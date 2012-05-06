@@ -6,6 +6,7 @@ import leveldb
 import threading
 import ujson as json
 
+from api import Handler
 from utils.patterns import enum
 from utils.decorators import cached_property
 
@@ -32,42 +33,6 @@ class Message(object):
         if len(message) != 3:
             return False
         return True
-
-
-class Handler(object):
-    def __init__(self, db):
-        # Each handlers is formatted following
-        # the pattern : [ command,
-        #                 default return value,
-        #                 raised error ]
-        self.handles = {
-            'GET': (db.Get, "", KeyError),
-            'PUT': (db.Put, "True", TypeError),
-            'DELETE': (db.Delete, ""),
-            }
-
-
-    def handle(self, message):
-        op_code = message.op_code
-        args = message.data
-
-        if op_code in self.handles:
-            if len(self.handles[op_code]) == 2:
-                return self.handles[op_code](*args)
-            else:
-                # FIXME
-                # global except catching is a total
-                # performance killer. Should enhance
-                # the handles attributes to link possible
-                # exceptions with leveldb methods.
-                try:
-                    value = self.handles[op_code][0](*args)
-                except self.handles[op_code][2]:
-                    return ""
-        else:
-            raise KeyError("op_code not handle")
-
-        return value if value else self.handles[op_code][1]
 
 
 class Worker(threading.Thread):
@@ -103,7 +68,7 @@ class Worker(threading.Thread):
             # Handle message, and execute the requested
             # command in leveldb
             reply = [message.id]
-            value = self.handler.handle(message)
+            value = self.handler.command(message)
             reply.append(value)
             self.socket.send_multipart(reply)
             processing = False
