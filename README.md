@@ -2,6 +2,22 @@ Elevator
 ========
 
 Minimalistic database engine based on levelDB.
+Allows async, multithreaded and/or remote acces to a leveldb backend.
+Will implement soon more complex data structures such as List, Hashes, and Sets
+as native parts of the Engine.
+Relying on the zeromq network library, it is made to be portable between languages and
+platforms.
+
+## Nota
+Still very early release, should not be stable, and be warned that
+many changes breaking backward compatibility are still possible.
+
+
+In the development tasks stack
+==============================
+Implement batching.
+Formalize a json api to communicate with server frontend and backend.
+Being able to handle complex data structures using protocol buffer.
 
 Dependencies
 ============
