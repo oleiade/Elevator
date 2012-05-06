@@ -15,9 +15,9 @@ many changes breaking backward compatibility are still possible.
 
 In the development tasks stack
 ==============================
-Implement batching.
-Formalize a json api to communicate with server frontend and backend.
-Being able to handle complex data structures using protocol buffer.
+* Implement batching.
+* Formalize a json api to communicate with server frontend and backend.
+* Being able to handle complex data structures using protocol buffer.
 
 Dependencies
 ============
