@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 from fabric.api import *
 
 
@@ -40,3 +41,4 @@ def install_dependencies():
     _build_zeromq()
     _build_pyzmq()
     _build_pyleveldb()
+    local('pip install -r requirements.txt')
