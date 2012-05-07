@@ -8,7 +8,7 @@ as native parts of the Engine.
 Relying on the zeromq network library, it is made to be portable between languages and
 platforms.
 
-## Nota
+### Nota
 Still very early release, should not be stable, and be warned that
 many changes breaking backward compatibility are still possible.
 
@@ -28,12 +28,14 @@ Dependencies
 
 Installation
 ============
-(Soon)
-
+```shell
+pip install fabric
+fab install_dependencies
+python setup.py install
+```
 Usage
 =====
 (Soon)
-
 
 Thanks
 ======
