@@ -6,6 +6,8 @@ import zmq
 import leveldb
 import threading
 
+import conf
+
 from database import Backend, Frontend
 from utils.daemon import Daemon
 
@@ -17,8 +19,10 @@ class ServerDaemon(Daemon):
 
 
 def run():
-    backend = Backend('test')
-    frontend = Frontend('tcp://127.0.0.1:4141')
+    args = conf.init_parser().parse_args(sys.argv[1:])
+
+    backend = Backend(args.db)
+    frontend = Frontend('tcp://%s:%s' % (args.bind, args.port))
 
     poll = zmq.Poller()
     poll.register(backend.socket, zmq.POLLIN)
@@ -26,7 +30,7 @@ def run():
 
     try:
         print >> sys.stdout, "Elevator server started"
-        print >> sys.stdout, "The server is now ready to accept connections on port 4141"
+        print >> sys.stdout, "The server is now ready to accept connections on port %s" % args.port
         while True:
             sockets = dict(poll.poll())
             if frontend.socket in sockets:

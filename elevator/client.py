@@ -10,8 +10,10 @@ import time
 import ujson as json
 
 class Elevator(object):
-    def __init__(self, host="tcp://127.0.0.1:4141", timeout=10*1000):
-        self.host = host
+    def __init__(self, bind="127.0.0.1", port="4141", timeout=10*1000):
+        self.bind = bind
+        self.port = port
+        self.host = "tcp://%s:%s" % (self.bind, self.port)
         self.timeout = timeout
         self.connect()
 
