@@ -11,15 +11,11 @@ import conf
 from database import Backend, Frontend
 from utils.daemon import Daemon
 
-
-class ServerDaemon(Daemon):
-    def run(self):
-        while True:
-            time.sleep(1)
+ARGS = conf.init_parser().parse_args(sys.argv[1:])
 
 
-def run():
-    args = conf.init_parser().parse_args(sys.argv[1:])
+def runserver():
+    args = ARGS
 
     backend = Backend(args.db)
     frontend = Frontend('tcp://%s:%s' % (args.bind, args.port))
@@ -45,3 +41,17 @@ def run():
     except KeyboardInterrupt:
         del backend
         del frontend
+
+
+class ServerDaemon(Daemon):
+    def run(self):
+        while True:
+            runserver()
+
+
+def main():
+    if ARGS.daemon:
+        server_daemon = ServerDaemon('/tmp/elevator.pid')
+        server_daemon.start()
+    else:
+        runserver()

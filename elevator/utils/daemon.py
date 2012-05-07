@@ -126,15 +126,15 @@ class Daemon:
 
 
         def restart(self):
-                """
-                Restart the daemon
-                """
-                self.stop()
-                self.start()
+            """
+            Restart the daemon
+            """
+            self.stop()
+            self.start()
 
 
         def run(self):
-                """
-                You should override this method when you subclass Daemon. It will be called after the process has been
-                daemonized by start() or restart().
-                """
+            """
+            You should override this method when you subclass Daemon. It will be called after the process has been
+            daemonized by start() or restart().
+            """

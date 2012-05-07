@@ -39,7 +39,7 @@ setup(
     # Setting up executable/main functions links
     entry_points = {
         'console_scripts': [
-            'elevator = elevator.server:run',
+            'elevator = elevator.server:main',
         ]
     },
 
