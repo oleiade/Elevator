@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
+import sys
 import zmq
 import leveldb
 import threading
@@ -17,6 +18,8 @@ def run():
     poll.register(frontend.socket, zmq.POLLIN)
 
     try:
+    	print >> sys.stdout, "Elevator server started"
+    	print >> sys.stdout, "The server is now ready to accept connections on port 4141"
         while True:
             sockets = dict(poll.poll())
             if frontend.socket in sockets:
