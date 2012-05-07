@@ -24,7 +24,7 @@ class Message(object):
         if not self.is_valid(message):
             raise MessageFormatError("Bad Message format")
         self.id = message[0]
-        self.op_code = message[1]
+        self.command = message[1]
         self.data = json.loads(message[2])
         self.reply = [self.id]
 
@@ -82,13 +82,13 @@ class Worker(threading.Thread):
 
 
 class Backend():
-    def __init__(self, db):
+    def __init__(self, db, workers_count=4):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.XREQ)
         self.socket.bind('inproc://leveldb')
         self.db = leveldb.LevelDB(db)
         self.workers_pool = []
-        self.init_workers()
+        self.init_workers(workers_count)
 
 
     def __del__(self):
@@ -97,7 +97,7 @@ class Backend():
         self.context.term()
 
 
-    def init_workers(self, count=4):
+    def init_workers(self, count):
         pos = 0
 
         while pos < count:
