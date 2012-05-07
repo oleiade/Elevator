@@ -20,7 +20,7 @@ class Handler(object):
 
         if op_code in self.handles:
             if len(self.handles[op_code]) == 2:
-                return self.handles[op_code](*args)
+                value = self.handles[op_code][0](*args)
             else:
                 # FIXME
                 # global except catching is a total
