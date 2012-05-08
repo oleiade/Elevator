@@ -43,9 +43,9 @@ class Elevator(object):
         return self.socket.recv_multipart()[0]
 
 
-    def Range(self, start=None, end=None):
-        self.socket.send_multipart(['RANGE', json.dumps([start, end])])
-        return self.socket.recv_multipart()[0]
+    def Range(self, start=None, limit=None):
+        self.socket.send_multipart(['RANGE', json.dumps([start, limit])])
+        return json.loads(self.socket.recv_multipart()[0])
 
 
     def close(self):
