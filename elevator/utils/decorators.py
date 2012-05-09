@@ -1,4 +1,6 @@
 ###   Cached Property   ###
+
+
 class _Missing(object):
     """cached_property decorator dependency"""
     def __repr__(self):
@@ -6,6 +8,8 @@ class _Missing(object):
 
     def __reduce__(self):
         return '_missing'
+
+
 _missing = _Missing()
 
 
