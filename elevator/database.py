@@ -5,15 +5,16 @@ import zmq
 import leveldb
 import threading
 import ujson as json
+from time import sleep
 
 from api import Handler
 from utils.patterns import enum
-from utils.decorators import cached_property
 
 
 class MessageFormatError(Exception):
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
 
@@ -27,7 +28,6 @@ class Message(object):
         self.command = message[1]
         self.data = json.loads(message[2])
         self.reply = [self.id]
-
 
     def is_valid(self, message):
         if len(message) != 3:
@@ -45,7 +45,6 @@ class Worker(threading.Thread):
         self.socket = context.socket(zmq.XREQ)
         self.handler = Handler(db)
 
-
     def run(self):
         self.socket.connect('inproc://leveldb')
         msg = None
@@ -54,10 +53,11 @@ class Worker(threading.Thread):
             try:
                 msg = self.socket.recv_multipart()
             except zmq.ZMQError:
-                self.state = STATES.STOPPED
+                self.state = self.STATES.STOPPED
                 continue
 
-            processing = True
+            self.processing = True
+
             try:
                 message = Message(msg)
             except MessageFormatError:
@@ -65,23 +65,25 @@ class Worker(threading.Thread):
                 reply = [msg[0], value]
                 self.socket.send_multipart(reply)
                 continue
+
             # Handle message, and execute the requested
             # command in leveldb
             reply = [message.id]
             value = self.handler.command(message)
             reply.append(value)
             self.socket.send_multipart(reply)
-            processing = False
-
+            self.processing = False
 
     def close(self):
         self.running = False
+
         while self.processing:
             sleep(1)
+
         self.socket.close()
 
 
-class Backend():
+class Backend(object):
     def __init__(self, db, workers_count=4):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.XREQ)
@@ -90,12 +92,10 @@ class Backend():
         self.workers_pool = []
         self.init_workers(workers_count)
 
-
     def __del__(self):
         [worker.close() for worker in self.workers_pool]
         self.socket.close()
         self.context.term()
-
 
     def init_workers(self, count):
         pos = 0
@@ -107,7 +107,7 @@ class Backend():
             pos += 1
 
 
-class Frontend():
+class Frontend(object):
     def __init__(self, host):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.XREP)
