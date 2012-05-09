@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 
 
+import zmq
 import threading
+import ujson as json
 
+from api import Handler
 from utils.patterns import enum
 
 
@@ -32,14 +35,15 @@ class Message(object):
 
 
 class Worker(threading.Thread):
-    def __init__(self, context, db):
+    def __init__(self, zmq_context, db, context):
         threading.Thread.__init__(self)
         self.STATES = enum('RUNNING', 'IDLE', 'STOPPED')
-        self.context = context
+        self.zmq_context = zmq_context
         self.state = self.STATES.RUNNING
         self.db = db
-        self.socket = context.socket(zmq.XREQ)
-        self.handler = Handler(db)
+        self.context = context
+        self.socket = self.zmq_context.socket(zmq.XREQ)
+        self.handler = Handler(db, context)
 
 
     def run(self):
@@ -64,7 +68,7 @@ class Worker(threading.Thread):
             # Handle message, and execute the requested
             # command in leveldb
             reply = [message.id]
-            value = self.handler.command(message)
+            value = self.handler.command(message, self.context)
             reply.append(value)
             self.socket.send_multipart(reply)
             processing = False

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import leveldb
 import ujson as json
 
 class Handler(object):
@@ -8,7 +9,7 @@ class Handler(object):
     Class that handles commands server side.
     Translates, messages commands to it's methods calls.
     """
-    def __init__(self, db):
+    def __init__(self, db, context):
         self.db = db
         # Each handlers is formatted following
         # the pattern : [ command,
@@ -19,10 +20,14 @@ class Handler(object):
             'PUT': (self.Put, "True", TypeError),
             'DELETE': (self.Delete, ""),
             'RANGE': (self.Range, "",),
+            'BPUT': (self.BPut, ""),
+            'BDELETE': (self.BDelete, ""),
+            'BWRITE': (self.BWrite, ""),
+            'BCLEAR': (self.BClear, ""),
             }
 
 
-    def Get(self, db, *args):
+    def Get(self, db, context, *args):
         """
         Handles GET message command.
         Executes a Get operation over the leveldb backend.
@@ -33,7 +38,7 @@ class Handler(object):
         return db.Get(*args)
 
 
-    def Put(self, db, *args):
+    def Put(self, db, context, *args):
         """
         Handles Put message command.
         Executes a Put operation over the leveldb backend.
@@ -45,7 +50,7 @@ class Handler(object):
         return db.Put(*args)
 
 
-    def Delete(self, db, *args):
+    def Delete(self, db, context, *args):
         """
         Handles Delete message command
         Executes a Delete operation over the leveldb backend.
@@ -57,7 +62,7 @@ class Handler(object):
         return db.Delete(*args)
 
 
-    def Range(self, db, *args):
+    def Range(self, db, context, *args):
         """
         Handles RANGE message command.
         Executes a RangeIter operation over the leveldb backend.
@@ -104,13 +109,52 @@ class Handler(object):
         return json.dumps(value) if value else None
 
 
-    def command(self, message):
+    def BPut(self, db, context, *args):
+        key, value, bid = args
+
+        # if the sought batch to update with Put
+        # operation is not yet present in the
+        # context, create it
+        if not bid in context:
+            context[bid] = leveldb.WriteBatch()
+        context[bid].Put(key, value)
+        return ''
+
+    def BDelete(self, db, context, *args):
+        key, bid = args
+
+        # if the sought batch to update with Put
+        # operation is not yet present in the
+        # context, create it
+        if not bid in context:
+            context[bid] = leveldb.WriteBatch()
+        context[bid].Delete(key)
+        return ''
+
+    def BWrite(self, db, context, *args):
+        bid = args[0]
+
+        # FIXME : an error should be raised
+        # whenever the batch object to write
+        # doesn't exist or is empty.
+        if bid in context:
+            db.Write(context[bid])
+        return ''
+
+    def BClear(self, db, context, *args):
+        bid = args[0]
+
+        if bid in context:
+            del context[bid]
+        return ''
+
+    def command(self, message, context):
         command = message.command
         args = message.data
 
         if command in self.handlers:
             if len(self.handlers[command]) == 2:
-                value = self.handlers[command][0](self.db, *args)
+                value = self.handlers[command][0](self.db, context, *args)
             else:
                 # FIXME
                 # global except catching is a total
@@ -118,7 +162,7 @@ class Handler(object):
                 # the handlers attributes to link possible
                 # exceptions with leveldb methods.
                 try:
-                    value = self.handlers[command][0](self.db, *args)
+                    value = self.handlers[command][0](self.db, context, *args)
                 except self.handlers[command][2]:
                     return ""
         else:

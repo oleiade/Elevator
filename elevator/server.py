@@ -8,7 +8,7 @@ import threading
 
 import conf
 
-from database import Backend, Frontend
+from proxy import Backend, Frontend
 from utils.daemon import Daemon
 
 ARGS = conf.init_parser().parse_args(sys.argv[1:])
