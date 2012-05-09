@@ -5,8 +5,6 @@
 
 # leveldb client
 import zmq
-import threading
-import time
 import ujson as json
 
 
@@ -21,18 +19,14 @@ class Client(object):
     def __del__(self):
         self.close()
 
-
     def connect(self):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.XREQ)
         self.socket.connect(self.host)
 
-
     def close(self):
         self.socket.close()
         self.context.term()
-
-
 
 
 class Elevator(Client):

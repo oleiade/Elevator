@@ -13,6 +13,7 @@ from utils.patterns import enum
 class MessageFormatError(Exception):
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
 
@@ -26,7 +27,6 @@ class Message(object):
         self.command = message[1]
         self.data = json.loads(message[2])
         self.reply = [self.id]
-
 
     def is_valid(self, message):
         if len(message) != 3:
@@ -45,7 +45,6 @@ class Worker(threading.Thread):
         self.socket = self.zmq_context.socket(zmq.XREQ)
         self.handler = Handler(db, context)
 
-
     def run(self):
         self.socket.connect('inproc://leveldb')
         msg = None
@@ -54,10 +53,11 @@ class Worker(threading.Thread):
             try:
                 msg = self.socket.recv_multipart()
             except zmq.ZMQError:
-                self.state = STATES.STOPPED
+                self.state = self.STATES.STOPPED
                 continue
 
-            processing = True
+            self.processing = True
+
             try:
                 message = Message(msg)
             except MessageFormatError:
@@ -65,17 +65,19 @@ class Worker(threading.Thread):
                 reply = [msg[0], value]
                 self.socket.send_multipart(reply)
                 continue
+
             # Handle message, and execute the requested
             # command in leveldb
             reply = [message.id]
             value = self.handler.command(message, self.context)
             reply.append(value)
             self.socket.send_multipart(reply)
-            processing = False
-
+            self.processing = False
 
     def close(self):
         self.running = False
+
         while self.processing:
             sleep(1)
+
         self.socket.close()
