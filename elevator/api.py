@@ -3,6 +3,7 @@
 
 import ujson as json
 
+
 class Handler(object):
     """
     Class that handles commands server side.
@@ -21,7 +22,6 @@ class Handler(object):
             'RANGE': (self.Range, "",),
             }
 
-
     def Get(self, db, *args):
         """
         Handles GET message command.
@@ -31,7 +31,6 @@ class Handler(object):
         *args   =>      (key) to fetch
         """
         return db.Get(*args)
-
 
     def Put(self, db, *args):
         """
@@ -44,7 +43,6 @@ class Handler(object):
         """
         return db.Put(*args)
 
-
     def Delete(self, db, *args):
         """
         Handles Delete message command
@@ -55,7 +53,6 @@ class Handler(object):
 
         """
         return db.Delete(*args)
-
 
     def Range(self, db, *args):
         """
@@ -71,9 +68,11 @@ class Handler(object):
         from from_key, to to_key and returns the result as a list of
         tuples.
 
-        For example :
-        Range(db_obj, ('a', 'z')) will return [('a', value), ..., ('z', value)]
-        Range(db_obj, ('a', 10) will return [(n, value), (n+1, value), ..., (n+10, value)]
+        For example:
+        Range(db_obj, ('a', 'z'))
+            will return [('a', value), ..., ('z', value)]
+        Range(db_obj, ('a', 10)
+            will return [(n, value), (n+1, value), ..., (n+10, value)]
 
         db      =>      LevelDB object
         *args   =>      (from_key, to_key/step) to delete from backend
@@ -102,7 +101,6 @@ class Handler(object):
                 pos += 1
 
         return json.dumps(value) if value else None
-
 
     def command(self, message):
         command = message.command
