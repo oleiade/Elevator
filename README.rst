@@ -3,9 +3,11 @@ Elevator
 ========
 
 Minimalistic database engine written in Python an based on levelDB.
+
 Allows async, multithreaded and/or remote acces to a leveldb backend.
 Will implement soon more complex data structures such as List, Hashes, and Sets
 as native parts of the Engine.
+
 Relying on the zeromq network library, it is made to be portable between languages and
 platforms.
 
@@ -30,7 +32,6 @@ Installation
 ------------
 
 ::
-
     pip install fabric
     fab install_dependencies
     python setup.py install
@@ -94,7 +95,7 @@ Here is a demo:
     ]
 
 Batch are implemented too. They're very handy and very fast when it comes to write a lot of datas to the database.
-See `LevelDB documentation <http://leveldb.googlecode.com/svn/trunk/doc/index.html>` for more informations.
+See `LevelDB documentation <http://leveldb.googlecode.com/svn/trunk/doc/index.html>`_ for more informations.
 Use it through the WriteBatch client module class. It has three base methods modeled on LevelDB's
 Put, Delete, Write.
 
