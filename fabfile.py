@@ -37,8 +37,20 @@ def _build_pyleveldb():
             local('sudo python setup.py install')
 
 
+def _build_thrift():
+    with lcd('/tmp'):
+        local('wget http://mirror.speednetwork.de/apache/thrift/0.8.0/thrift-0.8.0.tar.gz')
+        local('tar xvfz thrift-0.8.0.tar.gz')
+        with lcd('thrift-0.8.0'):
+            local('sudo chmod -R 777 .')
+            local('./configure')
+            local('make')
+            local('sudo make install')
+
+
 def install_dependencies():
     _build_zeromq()
     _build_pyzmq()
     _build_pyleveldb()
+    _build_thrift()
     local('pip install -r requirements.txt')
