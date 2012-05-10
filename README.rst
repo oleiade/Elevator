@@ -32,9 +32,11 @@ Installation
 ------------
 
 ::
+
     pip install fabric
     fab install_dependencies
     python setup.py install
+
 
 Usage
 -----
