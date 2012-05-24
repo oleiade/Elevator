@@ -57,3 +57,8 @@ def install_requirements():
     _build_pyzmq()
     _build_pyleveldb()
     local('pip install -r requirements.txt')
+
+
+def build():
+    install_dependencies()
+    install_requirements()

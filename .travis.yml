@@ -5,8 +5,7 @@ python:
 
 install:
   - pip install fabric
-  - fab install_dependencies
-  - fab install_requirements
+  - fab build
   - python setup.py install
 
 script: nosetests
