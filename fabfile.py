@@ -50,7 +50,10 @@ def _build_thrift():
 
 def install_dependencies():
     _build_zeromq()
+    _build_thrift()
+
+
+def install_requirements():
     _build_pyzmq()
     _build_pyleveldb()
-    _build_thrift()
     local('pip install -r requirements.txt')
