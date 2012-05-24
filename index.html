@@ -32,15 +32,19 @@
 
         <h3>Dependencies</h3>
 
-        <p>Elevator relies on three pillars : ZeroMQ, levelDB and Thrift. The project fabfile has a rule to automatically build it on your system. Simpy use :
-        </p>
-        <pre>$ fab install_dependencies</pre>
+        <p>Elevator relies on three pillars : ZeroMQ, levelDB and Thrift. The project fabfile has a rule to automatically build it on your system. Simpy use :</p>
+        <pre>
+          $ pip install fabric
+          $ fab build
+        </pre>
+        <p>Or, if you'd wanna bypass the Thrift and Zeromq build and install, keeping your system clean, you can just</p>
+        <pre>
+          $ fab install_requirements
+        </pre>
 
         <h3>Installation</h3>
 
         <pre>
-          $ pip install fabric
-          $ fab install_requirements
           $ python setup.py install
         </pre>
       </section>
