@@ -27,27 +27,21 @@
       </header>
       <section>
         <h3>Overview</h3>
+        <p>Soon</p>
 
-<p>Extensively </p>
+        <h3>Dependencies</h3>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+        <p>Elevator relies on three pillars : ZeroMQ, levelDB and Thrift. The project fabfile has a rule to automatically build it on your system. Simpy use :
+        </p>
+        <pre><code>$ fab install_dependencies
+        </code></pre>
 
-<h3>Dependencies</h3>
+        <h3>Installation</h3>
 
-<p>Elevator relies on three pillars : ZeroMQ, levelDB and Thrift. The project fabfile has a rule to automatically build it on your system. Simpy use :
-</p>
-<pre><code>$ fab install_dependencies
-</code></pre>
-
-<h3>Installation</h3>
-
-<pre><code>$ pip install fabric
-$ fab install_requirements
-$ python setup.py install
-</code></pre>
+        <pre><code>$ pip install fabric
+        $ fab install_requirements
+        $ python setup.py install
+        </code></pre>
 
 <!--
 <h3>Rather Drive Stick?</h3>
