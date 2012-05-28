@@ -8,7 +8,7 @@ from utils.decorators import lru_cache
 from utils.snippets import items_to_dict
 
 
-class Environment(object):
+class Environment(dict):
     """
     Unix shells like environment class. Implements add,
     get, load, flush methods. Handles lists of values too.
@@ -16,25 +16,12 @@ class Environment(object):
     """
     __metaclass__ = Singleton
 
-    SEQ_DELIMITER = ','
-
-    def __init__(self, env_file=''):
-        self._store = {}
-        self.attributes = set()  # Stores manually added attributes
+    def __init__(self, env_file='', *args, **kwargs):
         if env_file:
             self.load(env_file=env_file)  # Has to be called last!
 
-    @property
-    def store(self):
-        return self._store
-
-    def add(self, name, value):
-        """Adds a key/value to env"""
-        self._store.update({name: value})
-
-    def get(self, name):
-        """Cached env key fetch"""
-        return self._store[name]
+        self.update(kwargs)
+        dict.__init__(self, *args, **kwargs)
 
     def load(self, env_file):
         """
@@ -45,10 +32,7 @@ class Environment(object):
         config.read(env_file)
 
         for section in config.sections():
-            section_content = items_to_dict(config.items(section))
-
-            for k, v in section_content.iteritems():
-                self._store.update({':'.join([section, k]): v})
+            self.update({section: items_to_dict(config.items(section))})
 
     def reload(self, env_file=''):
         self.flush(env_file)
