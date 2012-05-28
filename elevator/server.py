@@ -4,19 +4,20 @@
 import sys
 import zmq
 
-import conf
 
-from proxy import Backend, Frontend
-from utils.daemon import Daemon
+from elevator import conf
+from elevatpr.env import Environment
+from elevator.proxy import Backend, Frontend
+from elevator.utils.daemon import Daemon
 
 
 ARGS = conf.init_parser().parse_args(sys.argv[1:])
 
 
-def runserver():
+def runserver(env):
     args = ARGS
 
-    backend = Backend(args.db)
+    backend = Backend(args.db, db_options=env['leveldb'])
     frontend = Frontend('tcp://%s:%s' % (args.bind, args.port))
 
     poll = zmq.Poller()
@@ -44,14 +45,21 @@ def runserver():
 
 
 class ServerDaemon(Daemon):
-    def run(self):
+    def run(self, env):
+        super(self, Daemon).run()
         while True:
-            runserver()
+            runserver(env)
 
 
 def main():
+    # As Environment object is a singleton
+    # every further instanciation of the object
+    # will point on this one, and conf will be
+    # present in it yet.
+    env = Environment(ARGS.config)
+
     if ARGS.daemon:
         server_daemon = ServerDaemon('/tmp/elevator.pid')
         server_daemon.start()
     else:
-        runserver()
+        runserver(env)
