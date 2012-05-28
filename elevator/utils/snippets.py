@@ -15,6 +15,7 @@ def items_to_dict(items):
 
     for k, v in items:
         res[k] = v
+    return res
 
 # Iterates through a sequence of size `clen`
 chunks = lambda seq, clen: [seq[i:(i + clen)] for i in xrange(0, len(seq), clen)]
