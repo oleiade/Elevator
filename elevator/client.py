@@ -9,11 +9,12 @@ import ujson as json
 
 
 class Client(object):
-    def __init__(self, bind="127.0.0.1", port="4141", timeout=10*1000):
-        self.bind = bind
-        self.port = port
+    def __init__(self, *args, **kwargs):
+        self.bind = kwargs.pop('bind', '127.0.0.1')
+        self.port = kwargs.pop('port', '4141')
+        self.db_name = kwargs.pop('db_name', 'default')
+        self.timeout = kwargs.pop('timeout', 10 * 10000)
         self.host = "tcp://%s:%s" % (self.bind, self.port)
-        self.timeout = timeout
         self.connect()
 
     def __del__(self):
@@ -31,19 +32,19 @@ class Client(object):
 
 class Elevator(Client):
     def Get(self, key):
-        self.socket.send_multipart(['GET', json.dumps([key])])
+        self.socket.send_multipart([self.db_name, 'GET', json.dumps([key])])
         return self.socket.recv_multipart()[0]
 
     def Put(self, key, value):
-        self.socket.send_multipart(['PUT', json.dumps([key, value])])
+        self.socket.send_multipart([self.db_name, 'PUT', json.dumps([key, value])])
         return self.socket.recv_multipart()[0]
 
     def Delete(self, key):
-        self.socket.send_multipart(['DELETE', json.dumps([key])])
+        self.socket.send_multipart([self.db_name, 'DELETE', json.dumps([key])])
         return self.socket.recv_multipart()[0]
 
     def Range(self, start=None, limit=None):
-        self.socket.send_multipart(['RANGE', json.dumps([start, limit])])
+        self.socket.send_multipart([self.db_name, 'RANGE', json.dumps([start, limit])])
         return json.loads(self.socket.recv_multipart()[0])
 
 
@@ -57,17 +58,17 @@ class WriteBatch(Client):
         super(WriteBatch, self).__init__(*args, **kwargs)
 
     def __del__(self):
-        self.socket.send_multipart(['BCLEAR', json.dumps([self.bid])])
+        self.socket.send_multipart([self.db_name, 'BCLEAR', json.dumps([self.bid])])
         return self.socket.recv_multipart()[0]
 
     def Put(self, key, value):
-        self.socket.send_multipart(['BPUT', json.dumps([key, value, self.bid])])
+        self.socket.send_multipart([self.db_name, 'BPUT', json.dumps([key, value, self.bid])])
         return self.socket.recv_multipart()[0]
 
     def Delete(self, key):
-        self.socket.send_multipart(['BDELETE', json.dumps([key, self.bid])])
+        self.socket.send_multipart([self.db_name, 'BDELETE', json.dumps([key, self.bid])])
         return self.socket.recv_multipart()[0]
 
     def Write(self):
-        self.socket.send_multipart(['BWRITE', json.dumps([self.bid])])
+        self.socket.send_multipart([self.db_name, 'BWRITE', json.dumps([self.bid])])
         return self.socket.recv_multipart()[0]
