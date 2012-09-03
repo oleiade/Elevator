@@ -6,7 +6,7 @@ import zmq
 
 
 from elevator import conf
-from elevatpr.env import Environment
+from elevator.env import Environment
 from elevator.proxy import Backend, Frontend
 from elevator.utils.daemon import Daemon
 
@@ -17,7 +17,7 @@ ARGS = conf.init_parser().parse_args(sys.argv[1:])
 def runserver(env):
     args = ARGS
 
-    backend = Backend(args.db, db_options=env['leveldb'])
+    backend = Backend(args.db)
     frontend = Frontend('tcp://%s:%s' % (args.bind, args.port))
 
     poll = zmq.Poller()
