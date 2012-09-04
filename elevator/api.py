@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import leveldb
 import ujson as json
 
@@ -10,8 +11,8 @@ class Handler(object):
     Class that handles commands server side.
     Translates, messages commands to it's methods calls.
     """
-    def __init__(self, db, context):
-        self.db = db
+    def __init__(self, databases, context):
+        self.databases = databases
         # Each handlers is formatted following
         # the pattern : [ command,
         #                 default return value,
@@ -25,9 +26,12 @@ class Handler(object):
             'BDELETE': (self.BDelete, ""),
             'BWRITE': (self.BWrite, ""),
             'BCLEAR': (self.BClear, ""),
+            'DBCREATE': (self.DBCreate, ""),
+            'DBLIST': (self.DBList, ""),
+            'DBDELETE': (self.DBDelete, ""),
             }
 
-    def Get(self, db, context, *args):
+    def Get(self, db, context, *args, **kwargs):
         """
         Handles GET message command.
         Executes a Get operation over the leveldb backend.
@@ -37,7 +41,7 @@ class Handler(object):
         """
         return db.Get(*args)
 
-    def Put(self, db, context, *args):
+    def Put(self, db, context, *args, **kwargs):
         """
         Handles Put message command.
         Executes a Put operation over the leveldb backend.
@@ -48,7 +52,7 @@ class Handler(object):
         """
         return db.Put(*args)
 
-    def Delete(self, db, context, *args):
+    def Delete(self, db, context, *args, **kwargs):
         """
         Handles Delete message command
         Executes a Delete operation over the leveldb backend.
@@ -59,7 +63,7 @@ class Handler(object):
         """
         return db.Delete(*args)
 
-    def Range(self, db, context, *args):
+    def Range(self, db, context, *args, **kwargs):
         """
         Handles RANGE message command.
         Executes a RangeIter operation over the leveldb backend.
@@ -107,7 +111,7 @@ class Handler(object):
 
         return json.dumps(value) if value else None
 
-    def BPut(self, db, context, *args):
+    def BPut(self, db, context, *args, **kwargs):
         key, value, bid = args
 
         # if the sought batch to update with Put
@@ -118,7 +122,7 @@ class Handler(object):
         context[bid].Put(key, value)
         return ''
 
-    def BDelete(self, db, context, *args):
+    def BDelete(self, db, context, *args, **kwargs):
         key, bid = args
 
         # if the sought batch to update with Put
@@ -129,7 +133,7 @@ class Handler(object):
         context[bid].Delete(key)
         return ''
 
-    def BWrite(self, db, context, *args):
+    def BWrite(self, db, context, *args, **kwargs):
         bid = args[0]
 
         # FIXME : an error should be raised
@@ -139,20 +143,48 @@ class Handler(object):
             db.Write(context[bid])
         return ''
 
-    def BClear(self, db, context, *args):
+    def BClear(self, db, context, *args, **kwargs):
         bid = args[0]
 
         if bid in context:
             del context[bid]
         return ''
 
-    def command(self, message, context):
+    def DBCreate(self, db, context, *args, **kwargs):
+        env = kwargs.get('env', None)
+        db_name = args[0]
+        db_options = kwargs.pop('db_options', {})
+
+        if env and not 'database_store' in env['global']:
+            raise KeyError("Missing database_store value in environment")
+        else:
+            db_path = os.path.join(env['global']['database_store'], db_name)
+
+        if not db_name in self.databases:
+            self.databases.update({db_name: leveldb.LevelDB(db_path, **db_options)})
+            return 'SUCCESS'
+        else:
+            raise KeyError("Database %s already exists" % db_name)
+
+        return ''
+
+    def DBList(self, db, context, *args, **kwargs):
+        return json.dumps([db for db in self.databases.iterkeys()])
+
+    def DBDelete(self, db, context, *args, **kwargs):
+        pass
+
+    def command(self, message, context, *args, **kwargs):
+        db = message.db_name
         command = message.command
         args = message.data
 
+        if not db in self.databases:
+            raise RuntimeError("Databases %s does not exist" % db)
+
         if command in self.handlers:
             if len(self.handlers[command]) == 2:
-                value = self.handlers[command][0](self.db, context, *args)
+                value = self.handlers[command][0](self.databases[db], context, *args, **kwargs)
             else:
                 # FIXME
                 # global except catching is a total
@@ -160,7 +192,7 @@ class Handler(object):
                 # the handlers attributes to link possible
                 # exceptions with leveldb methods.
                 try:
-                    value = self.handlers[command][0](self.db, context, *args)
+                    value = self.handlers[command][0](self.databases[db], context, *args, **kwargs)
                 except self.handlers[command][2]:
                     return ""
         else:

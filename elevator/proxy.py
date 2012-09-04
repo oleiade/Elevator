@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import zmq
 import leveldb
 
 from worker import Worker
+
+from elevator.env import Environment
 
 
 class Backend():
@@ -13,8 +16,10 @@ class Backend():
 
         self.zmq_context = zmq.Context()
         self.socket = self.zmq_context.socket(zmq.XREQ)
-        self.socket.bind('inproc://leveldb')
-        self.db = leveldb.LevelDB(db, **db_options)
+        self.socket.bind('inproc://elevator')
+        self.databases = self.load_databases(kwargs.get('env', Environment()))
+        # self.databases = {'default': leveldb.LevelDB(db, **db_options)}
+        # self.db = leveldb.LevelDB(db, **db_options)
         # context used to stack datas, and share it
         # between workers. For batches for example.
         self.context = {}
@@ -26,11 +31,24 @@ class Backend():
         self.socket.close()
         self.context.term()
 
+    def load_databases(self, env):
+        if env and ('global' in env) and ('database_store' in env['global']):
+            databases = {}
+            databases_names = [db_name for db_name in os.listdir(env['global']['database_store'])]
+
+            for database_name in databases_names:
+                databases.update({
+                    database_name: leveldb.LevelDB(os.path.join(env['global']['database_store'], database_name)),
+                })
+            self.databases = databases
+            return databases
+        return {}
+
     def init_workers(self, count, context):
         pos = 0
 
         while pos < count:
-            worker = Worker(self.zmq_context, self.db, context)
+            worker = Worker(self.zmq_context, self.databases, context)
             worker.start()
             self.workers_pool.append(worker)
             pos += 1

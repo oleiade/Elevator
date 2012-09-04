@@ -9,6 +9,8 @@ import ujson as json
 from api import Handler
 from utils.patterns import enum
 
+from elevator.env import Environment
+
 
 class MessageFormatError(Exception):
     def __init__(self, value):
@@ -34,18 +36,19 @@ class Message(object):
 
 
 class Worker(threading.Thread):
-    def __init__(self, zmq_context, db, context):
+    def __init__(self, zmq_context, databases, context, *args, **kwargs):
         threading.Thread.__init__(self)
         self.STATES = enum('RUNNING', 'IDLE', 'STOPPED')
         self.zmq_context = zmq_context
         self.state = self.STATES.RUNNING
-        self.db = db
+        self.databases = databases
         self.context = context
+        self.env = kwargs.pop('env', Environment())
         self.socket = self.zmq_context.socket(zmq.XREQ)
-        self.handler = Handler(db, context)
+        self.handler = Handler(databases, context)
 
     def run(self):
-        self.socket.connect('inproc://leveldb')
+        self.socket.connect('inproc://elevator')
         msg = None
 
         while (self.state == self.STATES.RUNNING):
@@ -68,7 +71,7 @@ class Worker(threading.Thread):
             # Handle message, and execute the requested
             # command in leveldb
             reply = [message.id]
-            value = self.handler.command(message, self.context)
+            value = self.handler.command(message, self.context, env=self.env)
             reply.append(value)
             self.socket.send_multipart(reply)
             self.processing = False

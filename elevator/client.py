@@ -47,6 +47,14 @@ class Elevator(Client):
         self.socket.send_multipart([self.db_name, 'RANGE', json.dumps([start, limit])])
         return json.loads(self.socket.recv_multipart()[0])
 
+    def ListDatabases(self):
+        self.socket.send_multipart([self.db_name, 'DBLIST', json.dumps({})])
+        return json.loads(self.socket.recv_multipart()[0])
+
+    def CreateDatabase(self, key):
+        self.socket.send_multipart([self.db_name, 'DBCREATE', json.dumps([key])])
+        return json.loads(self.socket.recv_multipart()[0])
+
 
 class WriteBatch(Client):
     def __init__(self, *args, **kwargs):
