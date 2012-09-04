@@ -169,10 +169,7 @@ class Handler(object):
         return ''
 
     def DBList(self, db, context, *args, **kwargs):
-        return json.dumps([db for db in self.databases.iterkeys()])
-
-    def DBDelete(self, db, context, *args, **kwargs):
-        pass
+        return json.dumps([db for db in self.databases.iterkeys()])        
 
     def command(self, message, context, *args, **kwargs):
         db_name = message.db_name
