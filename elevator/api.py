@@ -28,7 +28,6 @@ class Handler(object):
             'BCLEAR': (self.BClear, ""),
             'DBCREATE': (self.DBCreate, ""),
             'DBLIST': (self.DBList, ""),
-            'DBDELETE': (self.DBDelete, ""),
             }
 
     def Get(self, db, context, *args, **kwargs):
