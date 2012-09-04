@@ -15,17 +15,17 @@ class Client(object):
         self.db_name = kwargs.pop('db_name', 'default')
         self.timeout = kwargs.pop('timeout', 10 * 10000)
         self.host = "tcp://%s:%s" % (self.bind, self.port)
-        self.connect()
+        self._connect()
 
     def __del__(self):
-        self.close()
+        self._close()
 
     def connect(self):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.XREQ)
         self.socket.connect(self.host)
 
-    def close(self):
+    def _close(self):
         self.socket.close()
         self.context.term()
 
@@ -61,8 +61,8 @@ class WriteBatch(Client):
         # Generate a unique id, in order to keep
         # trace of it over server side for it's further
         # updates.
-        self.uid = int(time.time())
-        self.bid = "%s:%d" % ('batch', self.uid)
+        self.uid = str(uuid.uuid4())
+        self.bid = "%s:%s" % ('batch', self.uid)
         super(WriteBatch, self).__init__(*args, **kwargs)
 
     def __del__(self):
