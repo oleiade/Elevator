@@ -175,16 +175,16 @@ class Handler(object):
         pass
 
     def command(self, message, context, *args, **kwargs):
-        db = message.db_name
+        db_name = message.db_name
         command = message.command
         args = message.data
 
-        if not db in self.databases:
-            raise RuntimeError("Databases %s does not exist" % db)
+        if not db_name in self.databases:
+            raise RuntimeError("Databases %s does not exist" % db_name)
 
         if command in self.handlers:
             if len(self.handlers[command]) == 2:
-                value = self.handlers[command][0](self.databases[db], context, *args, **kwargs)
+                value = self.handlers[command][0](self.databases[db_name], context, *args, **kwargs)
             else:
                 # FIXME
                 # global except catching is a total
@@ -192,7 +192,7 @@ class Handler(object):
                 # the handlers attributes to link possible
                 # exceptions with leveldb methods.
                 try:
-                    value = self.handlers[command][0](self.databases[db], context, *args, **kwargs)
+                    value = self.handlers[command][0](self.databases[db_name], context, *args, **kwargs)
                 except self.handlers[command][2]:
                     return ""
         else:

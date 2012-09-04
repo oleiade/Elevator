@@ -17,7 +17,7 @@ ARGS = conf.init_parser().parse_args(sys.argv[1:])
 def runserver(env):
     args = ARGS
 
-    backend = Backend(args.db, env=env)
+    backend = Backend(args.db)
     frontend = Frontend('tcp://%s:%s' % (args.bind, args.port))
 
     poll = zmq.Poller()
