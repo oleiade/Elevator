@@ -150,11 +150,11 @@ class Handler(object):
         return ''
 
     def DBCreate(self, db, context, *args, **kwargs):
-        env = kwargs.get('env', None)
+        env = Environment()
         db_name = args[0]
         db_options = kwargs.pop('db_options', {})
 
-        if env and not 'database_store' in env['global']:
+        if not 'database_store' in env['global']:
             raise KeyError("Missing database_store value in environment")
         else:
             db_path = os.path.join(env['global']['database_store'], db_name)

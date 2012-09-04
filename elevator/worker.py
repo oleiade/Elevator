@@ -43,7 +43,7 @@ class Worker(threading.Thread):
         self.state = self.STATES.RUNNING
         self.databases = databases
         self.context = context
-        self.env = kwargs.pop('env', Environment())
+        self.env = Environment()
         self.socket = self.zmq_context.socket(zmq.XREQ)
         self.handler = Handler(databases, context)
 
