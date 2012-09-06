@@ -14,17 +14,16 @@ class Backend():
     def __init__(self, db, workers_count=4, **kwargs):
         db_options = kwargs.get('db_options', {}) # NOQA
 
+        # context used to stack datas, and share it
+        # between workers. For batches for example.
+        self.context = {}
+        self.workers_pool = []
+
         self.databases = self.load_databases()
 
         self.zmq_context = zmq.Context()
         self.socket = self.zmq_context.socket(zmq.XREQ)
         self.socket.bind('inproc://elevator')
-        # self.databases = {'default': leveldb.LevelDB(db, **db_options)}
-        # self.db = leveldb.LevelDB(db, **db_options)
-        # context used to stack datas, and share it
-        # between workers. For batches for example.
-        self.context = {}
-        self.workers_pool = []
         self.init_workers(workers_count, self.context)
 
     def __del__(self):
