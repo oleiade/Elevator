@@ -1,14 +1,13 @@
 language: python
 python:
-  	- "2.6"
   	- "2.7"
 
 before_install:
-	- apt-get install php-config libzmq-dev python-zmq
-	- pip install fabric
-  	- fab build
+	- "apt-get install php-config libzmq-dev python-zmq"
+	- "pip install fabric"
+  	- "fab build"
 
 install:
-  	- python setup.py install
+  	- "python setup.py install"
 
 # script: nosetests
