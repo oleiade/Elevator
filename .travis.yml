@@ -4,11 +4,11 @@ python:
   	- "2.7"
 
 before_install:
-	- apt-get install php-config
+	- apt-get install php-config libzmq-dev python-zmq
 	- pip install fabric
   	- fab build
 
 install:
   	- python setup.py install
 
-script: nosetests
+# script: nosetests
