@@ -17,10 +17,12 @@ def _build_pyleveldb():
             local('sudo python setup.py install')
 
 
+@task
 def install_requirements():
     _build_pyleveldb()
     local('pip install -r requirements.txt --use-mirrors')
 
 
+@task
 def build():
     install_requirements()
