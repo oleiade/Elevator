@@ -19,7 +19,7 @@ def _build_pyleveldb():
 
 def install_requirements():
     _build_pyleveldb()
-    local('pip install -r requirements.txt')
+    local('pip install -r requirements.txt --use-mirrors')
 
 
 def build():
