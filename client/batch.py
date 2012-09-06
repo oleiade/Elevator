@@ -13,13 +13,13 @@ class WriteBatch(Client):
         super(WriteBatch, self).__init__(*args, **kwargs)
 
     def __del__(self):
-        return self.send(self.db_name, 'BCLEAR', [self.bid])
+        return self.send(self.db_uid, 'BCLEAR', [self.bid])
 
     def Put(self, key, value):
-        return self.send(self.db_name, 'BPUT', [key, value, self.bid])
+        return self.send(self.db_uid, 'BPUT', [key, value, self.bid])
 
     def Delete(self, key):
-        return self.send(self.db_name, 'BDELETE', [key, self.bid])
+        return self.send(self.db_uid, 'BDELETE', [key, self.bid])
 
     def Write(self):
-        return self.send(self.db_name, 'BWRITE', [self.bid])
+        return self.send(self.db_uid, 'BWRITE', [self.bid])

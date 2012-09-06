@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import md5
 import zmq
 import leveldb
 
@@ -13,13 +14,13 @@ from elevator.env import Environment
 class Backend():
     def __init__(self, db, workers_count=4, **kwargs):
         db_options = kwargs.get('db_options', {}) # NOQA
+        self.databases = self.load_databases()
 
         # context used to stack datas, and share it
         # between workers. For batches for example.
         self.context = {}
         self.workers_pool = []
 
-        self.databases = self.load_databases()
 
         self.zmq_context = zmq.Context()
         self.socket = self.zmq_context.socket(zmq.XREQ)
@@ -37,21 +38,24 @@ class Backend():
 
         # Updating databases store with get or created default
         # database
+        default_db_name = server_conf['default_db']
+        default_db_uid = md5.new(default_db_name).digest()
         default_db_path = os.path.join(server_conf['database_store'],
-                                  server_conf['default_db'])
+                                       default_db_name)
         databases = {
-            server_conf['default_db']: leveldb.LevelDB(default_db_path)
+            'index': {default_db_name: default_db_uid},
+            default_db_uid: leveldb.LevelDB(default_db_path),
         }
 
         # Retrieving every databases from database store on fs,
         # and adding them to backend databases handler.
-        databases_names = [db_name for db_name
-                           in os.listdir(server_conf['database_store'])
-                            if db_name != server_conf['default_db']]
-        for database_name in databases_names:
-            databases.update({
-                database_name: leveldb.LevelDB(os.path.join(server_conf['database_store'], database_name)),
-            })
+        for db_name in os.listdir(server_conf['database_store']):
+            if db_name != server_conf['default_db']:
+                db_path = os.path.join(server_conf['database_store'], db_name)
+                db_uid = md5.new(db_name).digest()
+                databases['index'].update({db_name: db_uid})
+                databases.update({db_uid: leveldb.LevelDB(db_path)})
+
         return databases
 
     def init_workers(self, count, context):

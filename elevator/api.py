@@ -28,6 +28,7 @@ class Handler(object):
             'BDELETE': (self.BDelete, ""),
             'BWRITE': (self.BWrite, ""),
             'BCLEAR': (self.BClear, ""),
+            'DBCONNECT': (self.DBConnect, ""),
             'DBCREATE': (self.DBCreate, ""),
             'DBLIST': (self.DBList, ""),
         }
@@ -153,6 +154,15 @@ class Handler(object):
             del context[bid]
         return ''
 
+    def DBConnect(self, *args, **kwargs):
+        db_name = kwargs.pop('db_name', None)
+
+        if (not db_name or
+            (db_name and (not db_name in self.databases['index']))):
+            raise KeyError("Database %s doesn't exist" % db_name)
+
+        return self.databases['index'][db_name]
+
     def DBCreate(self, db, context, *args, **kwargs):
         env = Environment()
         db_name = args[0]
@@ -174,18 +184,24 @@ class Handler(object):
         return json.dumps([db for db in self.databases.iterkeys()])
 
     def command(self, message, context, *args, **kwargs):
-        db_name = message.db_name
+        db_uid = message.db_name
         command = message.command
         args = message.data
 
-        if not db_name in self.databases:
-            raise RuntimeError("Databases %s does not exist" % db_name)
+        if command == 'DBCONNECT':
+            # Here db_uid is in fact a db name, and connect
+            # returns the valid seek db uid.
+            return self.DBConnect(db_name=message.data['db_name'], *args, **kwargs)
+
+        if (not db_uid or
+            (db_uid and (not db_uid in self.databases))):
+            raise RuntimeError("Database does not exist")
 
         if not command in self.handlers:
             raise KeyError("command not handle")
 
         if len(self.handlers[command]) == 2:
-            value = self.handlers[command][0](self.databases[db_name], context, *args, **kwargs)
+            value = self.handlers[command][0](self.databases[db_uid], context, *args, **kwargs)
         else:
             # FIXME
             # global except catching is a total
@@ -193,7 +209,7 @@ class Handler(object):
             # the handlers attributes to link possible
             # exceptions with leveldb methods.
             try:
-                value = self.handlers[command][0](self.databases[db_name], context, *args, **kwargs)
+                value = self.handlers[command][0](self.databases[db_uid], context, *args, **kwargs)
             except self.handlers[command][2]:
                 return ""
             else:
