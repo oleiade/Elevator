@@ -1,5 +1,6 @@
 import zmq
 
+from .message import Message
 
 class Client(object):
     def __init__(self, *args, **kwargs):
@@ -21,3 +22,7 @@ class Client(object):
     def _close(self):
         self.socket.close()
         self.context.term()
+
+    def send(self, db_name, command, datas):
+        self.socket.send_multipart([Message(db_name=db_name, command=command, data=datas)])
+        return self.socket.recv_multipart()[0]

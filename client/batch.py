@@ -1,5 +1,4 @@
 import uuid
-import ujson as json
 
 from .base import Client
 
@@ -14,17 +13,13 @@ class WriteBatch(Client):
         super(WriteBatch, self).__init__(*args, **kwargs)
 
     def __del__(self):
-        self.socket.send_multipart([self.db_name, 'BCLEAR', json.dumps([self.bid])])
-        return self.socket.recv_multipart()[0]
+        return self.send(self.db_name, 'BCLEAR', [self.bid])
 
     def Put(self, key, value):
-        self.socket.send_multipart([self.db_name, 'BPUT', json.dumps([key, value, self.bid])])
-        return self.socket.recv_multipart()[0]
+        return self.send(self.db_name, 'BPUT', [key, value, self.bid])
 
     def Delete(self, key):
-        self.socket.send_multipart([self.db_name, 'BDELETE', json.dumps([key, self.bid])])
-        return self.socket.recv_multipart()[0]
+        return self.send(self.db_name, 'BDELETE', [key, self.bid])
 
     def Write(self):
-        self.socket.send_multipart([self.db_name, 'BWRITE', json.dumps([self.bid])])
-        return self.socket.recv_multipart()[0]
+        return self.send(self.db_name, 'BWRITE', [self.bid])

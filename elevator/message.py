@@ -14,11 +14,11 @@ class Message(object):
     def __init__(self, message):
         if not self.is_valid(message):
             raise MessageFormatError("Bad Message format")
-        self.id, self.db_name, self.command = message[:-1]
-        self.data = json.loads(message[3])
+        self.id = message.pop(0)
+        self.db_name, self.command, self.data = json.loads(message.pop(0))
         self.reply = [self.id]
 
     def is_valid(self, message):
-        if len(message) != 4:
+        if len(message) != 2:
             return False
         return True
