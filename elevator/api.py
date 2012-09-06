@@ -168,15 +168,10 @@ class Handler(object):
         db_name = args[0]
         db_options = kwargs.pop('db_options', {})
 
-        if not 'database_store' in env['global']:
-            raise KeyError("Missing database_store value in environment")
-
-        db_path = os.path.join(env['global']['database_store'], db_name)
-
-        if db_name in self.databases:
+        if db_name in self.databases['index']:
             raise KeyError("Database %s already exists" % db_name)
 
-        self.databases.update({db_name: leveldb.LevelDB(db_path, **db_options)})
+        self.databases.add(db_name)
 
         return 'SUCCESS'
 
