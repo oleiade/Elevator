@@ -29,3 +29,13 @@ class DatabasesHandler(dict):
 
         self['index'].update({new_db_name: new_db_uid})
         self.update({new_db_uid: leveldb.LevelDB(new_db_dest)})
+
+    def drop(self, db_name):
+        db_uid = self['index'].pop(db_name)
+        del self['db_uid']
+        os.remove(os.path.join(self.dest, db_name))
+        self.pop(db_uid)
+
+
+    def list(self):
+        return [db_name for db_name in self['index'].itervalues()]
