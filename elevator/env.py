@@ -4,7 +4,6 @@
 from ConfigParser import ConfigParser
 
 from utils.patterns import Singleton
-from utils.decorators import lru_cache
 from utils.snippets import items_to_dict
 
 

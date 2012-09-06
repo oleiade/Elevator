@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import ConfigParser
 import argparse
-
-from utils.snippets import items_to_dict
 
 
 DEFAULT_CONFIG_FILE = '../config/elevator.conf'
+
 
 def init_parser():
     parser = argparse.ArgumentParser(

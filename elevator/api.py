@@ -5,6 +5,8 @@ import os
 import leveldb
 import ujson as json
 
+from .env import Environment
+
 
 class Handler(object):
     """
@@ -28,7 +30,7 @@ class Handler(object):
             'BCLEAR': (self.BClear, ""),
             'DBCREATE': (self.DBCreate, ""),
             'DBLIST': (self.DBList, ""),
-            }
+        }
 
     def Get(self, db, context, *args, **kwargs):
         """
@@ -89,8 +91,8 @@ class Handler(object):
         value = []
         if not len(args) == 2:
             raise IndexError("Missing argument to_key or step to Range")
-        else:
-            from_key, limit = args
+
+        from_key, limit = args
 
         # Right argument is to_key
         if isinstance(limit, str):
@@ -118,6 +120,7 @@ class Handler(object):
         # context, create it
         if not bid in context:
             context[bid] = leveldb.WriteBatch()
+
         context[bid].Put(key, value)
         return ''
 
@@ -129,6 +132,7 @@ class Handler(object):
         # context, create it
         if not bid in context:
             context[bid] = leveldb.WriteBatch()
+
         context[bid].Delete(key)
         return ''
 
@@ -156,19 +160,18 @@ class Handler(object):
 
         if not 'database_store' in env['global']:
             raise KeyError("Missing database_store value in environment")
-        else:
-            db_path = os.path.join(env['global']['database_store'], db_name)
 
-        if not db_name in self.databases:
-            self.databases.update({db_name: leveldb.LevelDB(db_path, **db_options)})
-            return 'SUCCESS'
-        else:
+        db_path = os.path.join(env['global']['database_store'], db_name)
+
+        if db_name in self.databases:
             raise KeyError("Database %s already exists" % db_name)
 
-        return ''
+        self.databases.update({db_name: leveldb.LevelDB(db_path, **db_options)})
+
+        return 'SUCCESS'
 
     def DBList(self, db, context, *args, **kwargs):
-        return json.dumps([db for db in self.databases.iterkeys()])        
+        return json.dumps([db for db in self.databases.iterkeys()])
 
     def command(self, message, context, *args, **kwargs):
         db_name = message.db_name
@@ -178,20 +181,20 @@ class Handler(object):
         if not db_name in self.databases:
             raise RuntimeError("Databases %s does not exist" % db_name)
 
-        if command in self.handlers:
-            if len(self.handlers[command]) == 2:
-                value = self.handlers[command][0](self.databases[db_name], context, *args, **kwargs)
-            else:
-                # FIXME
-                # global except catching is a total
-                # performance killer. Should enhance
-                # the handlers attributes to link possible
-                # exceptions with leveldb methods.
-                try:
-                    value = self.handlers[command][0](self.databases[db_name], context, *args, **kwargs)
-                except self.handlers[command][2]:
-                    return ""
-        else:
+        if not command in self.handlers:
             raise KeyError("command not handle")
 
-        return value if value else self.handlers[command][1]
+        if len(self.handlers[command]) == 2:
+            value = self.handlers[command][0](self.databases[db_name], context, *args, **kwargs)
+        else:
+            # FIXME
+            # global except catching is a total
+            # performance killer. Should enhance
+            # the handlers attributes to link possible
+            # exceptions with leveldb methods.
+            try:
+                value = self.handlers[command][0](self.databases[db_name], context, *args, **kwargs)
+            except self.handlers[command][2]:
+                return ""
+            else:
+                return value if value else self.handlers[command][1]

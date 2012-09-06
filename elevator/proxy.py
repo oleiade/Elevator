@@ -12,7 +12,8 @@ from elevator.env import Environment
 
 class Backend():
     def __init__(self, db, workers_count=4, **kwargs):
-        db_options = kwargs.get('db_options', {})
+        db_options = kwargs.get('db_options', {}) # NOQA
+
         self.databases = self.load_databases()
 
         self.zmq_context = zmq.Context()

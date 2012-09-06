@@ -6,6 +6,7 @@
 # leveldb client
 import zmq
 import ujson as json
+import uuid
 
 
 class Client(object):
