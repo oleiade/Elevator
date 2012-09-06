@@ -3,7 +3,7 @@
 
 import os
 import leveldb
-import ujson as json
+import msgpack
 
 from .env import Environment
 
@@ -111,7 +111,7 @@ class Handler(object):
                     break
                 pos += 1
 
-        return json.dumps(value) if value else None
+        return msgpack.packb(value) if value else None
 
     def BPut(self, db, context, *args, **kwargs):
         key, value, bid = args
@@ -181,10 +181,10 @@ class Handler(object):
         return 'SUCCESS'
 
     def DBList(self, db, context, *args, **kwargs):
-        return json.dumps([db for db in self.databases.iterkeys()])
+        return self.databases.list()
 
     def command(self, message, context, *args, **kwargs):
-        db_uid = message.db_name
+        db_uid = message.db_uid
         command = message.command
         args = message.data
 
@@ -212,5 +212,5 @@ class Handler(object):
                 value = self.handlers[command][0](self.databases[db_uid], context, *args, **kwargs)
             except self.handlers[command][2]:
                 return ""
-            else:
-                return value if value else self.handlers[command][1]
+
+        return value if value else self.handlers[command][1]

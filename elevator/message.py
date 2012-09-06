@@ -15,7 +15,7 @@ class Message(object):
         if not self.is_valid(message):
             raise MessageFormatError("Bad Message format")
         self.id = message.pop(0)
-        self.db_name, self.command, self.data = msgpack.unpackb(message.pop(0))
+        self.db_uid, self.command, self.data = msgpack.unpackb(message.pop(0))
         self.reply = [self.id]
 
     def is_valid(self, message):

@@ -4,6 +4,7 @@
 
 import zmq
 import threading
+import msgpack
 from time import sleep
 
 from api import Handler
@@ -50,7 +51,7 @@ class Worker(threading.Thread):
             # command in leveldb
             reply = [message.id]
             value = self.handler.command(message, self.context, env=self.env)
-            reply.append(value)
+            reply.append(msgpack.packb(value))
             self.socket.send_multipart(reply)
             self.processing = False
 

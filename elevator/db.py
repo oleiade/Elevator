@@ -38,4 +38,4 @@ class DatabasesHandler(dict):
 
 
     def list(self):
-        return [db_name for db_name in self['index'].itervalues()]
+        return [db_name for db_name in self['index'].iterkeys()]

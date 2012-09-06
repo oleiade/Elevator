@@ -1,4 +1,5 @@
 import zmq
+import msgpack
 
 from .message import Message
 
@@ -30,11 +31,11 @@ class Client(object):
         return
 
     def listdb(self):
-        return self.send(self.db_name, 'DBLIST', {})
+        return self.send(self.db_uid, 'DBLIST', {})
 
     def createdb(self, key):
-        return self.send(self.db_name, 'DBCREATE', [key])
+        return self.send(self.db_uid, 'DBCREATE', [key])
 
     def send(self, db_uid, command, datas):
         self.socket.send_multipart([Message(db_uid=db_uid, command=command, data=datas)])
-        return self.socket.recv_multipart()[0]
+        return msgpack.unpackb(self.socket.recv_multipart()[0])
