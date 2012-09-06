@@ -9,12 +9,14 @@ import leveldb
 from worker import Worker
 
 from elevator.env import Environment
+from elevator.db import DatabasesHandler
 
 
 class Backend():
     def __init__(self, db, workers_count=4, **kwargs):
+        env = Environment()
         db_options = kwargs.get('db_options', {}) # NOQA
-        self.databases = self.load_databases()
+        self.databases = DatabasesHandler(env['global']['database_store'])
 
         # context used to stack datas, and share it
         # between workers. For batches for example.
