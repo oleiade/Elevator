@@ -1,4 +1,4 @@
-import ujson as json
+import msgpack
 
 
 class Message(str):
@@ -9,4 +9,4 @@ class Message(str):
         data = kwargs.pop('data')
 
         value = [db_name, command, data]
-        return str.__new__(cls, json.dumps(value))
+        return str.__new__(cls, msgpack.packb(value))

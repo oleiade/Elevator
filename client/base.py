@@ -2,6 +2,7 @@ import zmq
 
 from .message import Message
 
+
 class Client(object):
     def __init__(self, *args, **kwargs):
         self.bind = kwargs.pop('bind', '127.0.0.1')
