@@ -15,7 +15,7 @@ class DatabasesHandler(dict):
     def load(self):
         # Retrieving every databases from database store on fs,
         # and adding them to backend databases handler.
-        for db_name in os.listdir(self.store_path):
+        for db_name in os.lisdtir(self.store_path):
             if db_name != 'default':
                 db_path = os.path.join(self.store_path, db_name)
                 db_uid = md5.new(db_name).digest()
@@ -35,7 +35,6 @@ class DatabasesHandler(dict):
         del self['db_uid']
         os.remove(os.path.join(self.dest, db_name))
         self.pop(db_uid)
-
 
     def list(self):
         return [db_name for db_name in self['index'].iterkeys()]

@@ -1,17 +1,15 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-
 import zmq
 import threading
-import msgpack
+
 from time import sleep
 
-from api import Handler
-from utils.patterns import enum
+import msgpack
 
-from elevator.env import Environment
-from elevator.message import Message, MessageFormatError
+from .env import Environment
+from .api import Handler
+from .message import Message, MessageFormatError
+from .db import DatabasesHandler
+from .utils.patterns import enum
 
 
 class Worker(threading.Thread):
@@ -62,3 +60,36 @@ class Worker(threading.Thread):
             sleep(1)
 
         self.socket.close()
+
+
+class WorkersPool():
+    def __init__(self, db, workers_count=4, **kwargs):
+        env = Environment()
+        self.databases = DatabasesHandler(env['global']['database_store'])
+
+        # context used to stack datas, and share it
+        # between workers. For batches for example.
+        self.context = {}
+        self.pool = []
+
+        self.zmq_context = zmq.Context()
+        self.socket = self.zmq_context.socket(zmq.XREQ)
+        self.socket.bind('inproc://elevator')
+        self.init_workers(workers_count, self.context)
+
+    def __del__(self):
+        for worker in self.pool:
+            worker.close()
+
+        del self.pool
+        self.socket.close()
+        self.context.term()
+
+    def init_workers(self, count, context):
+        pos = 0
+
+        while pos < count:
+            worker = Worker(self.zmq_context, self.databases, context)
+            worker.start()
+            self.pool.append(worker)
+            pos += 1
