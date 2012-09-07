@@ -3,6 +3,10 @@
 
 import leveldb
 
+from .constants import KEY_ERROR, VALUE_ERROR,\
+                       INDEX_ERROR, RUNTIME_ERROR,\
+                       SUCCESS_STATUS, FAILURE_STATUS
+
 
 class Handler(object):
     """
@@ -16,17 +20,17 @@ class Handler(object):
         #                 default return value,
         #                 raised error ]
         self.handlers = {
-            'GET': [self.Get, KeyError],
-            'PUT': [self.Put, TypeError],
-            'DELETE': [self.Delete],
-            'RANGE': [self.Range],
-            'BPUT': [self.BPut],
-            'BDELETE': [self.BDelete],
-            'BWRITE': [self.BWrite],
-            'BCLEAR': [self.BClear],
-            'DBCONNECT': [self.DBConnect],
-            'DBCREATE': [self.DBCreate],
-            'DBLIST': [self.DBList],
+            'GET': self.Get,
+            'PUT': self.Put,
+            'DELETE': self.Delete,
+            'RANGE': self.Range,
+            'BPUT': self.BPut,
+            'BDELETE': self.BDelete,
+            'BWRITE': self.BWrite,
+            'BCLEAR': self.BClear,
+            'DBCONNECT': self.DBConnect,
+            'DBCREATE': self.DBCreate,
+            'DBLIST': self.DBList,
         }
 
     def Get(self, db, context, *args, **kwargs):
@@ -37,7 +41,13 @@ class Handler(object):
         db      =>      LevelDB object
         *args   =>      (key) to fetch
         """
-        return db.Get(*args)
+        try:
+            return SUCCESS_STATUS, db.Get(*args)
+        except KeyError:
+            return (FAILURE_STATUS,
+                    [KEY_ERROR, "Key does not exist"])
+
+        return FAILURE_STATUS, None
 
     def Put(self, db, context, *args, **kwargs):
         """
@@ -48,7 +58,13 @@ class Handler(object):
         *args   =>      (key, value) to update
 
         """
-        return db.Put(*args)
+        try:
+            return SUCCESS_STATUS, db.Put(*args)
+        except ValueError:
+            return (FAILURE_STATUS,
+                   [VALUE_ERROR, "Unsupported value type"])
+
+        return FAILURE_STATUS, None
 
     def Delete(self, db, context, *args, **kwargs):
         """
@@ -59,7 +75,7 @@ class Handler(object):
         *args   =>      (key) to delete from backend
 
         """
-        return db.Delete(*args)
+        return SUCCESS_STATUS, db.Delete(*args)
 
     def Range(self, db, context, *args, **kwargs):
         """
@@ -86,8 +102,10 @@ class Handler(object):
 
         """
         value = []
+
         if not len(args) == 2:
-            raise IndexError("Missing argument to_key or step to Range")
+            return (FAILURE_STATUS,
+                   [INDEX_ERROR, "Missing argument to_key or step to Range"])
 
         from_key, limit = args
 
@@ -106,8 +124,9 @@ class Handler(object):
                 except StopIteration:
                     break
                 pos += 1
+        value = None if not value else value
 
-        return value if value else None
+        return SUCCESS_STATUS, value
 
     def BPut(self, db, context, *args, **kwargs):
         key, value, bid = args
@@ -119,7 +138,7 @@ class Handler(object):
             context[bid] = leveldb.WriteBatch()
 
         context[bid].Put(key, value)
-        return None
+        return SUCCESS_STATUS, None
 
     def BDelete(self, db, context, *args, **kwargs):
         key, bid = args
@@ -131,7 +150,7 @@ class Handler(object):
             context[bid] = leveldb.WriteBatch()
 
         context[bid].Delete(key)
-        return None
+        return SUCCESS_STATUS, None
 
     def BWrite(self, db, context, *args, **kwargs):
         bid = args[0]
@@ -141,66 +160,59 @@ class Handler(object):
         # doesn't exist or is empty.
         if bid in context:
             db.Write(context[bid])
-        return None
+        return SUCCESS_STATUS, None
 
     def BClear(self, db, context, *args, **kwargs):
         bid = args[0]
 
         if bid in context:
             del context[bid]
-        return None
+        return SUCCESS_STATUS, None
 
     def DBConnect(self, *args, **kwargs):
         db_name = kwargs.pop('db_name', None)
 
         if (not db_name or
             (db_name and (not db_name in self.databases['index']))):
-            raise KeyError("Database %s doesn't exist" % db_name)
+            return (FAILURE_STATUS,
+                    [KEY_ERROR, "Database %s doesn't exist" % db_name])
 
-        return self.databases['index'][db_name]
+        return SUCCESS_STATUS, self.databases['index'][db_name]
 
     def DBCreate(self, db, context, *args, **kwargs):
         db_name = args[0]
 
         if db_name in self.databases['index']:
-            raise KeyError("Database %s already exists" % db_name)
+            return (FAILURE_STATUS,
+                    [KEY_ERROR, "Database %s already exists" % db_name])
 
         self.databases.add(db_name)
 
-        return None
+        return SUCCESS_STATUS, None
 
     def DBList(self, db, context, *args, **kwargs):
-        return self.databases.list()
+        return SUCCESS_STATUS, self.databases.list()
 
     def command(self, message, context, *args, **kwargs):
         db_uid = message.db_uid
         command = message.command
         args = message.data
-        status = 0
+        status = SUCCESS_STATUS
 
         if command == 'DBCONNECT':
             # Here db_uid is in fact a db name, and connect
             # returns the valid seek db uid.
-            return status, self.DBConnect(db_name=message.data['db_name'], *args, **kwargs)
+            return SUCCESS_STATUS, self.DBConnect(db_name=message.data['db_name'], *args, **kwargs)
 
         if (not db_uid or
             (db_uid and (not db_uid in self.databases))):
-            raise RuntimeError("Database does not exist")
+            return (FAILURE_STATUS,
+                    [RUNTIME_ERROR, "Database does not exist"])
 
         if not command in self.handlers:
-            raise KeyError("command not handle")
+            return (FAILURE_STATUS,
+                    [KEY_ERROR, "Command not handled"])
 
-        if len(self.handlers[command]) == 1:
-            value = self.handlers[command][0](self.databases[db_uid], context, *args, **kwargs)
-        else:
-            # FIXME
-            # global except catching is a total
-            # performance killer. Should enhance
-            # the handlers attributes to link possible
-            # exceptions with leveldb methods.
-            try:
-                value = self.handlers[command][0](self.databases[db_uid], context, *args, **kwargs)
-            except self.handlers[command][1]:
-                return -1, 'There was an error'
+        status, value = self.handlers[command](self.databases[db_uid], context, *args, **kwargs)
 
         return status, value

@@ -14,9 +14,8 @@ class Request(object):
     def __init__(self, message):
         if not self.is_valid(message):
             raise RequestFormatError("Bad Message format")
-        self.id = message.pop(0)
-        self.db_uid, self.command, self.data = msgpack.unpackb(message.pop(0))
-        self.reply = [self.id]
+        self.id = message[0]
+        self.db_uid, self.command, self.data = msgpack.unpackb(message[1])
 
     def is_valid(self, message):
         if len(message) != 2:

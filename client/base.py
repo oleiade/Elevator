@@ -1,7 +1,12 @@
+from __future__ import absolute_import
+
 import zmq
 import msgpack
 
 from .message import Message
+from .error import ELEVATOR_ERROR
+
+from elevator.constants import FAILURE_STATUS
 
 
 class Client(object):
@@ -27,7 +32,7 @@ class Client(object):
         self.context.term()
 
     def connect(self, db_name):
-        self.db_uid = self.send(db_name, 'DBCONNECT', {'db_name': db_name})
+        status, self.db_uid = self.send(db_name, 'DBCONNECT', {'db_name': db_name})
         return
 
     def listdb(self):
@@ -39,4 +44,8 @@ class Client(object):
     def send(self, db_uid, command, datas):
         self.socket.send_multipart([Message(db_uid=db_uid, command=command, data=datas)])
         status, content = msgpack.unpackb(self.socket.recv_multipart()[0])
+
+        if status == FAILURE_STATUS:
+            error_code, error_msg = content
+            raise ELEVATOR_ERROR[error_code](error_msg)
         return content
