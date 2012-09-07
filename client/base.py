@@ -13,7 +13,7 @@ class Client(object):
     def __init__(self, *args, **kwargs):
         self.bind = kwargs.pop('bind', '127.0.0.1')
         self.port = kwargs.pop('port', '4141')
-        self.db_uid = None
+        self._db_uid = None
         self.timeout = kwargs.pop('timeout', 10 * 10000)
         self.host = "tcp://%s:%s" % (self.bind, self.port)
         self._connect()
@@ -33,6 +33,7 @@ class Client(object):
 
     def connect(self, db_name):
         status, self.db_uid = self.send(db_name, 'DBCONNECT', {'db_name': db_name})
+        self.db_name = db_name
         return
 
     def listdb(self):

@@ -3,7 +3,7 @@
 
 import leveldb
 
-from .constants import KEY_ERROR, VALUE_ERROR,\
+from .constants import KEY_ERROR, TYPE_ERROR,\
                        INDEX_ERROR, RUNTIME_ERROR,\
                        SUCCESS_STATUS, FAILURE_STATUS
 
@@ -60,9 +60,9 @@ class Handler(object):
         """
         try:
             return SUCCESS_STATUS, db.Put(*args)
-        except ValueError:
+        except TypeError:
             return (FAILURE_STATUS,
-                   [VALUE_ERROR, "Unsupported value type"])
+                   [TYPE_ERROR, "Unsupported value type"])
 
         return FAILURE_STATUS, None
 
