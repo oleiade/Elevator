@@ -61,7 +61,9 @@ brought by the client module.
 Here is a demo:
 ::
     >>> from elevator.client import Elevator
-    >>> E = Elevator()  # N.B : port, host, and timeout options are available here
+    >>> E = Elevator()  # N.B : connected to 'default'
+    >>> Ebis = Elevator('testdb')  # You can even construct your client with desired db to connect to
+    >>> E.connect('testdbbis')  # Or even rebind client to a new database
     >>> E.Put('abc', 'cba')
     >>> E.Get('abc')
     'cba'
