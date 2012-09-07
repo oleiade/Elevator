@@ -111,7 +111,7 @@ class Handler(object):
                     break
                 pos += 1
 
-        return msgpack.packb(value) if value else None
+        return value if value else None
 
     def BPut(self, db, context, *args, **kwargs):
         key, value, bid = args
@@ -164,9 +164,7 @@ class Handler(object):
         return self.databases['index'][db_name]
 
     def DBCreate(self, db, context, *args, **kwargs):
-        env = Environment()
         db_name = args[0]
-        db_options = kwargs.pop('db_options', {})
 
         if db_name in self.databases['index']:
             raise KeyError("Database %s already exists" % db_name)
