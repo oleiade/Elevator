@@ -58,6 +58,10 @@ Client
 In order to communicate with elevator, a Python client is avalaible. You can use it through the Elevator object,
 brought by the client module.
 
+Note that by default, client to 'default' database.
+As Elevator implements a multi-db system, you can create/list/delete/repair databases.
+To connect to another database, use the eponyme function .connect()
+
 Here is a demo:
 ::
     >>> from elevator.client import Elevator
