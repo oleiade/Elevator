@@ -3,11 +3,9 @@ import threading
 
 from time import sleep
 
-import msgpack
-
 from .env import Environment
 from .api import Handler
-from .message import Message, MessageFormatError
+from .message import Request, RequestFormatError, Response
 from .db import DatabasesHandler
 from .utils.patterns import enum
 
@@ -38,8 +36,8 @@ class Worker(threading.Thread):
             self.processing = True
 
             try:
-                message = Message(msg)
-            except MessageFormatError:
+                message = Request(msg)
+            except RequestFormatError:
                 value = 'None'
                 reply = [msg[0], value]
                 self.socket.send_multipart(reply)
@@ -47,10 +45,9 @@ class Worker(threading.Thread):
 
             # Handle message, and execute the requested
             # command in leveldb
-            reply = [message.id]
-            value = self.handler.command(message, self.context, env=self.env)
-            reply.append(msgpack.packb(value))
-            self.socket.send_multipart(reply)
+            status, datas = self.handler.command(message, self.context, env=self.env)
+            response = Response(message.id, status=status, datas=datas)
+            self.socket.send_multipart(response)
             self.processing = False
 
     def close(self):

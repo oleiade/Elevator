@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import leveldb
-import msgpack
-
-from .env import Environment
 
 
 class Handler(object):
@@ -20,17 +16,17 @@ class Handler(object):
         #                 default return value,
         #                 raised error ]
         self.handlers = {
-            'GET': (self.Get, "", KeyError),
-            'PUT': (self.Put, "True", TypeError),
-            'DELETE': (self.Delete, ""),
-            'RANGE': (self.Range, "",),
-            'BPUT': (self.BPut, ""),
-            'BDELETE': (self.BDelete, ""),
-            'BWRITE': (self.BWrite, ""),
-            'BCLEAR': (self.BClear, ""),
-            'DBCONNECT': (self.DBConnect, ""),
-            'DBCREATE': (self.DBCreate, ""),
-            'DBLIST': (self.DBList, ""),
+            'GET': [self.Get, KeyError],
+            'PUT': [self.Put, TypeError],
+            'DELETE': [self.Delete],
+            'RANGE': [self.Range],
+            'BPUT': [self.BPut],
+            'BDELETE': [self.BDelete],
+            'BWRITE': [self.BWrite],
+            'BCLEAR': [self.BClear],
+            'DBCONNECT': [self.DBConnect],
+            'DBCREATE': [self.DBCreate],
+            'DBLIST': [self.DBList],
         }
 
     def Get(self, db, context, *args, **kwargs):
@@ -123,7 +119,7 @@ class Handler(object):
             context[bid] = leveldb.WriteBatch()
 
         context[bid].Put(key, value)
-        return ''
+        return None
 
     def BDelete(self, db, context, *args, **kwargs):
         key, bid = args
@@ -135,7 +131,7 @@ class Handler(object):
             context[bid] = leveldb.WriteBatch()
 
         context[bid].Delete(key)
-        return ''
+        return None
 
     def BWrite(self, db, context, *args, **kwargs):
         bid = args[0]
@@ -145,14 +141,14 @@ class Handler(object):
         # doesn't exist or is empty.
         if bid in context:
             db.Write(context[bid])
-        return ''
+        return None
 
     def BClear(self, db, context, *args, **kwargs):
         bid = args[0]
 
         if bid in context:
             del context[bid]
-        return ''
+        return None
 
     def DBConnect(self, *args, **kwargs):
         db_name = kwargs.pop('db_name', None)
@@ -171,7 +167,7 @@ class Handler(object):
 
         self.databases.add(db_name)
 
-        return 'SUCCESS'
+        return None
 
     def DBList(self, db, context, *args, **kwargs):
         return self.databases.list()
@@ -180,11 +176,12 @@ class Handler(object):
         db_uid = message.db_uid
         command = message.command
         args = message.data
+        status = 0
 
         if command == 'DBCONNECT':
             # Here db_uid is in fact a db name, and connect
             # returns the valid seek db uid.
-            return self.DBConnect(db_name=message.data['db_name'], *args, **kwargs)
+            return status, self.DBConnect(db_name=message.data['db_name'], *args, **kwargs)
 
         if (not db_uid or
             (db_uid and (not db_uid in self.databases))):
@@ -193,7 +190,7 @@ class Handler(object):
         if not command in self.handlers:
             raise KeyError("command not handle")
 
-        if len(self.handlers[command]) == 2:
+        if len(self.handlers[command]) == 1:
             value = self.handlers[command][0](self.databases[db_uid], context, *args, **kwargs)
         else:
             # FIXME
@@ -203,7 +200,7 @@ class Handler(object):
             # exceptions with leveldb methods.
             try:
                 value = self.handlers[command][0](self.databases[db_uid], context, *args, **kwargs)
-            except self.handlers[command][2]:
-                return ""
+            except self.handlers[command][1]:
+                return -1, 'There was an error'
 
-        return value if value else self.handlers[command][1]
+        return status, value

@@ -1,7 +1,7 @@
 import msgpack
 
 
-class MessageFormatError(Exception):
+class RequestFormatError(Exception):
     def __init__(self, value):
         self.value = value
 
@@ -9,11 +9,11 @@ class MessageFormatError(Exception):
         return repr(self.value)
 
 
-class Message(object):
+class Request(object):
     """Handler objects for frontend->backend objects messages"""
     def __init__(self, message):
         if not self.is_valid(message):
-            raise MessageFormatError("Bad Message format")
+            raise RequestFormatError("Bad Message format")
         self.id = message.pop(0)
         self.db_uid, self.command, self.data = msgpack.unpackb(message.pop(0))
         self.reply = [self.id]
@@ -22,3 +22,13 @@ class Message(object):
         if len(message) != 2:
             return False
         return True
+
+
+class Response(tuple):
+    """Handler objects for frontend->backend objects messages"""
+    def __new__(cls, id, *args, **kwargs):
+        status = kwargs.pop('status', 0)
+        datas = kwargs.pop('datas', None)
+
+        msg = [id, msgpack.packb([status, datas])]
+        return tuple.__new__(cls, msg)

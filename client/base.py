@@ -38,4 +38,5 @@ class Client(object):
 
     def send(self, db_uid, command, datas):
         self.socket.send_multipart([Message(db_uid=db_uid, command=command, data=datas)])
-        return msgpack.unpackb(self.socket.recv_multipart()[0])
+        status, content = msgpack.unpackb(self.socket.recv_multipart()[0])
+        return content
