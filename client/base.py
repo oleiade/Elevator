@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-
 import zmq
 import msgpack
 
@@ -8,6 +7,7 @@ from .error import ELEVATOR_ERROR
 
 from elevator.constants import FAILURE_STATUS
 
+from elevator.db import DatabaseOptions
 
 class Client(object):
     def __init__(self, *args, **kwargs):
@@ -39,8 +39,9 @@ class Client(object):
     def listdb(self):
         return self.send(self.db_uid, 'DBLIST', {})
 
-    def createdb(self, key):
-        return self.send(self.db_uid, 'DBCREATE', [key])
+    def createdb(self, key, db_options=None):
+        db_options = db_options if not None else DatabaseOptions()
+        return self.send(self.db_uid, 'DBCREATE', [key, db_options])
 
     def send(self, db_uid, command, datas):
         self.socket.send_multipart([Message(db_uid=db_uid, command=command, data=datas)])

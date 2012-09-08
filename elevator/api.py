@@ -6,6 +6,8 @@ import leveldb
 from .constants import KEY_ERROR, TYPE_ERROR,\
                        INDEX_ERROR, RUNTIME_ERROR,\
                        SUCCESS_STATUS, FAILURE_STATUS
+from .env import Environment
+from .db import DatabaseOptions
 
 
 class Handler(object):
@@ -181,12 +183,13 @@ class Handler(object):
 
     def DBCreate(self, db, context, *args, **kwargs):
         db_name = args[0]
+        db_options = kwargs.pop('db_options', DatabaseOptions())
 
         if db_name in self.databases['index']:
             return (FAILURE_STATUS,
                     [KEY_ERROR, "Database %s already exists" % db_name])
 
-        self.databases.add(db_name)
+        self.databases.add(db_name, db_options)
 
         return SUCCESS_STATUS, None
 
