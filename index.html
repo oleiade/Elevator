@@ -159,21 +159,24 @@ optional arguments:
 
 <p>Requesting to put 'key'/'value' pair.</p>
 
-<p><code>['theamazingdatabasewewannaupdatemd5hash', 'PUT', ['key', 'value']]</code></p>
+<div class="highlight"><pre><span class="p">[</span><span class="err">'theamazingdatabasewewannaupdatemd</span><span class="mi">5</span><span class="err">hash'</span><span class="p">,</span> <span class="err">'PUT'</span><span class="p">,</span> <span class="p">[</span><span class="err">'key'</span><span class="p">,</span> <span class="err">'value'</span><span class="p">]]</span>
+</pre></div>
 
 <p><em>would return</em></p>
 
 <p><strong>Successful (and proud) Response</strong></p>
 
-<p>value has been succesfully added, server responds everything went fine with the SUCCESS_STATUS, and null as return value.</p>
+<p>Value has been succesfully added, server responds everything went fine with the SUCCESS_STATUS, and null as return value.</p>
 
-<p><code>[1, null]</code></p>
+<div class="highlight"><pre><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="kc">null</span><span class="p">]</span>
+</pre></div>
 
 <p><strong>Failure (and sheepish)</strong></p>
 
-<p>Let's say you tried to put an int into Elevator (which he can't as it only handles strings)</p>
+<p>Let's say you tried to put an int into Elevator (which he can't as it only handles strings). Note that ERROR_CODE value is 2, which represents a VALUE_ERROR, see <strong>Error types codes</strong></p>
 
-<p><code>[-1, [2, "Invalid value type supplied"]]</code></p>
+<div class="highlight"><pre><span class="p">[</span><span class="mi">-1</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="s2">"Invalid value type supplied"</span><span class="p">]]</span>
+</pre></div>
 
 <h3>Constants</h3>
 
@@ -228,9 +231,9 @@ Here's their definition.</p>
 
 <h3>Client</h3>
 
-<p>In order to communicate with elevator, a Python client is avalaible. You can use it through the Elevator object, brought by the client module.</p>
+<p>In order to communicate with elevator, a Python client is avalaible (more to come. Feel free to make your own, I'll be glad to merge it into the repo).</p>
 
-<p>Note that by default, client to 'default' database. As Elevator implements a multi-db system, you can create/list/delete/repair databases. To connect to another database, use the eponyme function .connect()</p>
+<p>It exposes the Elevator object which api is quite similar to py-leveldb one. This similarity was kept in order to enhance the move from py-leveldb to Elevator in already existing projects. Note that by default, client to 'default' database. As Elevator implements a multi-db system, you can create/list/delete/repair databases. To connect to another database, use the eponyme function .connect()</p>
 
 <p><strong>Here is a demo:</strong></p>
 
