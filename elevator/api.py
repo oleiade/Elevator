@@ -33,6 +33,7 @@ class Handler(object):
             'DBCONNECT': self.DBConnect,
             'DBCREATE': self.DBCreate,
             'DBLIST': self.DBList,
+            'DBREPAIR': self.DBRepair,
         }
 
     def Get(self, db, context, *args, **kwargs):
@@ -196,10 +197,19 @@ class Handler(object):
     def DBList(self, db, context, *args, **kwargs):
         return SUCCESS_STATUS, self.databases.list()
 
+    def DBRepair(self, db, context, *args, **kwargs):
+        db_uid = kwargs.pop('db_uid')
+        db_path = self.databases['paths_index'][db_uid]
+
+        leveldb.RepairDB(db_path)
+
+        return SUCCESS_STATUS, None
+
     def command(self, message, context, *args, **kwargs):
         db_uid = message.db_uid
         command = message.command
         args = message.data
+        kwargs.update({'db_uid': db_uid})  # Just in case
         status = SUCCESS_STATUS
 
         if command == 'DBCONNECT':

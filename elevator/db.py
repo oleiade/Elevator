@@ -21,6 +21,8 @@ class DatabaseOptions(dict):
 class DatabasesHandler(dict):
     def __init__(self, dest, *args, **kwargs):
         self['index'] = {}
+        self['reverse_index'] = {}
+        self['paths_index'] = {}
         self.dest = dest
         self._init_default_db()
 
@@ -35,6 +37,8 @@ class DatabasesHandler(dict):
                 db_path = os.path.join(self.store_path, db_name)
                 db_uid = md5.new(db_name).digest()
                 self['index'].update({db_name: db_uid})
+                self['reverse_index'].update({db_uid: db_name})
+                self['paths_index'].update({db_uid: db_path})
                 self.update({db_uid: leveldb.LevelDB(db_path)})
 
     def add(self, db_name, db_options=None):
@@ -44,6 +48,8 @@ class DatabasesHandler(dict):
         new_db_options = db_options if db_options is not None else DatabaseOptions()
 
         self['index'].update({new_db_name: new_db_uid})
+        self['reverse_index'].update({new_db_uid: new_db_name})
+        self['paths_index'].update({new_db_uid: new_db_dest})        
         self.update({new_db_uid: leveldb.LevelDB(new_db_dest, **new_db_options)})
 
     def drop(self, db_name):

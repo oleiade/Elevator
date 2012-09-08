@@ -43,6 +43,9 @@ class Client(object):
         db_options = db_options if not None else DatabaseOptions()
         return self.send(self.db_uid, 'DBCREATE', [key, db_options])
 
+    def repairdb(self):
+        return self.send(self.db_uid, 'DBREPAIR', {})
+
     def send(self, db_uid, command, datas):
         self.socket.send_multipart([Message(db_uid=db_uid, command=command, data=datas)])
         status, content = msgpack.unpackb(self.socket.recv_multipart()[0])
