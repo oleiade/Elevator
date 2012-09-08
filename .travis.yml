@@ -1,7 +1,0 @@
-language: python
-
-before_install:
-	- pip install fabric --use-mirrors
-  	- fab build
-
-install: python setup.py install
