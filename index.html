@@ -33,6 +33,8 @@
         <section id="main_content">
           <h1>Elevator</h1>
 
+<h2>About</h2>
+
 <p>Minimalistic key/value store powered by levelDB and written in Python.
 Allows async, remote acces to a multithreaded leveldb backend. Handles multiple database access and storage. Elevator tries to sublimate leveldb amazing features (disk persistent fast writes/reads, batching system, [...]) by plugging it into a transparent rpc-like service.</p>
 
@@ -150,6 +152,28 @@ optional arguments:
     <span class="p">]</span>
 <span class="p">]</span>
 </pre></div>
+
+<h4>Example</h4>
+
+<p><strong>Request</strong></p>
+
+<p>Requesting to put 'key'/'value' pair.</p>
+
+<p><code>['theamazingdatabasewewannaupdatemd5hash', 'PUT', ['key', 'value']]</code></p>
+
+<p><em>would return</em></p>
+
+<p><strong>Successful (and proud) Response</strong></p>
+
+<p>value has been succesfully added, server responds everything went fine with the SUCCESS_STATUS, and null as return value.</p>
+
+<p><code>[1, null]</code></p>
+
+<p><strong>Failure (and sheepish)</strong></p>
+
+<p>Let's say you tried to put an int into Elevator (which he can't as it only handles strings)</p>
+
+<p><code>[-1, [2, "Invalid value type supplied"]]</code></p>
 
 <h3>Constants</h3>
 
