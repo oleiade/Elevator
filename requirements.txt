@@ -1,9 +1,8 @@
 Elevator==0.0.1
 Fabric==1.4.1
 ipython==0.12.1
-leveldb==0.1
+msgpack-python
 pycrypto==2.5
-pyzmq==2.1.11
 ssh==1.7.13
 thrift==0.8.0
 ujson==1.18

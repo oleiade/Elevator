@@ -4,24 +4,26 @@
 import sys
 import zmq
 
-import conf
 
-from proxy import Backend, Frontend
-from utils.daemon import Daemon
+from elevator import conf
+from elevator.env import Environment
+from elevator.backend import WorkersPool
+from elevator.frontend import Proxy
+from elevator.utils.daemon import Daemon
 
 
 ARGS = conf.init_parser().parse_args(sys.argv[1:])
 
 
-def runserver():
+def runserver(env):
     args = ARGS
 
-    backend = Backend(args.db)
-    frontend = Frontend('tcp://%s:%s' % (args.bind, args.port))
+    workers_pool = WorkersPool(args.db)
+    proxy = Proxy('tcp://%s:%s' % (args.bind, args.port))
 
     poll = zmq.Poller()
-    poll.register(backend.socket, zmq.POLLIN)
-    poll.register(frontend.socket, zmq.POLLIN)
+    poll.register(workers_pool.socket, zmq.POLLIN)
+    poll.register(proxy.socket, zmq.POLLIN)
 
     try:
         print >> sys.stdout, "Elevator server started"
@@ -29,29 +31,36 @@ def runserver():
                              "connections on port %s" % args.port
         while True:
             sockets = dict(poll.poll())
-            if frontend.socket in sockets:
-                if sockets[frontend.socket] == zmq.POLLIN:
-                    msg = frontend.socket.recv_multipart()
-                    backend.socket.send_multipart(msg)
+            if proxy.socket in sockets:
+                if sockets[proxy.socket] == zmq.POLLIN:
+                    msg = proxy.socket.recv_multipart()
+                    workers_pool.socket.send_multipart(msg)
 
-            if backend.socket in sockets:
-                if sockets[backend.socket] == zmq.POLLIN:
-                    msg = backend.socket.recv_multipart()
-                    frontend.socket.send_multipart(msg)
+            if workers_pool.socket in sockets:
+                if sockets[workers_pool.socket] == zmq.POLLIN:
+                    msg = workers_pool.socket.recv_multipart()
+                    proxy.socket.send_multipart(msg)
     except KeyboardInterrupt:
-        del backend
-        del frontend
+        del workers_pool
+        del proxy
 
 
 class ServerDaemon(Daemon):
-    def run(self):
+    def run(self, env):
+        super(self, Daemon).run()
         while True:
-            runserver()
+            runserver(env)
 
 
 def main():
+    # As Environment object is a singleton
+    # every further instanciation of the object
+    # will point on this one, and conf will be
+    # present in it yet.
+    env = Environment(ARGS.config)
+
     if ARGS.daemon:
         server_daemon = ServerDaemon('/tmp/elevator.pid')
         server_daemon.start()
     else:
-        runserver()
+        runserver(env)
