@@ -3,7 +3,7 @@
 
 import sys
 import zmq
-
+import logging
 
 from elevator import conf
 from elevator.env import Environment
@@ -15,8 +15,33 @@ from elevator.utils.daemon import Daemon
 ARGS = conf.init_parser().parse_args(sys.argv[1:])
 
 
+def setup_loggers(activity_file, errors_file):
+    # Setup up activity logger
+    activity_logger = logging.getLogger("activity_logger")
+    activity_logger.setLevel(logging.DEBUG)
+    activity_stream = logging.FileHandler(activity_file)
+    activity_formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(funcName)s : %(message)s")
+    activity_stream.setFormatter(activity_formatter)
+    activity_logger.addHandler(activity_stream)
+
+    # Setup up activity logger
+    errors_logger = logging.getLogger("errors_logger")
+    errors_logger.setLevel(logging.WARNING)
+    errors_stream = logging.FileHandler(errors_file)
+    errors_formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(funcName)s : %(message)s")
+    errors_stream.setFormatter(errors_formatter)
+    errors_logger.addHandler(errors_stream)
+
+
+
 def runserver(env):
     args = ARGS
+
+    activity_log = env['global'].pop('activity_log', '/var/log/elevator.log')
+    errors_log = env['global'].pop('errrors_log', '/var/log/elevator_errors.log')
+    setup_loggers(activity_log,
+                  errors_log)
+    activity_logger = logging.getLogger("activity_logger")
 
     workers_pool = WorkersPool(args.workers)
     proxy = Proxy('tcp://%s:%s' % (args.bind, args.port))
@@ -26,9 +51,13 @@ def runserver(env):
     poll.register(proxy.socket, zmq.POLLIN)
 
     try:
-        print >> sys.stdout, "Elevator server started"
-        print >> sys.stdout, "The server is now ready to accept " \
-                             "connections on port %s" % args.port
+        activity_logger.info('Elevator server started\n'
+               'Ready to accept '
+               'connections on port %s' % args.port)
+
+        # print >> sys.stdout, "Elevator server started"
+        # print >> sys.stdout, "The server is now ready to accept " \
+        #                      "connections on port %s" % args.port
         while True:
             sockets = dict(poll.poll())
             if proxy.socket in sockets:
@@ -41,8 +70,11 @@ def runserver(env):
                     msg = workers_pool.socket.recv_multipart()
                     proxy.socket.send_multipart(msg)
     except KeyboardInterrupt:
+        activity_logger.info('Gracefully shuthing down workers')
         del workers_pool
+        activity_logger.info('Stopping proxy')
         del proxy
+    activity_logger.info('Done')
 
 
 class ServerDaemon(Daemon):

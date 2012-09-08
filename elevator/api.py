@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import leveldb
+import logging
 
 from .constants import KEY_ERROR, TYPE_ERROR,\
                        INDEX_ERROR, RUNTIME_ERROR,\
@@ -17,6 +18,8 @@ class Handler(object):
     """
     def __init__(self, databases, context):
         self.databases = databases
+        self.activity_logger = logging.getLogger('activity_logger')
+        self.errors_logger = logging.getLogger('errors_logger')
         # Each handlers is formatted following
         # the pattern : [ command,
         #                 default return value,
@@ -47,6 +50,7 @@ class Handler(object):
         try:
             return SUCCESS_STATUS, db.Get(*args)
         except KeyError:
+            self.errors_logger.exception("Key %r does not exist" % args[0])
             return (FAILURE_STATUS,
                     [KEY_ERROR, "Key does not exist"])
 
@@ -64,6 +68,7 @@ class Handler(object):
         try:
             return SUCCESS_STATUS, db.Put(*args)
         except TypeError:
+            self.errors_logger.exception("Unsupported value type : %s" % type(args[1]))
             return (FAILURE_STATUS,
                    [TYPE_ERROR, "Unsupported value type"])
 
@@ -107,6 +112,8 @@ class Handler(object):
         value = []
 
         if not len(args) == 2:
+            self.errors_logger.error('Missing argument to_key or step to Range.'
+                                     ' %s supplied' % str(args))
             return (FAILURE_STATUS,
                    [INDEX_ERROR, "Missing argument to_key or step to Range"])
 
@@ -177,6 +184,7 @@ class Handler(object):
 
         if (not db_name or
             (db_name and (not db_name in self.databases['index']))):
+            self.errors_logger.error("Database %s doesn't exist" % db_name)
             return (FAILURE_STATUS,
                     [KEY_ERROR, "Database %s doesn't exist" % db_name])
 
@@ -187,6 +195,7 @@ class Handler(object):
         db_options = kwargs.pop('db_options', DatabaseOptions())
 
         if db_name in self.databases['index']:
+            self.errors_logger.error("Database %s already exists" % db_name)            
             return (FAILURE_STATUS,
                     [KEY_ERROR, "Database %s already exists" % db_name])
 
@@ -219,10 +228,12 @@ class Handler(object):
 
         if (not db_uid or
             (db_uid and (not db_uid in self.databases))):
+            self.errors_logger.error("Database %s doesn't exist" % db_uid)
             return (FAILURE_STATUS,
                     [RUNTIME_ERROR, "Database does not exist"])
 
         if not command in self.handlers:
+            self.errors_logger.error("Command %s not handled" % command)
             return (FAILURE_STATUS,
                     [KEY_ERROR, "Command not handled"])
 
