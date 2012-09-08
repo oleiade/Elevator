@@ -1,45 +1,43 @@
 <!DOCTYPE html>
 <html>
-
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Elevator : Minimalistic database engine based on levelDB as a backend, and protocol buffer as a message protocol." />
-
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>Elevator</title>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>Elevator by oleiade</title>
   </head>
 
   <body>
+    <div id="container">
+      <div class="inner">
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/oleiade/Elevator">View on GitHub</a>
-
-          <h1 id="project_title">Elevator</h1>
-          <h2 id="project_tagline">Minimalistic database engine based on levelDB as a backend, and protocol buffer as a message protocol.</h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/oleiade/Elevator/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/oleiade/Elevator/tarball/master">Download this project as a tar.gz file</a>
-            </section>
+        <header>
+          <h1>Elevator</h1>
+          <h2>Minimalistic database engine based on levelDB as a backend, and protocol buffer as a message protocol.</h2>
         </header>
-    </div>
 
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h1>Elevator</h1>
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/oleiade/Elevator/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/oleiade/Elevator/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/oleiade/Elevator" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
 
-<p>Minimalistic database engine written in Python an based on levelDB.</p>
+        <hr>
 
-<p>Allows async, multithreaded and/or remote acces to a leveldb backend. Will implement soon more complex data structures such as List, Hashes, and Sets as native parts of the Engine.</p>
+        <section id="main_content">
+          <h1>Elevator</h1>
 
-<p>Relying on the zeromq network library, it is made to be portable between languages and platforms.</p>
+<p>Minimalistic database engine written in Python and based on levelDB.</p>
 
-<p>N.B. Still very early release, should not be stable, and be warned that many changes breaking backward compatibility are still possible.</p>
+<p>Allows async, multithreaded and/or remote acces to a multidb backend.</p>
+
+<p>Relying on the zeromq network library and msgpack serialization format, it is made to be portable between languages and platforms.</p>
 
 <h2>Dependencies</h2>
 
@@ -52,11 +50,20 @@
 <li>pip install fabric</li>
 <li>fab install_dependencies</li>
 <li>python setup.py install</li>
-</ul><h2>Usage</h2>
+</ul><h2>Installation</h2>
+
+<div class="highlight"><pre>pip install fabric
+fab build
+python setup.py install
+</pre></div>
+
+<h2>Usage</h2>
 
 <h3>Server</h3>
 
-<p>When elevator installed, you can then launch the server using the elevator executable. Note that a --daemon option is disposable, and allows you to run elevator server as a daemon, storing it's pid in .pid file in /tmp.</p>
+<p>When elevator is installed, you can then launch the server using the elevator executable. Note that a --daemon option is disposable, and allows you to run elevator server as a daemon, storing it's pid in .pid file in /tmp.</p>
+
+<p>See config/elevator.conf for an example of Elevator configuration.</p>
 
 <p><strong>Example:</strong></p>
 
@@ -77,7 +84,7 @@ optional arguments:
 
 <h3>Client</h3>
 
-<p>In order to communicate with elevator, a python client is avalaible. You can use it through the Elevator object, brought by the client module.</p>
+<p>In order to communicate with elevator, a Python client is avalaible. You can use it through the Elevator object, brought by the client module.</p>
 
 <p>Note that by default, client to 'default' database. As Elevator implements a multi-db system, you can create/list/delete/repair databases. To connect to another database, use the eponyme function .connect()</p>
 
@@ -88,11 +95,9 @@ optional arguments:
 <span class="o">&gt;&gt;&gt;</span> <span class="n">Ebis</span> <span class="o">=</span> <span class="n">Elevator</span><span class="p">(</span><span class="s">'testdb'</span><span class="p">)</span>  <span class="c"># You can even construct your client with desired db to connect to</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">'testdbbis'</span><span class="p">)</span>  <span class="c"># Or even rebind client to a new database</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">Put</span><span class="p">(</span><span class="s">'abc'</span><span class="p">,</span> <span class="s">'cba'</span><span class="p">)</span>
-<span class="s">'True'</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">Get</span><span class="p">(</span><span class="s">'abc'</span><span class="p">)</span>
 <span class="s">'cba'</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s">'abc'</span><span class="p">)</span>
-<span class="s">''</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
 <span class="o">...</span>     <span class="n">E</span><span class="o">.</span><span class="n">Put</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">Range</span><span class="p">(</span><span class="s">'1'</span><span class="p">,</span> <span class="s">'9'</span><span class="p">)</span>
@@ -119,15 +124,10 @@ optional arguments:
 <div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">elevator.client</span> <span class="kn">import</span> <span class="n">WriteBatch</span><span class="p">,</span> <span class="n">Elevator</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">batch</span> <span class="o">=</span> <span class="n">WriteBatch</span><span class="p">()</span>  <span class="c"># N.B : port, host, and timeout options are available here</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">batch</span><span class="o">.</span><span class="n">Put</span><span class="p">(</span><span class="s">'a'</span><span class="p">,</span> <span class="s">'a'</span><span class="p">)</span>
-<span class="s">''</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">batch</span><span class="o">.</span><span class="n">Put</span><span class="p">(</span><span class="s">'b'</span><span class="p">,</span> <span class="s">'b'</span><span class="p">)</span>
-<span class="s">''</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">batch</span><span class="o">.</span><span class="n">Put</span><span class="p">(</span><span class="s">'c'</span><span class="p">,</span> <span class="s">'c'</span><span class="p">)</span>
-<span class="s">''</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">batch</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s">'c'</span><span class="p">)</span>
-<span class="s">''</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">batch</span><span class="o">.</span><span class="n">Write</span><span class="p">()</span>
-<span class="s">''</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">E</span> <span class="o">=</span> <span class="n">Elevator</span><span class="p">()</span>
 <span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">Get</span><span class="p">(</span><span class="s">'a'</span><span class="p">)</span>
 <span class="s">'a'</span>
@@ -140,18 +140,15 @@ optional arguments:
 <h3>Thanks</h3>
 
 <p>Thanks to srinikom for its leveldb-server which was a very good base to start from. Thanks to Google, for its amazing database. Thanks to ZeroMQ team, you changed my life!</p>
-      </section>
+        </section>
+
+        <footer>
+          Elevator is maintained by <a href="https://github.com/oleiade">oleiade</a><br>
+          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="http://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
     </div>
-
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Elevator maintained by <a href="https://github.com/oleiade">oleiade</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
-
-    
-
   </body>
 </html>
