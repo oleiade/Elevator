@@ -260,6 +260,11 @@ Here's their definition.</p>
 <span class="p">[[</span><span class="s">'1'</span><span class="p">,</span> <span class="s">'1'</span><span class="p">],</span>
  <span class="p">[</span><span class="s">'2'</span><span class="p">,</span> <span class="s">'2'</span><span class="p">],</span>
 <span class="p">]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">it</span> <span class="o">=</span> <span class="n">E</span><span class="o">.</span><span class="n">RangeIter</span><span class="p">(</span><span class="s">'1'</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nb">list</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+<span class="p">[[</span><span class="s">'1'</span><span class="p">,</span> <span class="s">'1'</span><span class="p">],</span>
+ <span class="p">[</span><span class="s">'2'</span><span class="p">,</span> <span class="s">'2'</span><span class="p">],</span>
+<span class="p">]</span>
 </pre></div>
 
 <p>Batches are implemented too. They're very handy and very fast when it comes to write a lot of datas to the database. See LevelDB documentation for more informations. Use it through the WriteBatch client module class. It has three base methods modeled on LevelDB's Put, Delete, Write.</p>
