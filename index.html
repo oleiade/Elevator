@@ -293,30 +293,41 @@ Here's their definition.</p>
 
 <ul>
 <li>
-<em>Methods</em>
+<strong>Methods</strong>
 
 <ul>
-<li>Get(key), fetches a specific key in connected db</li>
-<li>Put(key, value), inserts key/value pair in connected db</li>
-<li>Delete(key), deletes the specified key in connected db</li>
-<li>Range(start=None, limit=None), returns a whole lot of data following the specified key range,
+<li>
+<strong>Get(key)</strong>, fetches a specific key in connected db</li>
+<li>
+<strong>Put(key, value)</strong>, inserts key/value pair in connected db</li>
+<li>
+<strong>Delete(key)</strong>, deletes the specified key in connected db</li>
+<li>
+<strong>Range(start=None, limit=None)</strong>, returns a whole lot of data following the specified key range,
 note that limit can whether be a key to stop to, or an offset.</li>
-<li>RangeIter(start=None, limit=None), idem, but returns an iterator</li>
-<li>connect(db_name), connects the current Elevator instance to a database</li>
-<li>listdb(), lists server databases</li>
-<li>createdb(db_name), creates a database</li>
+<li>
+<strong>RangeIter(start=None, limit=None)</strong>, idem, but returns an iterator</li>
+<li>
+<strong>connect(db_name)</strong>, connects the current Elevator instance to a database</li>
+<li>
+<strong>listdb()</strong>, lists server databases</li>
+<li>
+<strong>createdb(db_name)</strong>, creates a database</li>
 </ul>
 </li>
 </ul><p><strong>WriteBatch object</strong></p>
 
 <ul>
 <li>
-<em>Methods</em>
+<strong>Methods</strong>
 
 <ul>
-<li>Put(key, value), stack a command to insert a key/value pair in WriteBatch instance</li>
-<li>Delete(key), stack a command to delete the key in WriteBatch</li>
-<li>Write(), applies the WriteBatch server-side</li>
+<li>
+<strong>Put(key, value)</strong>, stack a command to insert a key/value pair in WriteBatch instance</li>
+<li>
+<strong>Delete(key)</strong>, stack a command to delete the key in WriteBatch</li>
+<li>
+<strong>Write()</strong>, applies the WriteBatch server-side</li>
 </ul>
 </li>
 </ul><h3>Thanks</h3>
