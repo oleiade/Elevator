@@ -12,9 +12,9 @@ def _build_pyleveldb():
     with lcd('/tmp'):
         local('svn checkout http://py-leveldb.googlecode.com/svn/trunk/ py-leveldb-read-only')
         with lcd('py-leveldb-read-only'):
-            local('sudo chmod -R 777 .')
-            local('sudo sh compile_leveldb.sh')
-            local('sudo python setup.py install')
+            local('chmod -R 777 .')
+            local('sh compile_leveldb.sh')
+            local('python setup.py install')
 
 
 @task
