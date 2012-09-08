@@ -67,17 +67,15 @@ python setup.py install
 
 <div class="highlight"><pre>elevator --help
 usage: elevator <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--daemon<span class="o">]</span> <span class="o">[</span>--config CONFIG<span class="o">]</span> <span class="o">[</span>--bind BIND<span class="o">]</span> <span class="o">[</span>--port PORT<span class="o">]</span>
-                <span class="o">[</span>--db DB<span class="o">]</span>
 
 Elevator <span class="nb">command </span>line manager
 
 optional arguments:
   -h, --help       show this <span class="nb">help </span>message and <span class="nb">exit</span>
   --daemon
-  --config CONFIG
-  --bind BIND
-  --port PORT
-  --db DB
+  --config      Path to elevator server config file, eventually
+  --bind        Ip to <span class="nb">bind </span>server to
+  --port        Port the server should listen on
 </pre></div>
 
 <h3>Configuration</h3>
@@ -126,9 +124,9 @@ optional arguments:
 <h4>Client/Server message format (Request)</h4>
 
 <div class="highlight"><pre><span class="p">[</span>
-    <span class="s2">"database_uid"</span><span class="err">:</span> <span class="s2">"Md5 hash : of the database name you're working on"</span>
-    <span class="s2">"command_code"</span><span class="err">:</span> <span class="s2">"String : PUT or GET"</span>
-    <span class="s2">"command_args"</span><span class="err">:</span> <span class="s2">"List : command arguments list"</span>
+    <span class="s2">"database_uid"</span> <span class="err">:</span> <span class="s2">"Md5 hash : of the database name you're working on"</span>
+    <span class="s2">"command_code"</span> <span class="err">:</span> <span class="s2">"String : PUT or GET"</span>
+    <span class="s2">"command_args"</span> <span class="err">:</span> <span class="s2">"List : command arguments list"</span>
 <span class="p">]</span>
 </pre></div>
 
@@ -137,18 +135,18 @@ optional arguments:
 <p><strong>If the command succeeded</strong></p>
 
 <div class="highlight"><pre><span class="p">[</span>
-    <span class="s2">"response_status"</span><span class="err">:</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="s2">"resulting_datas"</span><span class="err">:</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="s2">"response_status"</span> <span class="err">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">"resulting_datas"</span> <span class="err">:</span> <span class="s2">""</span><span class="p">,</span>
 <span class="p">]</span>
 </pre></div>
 
 <p><strong>If the command failed</strong></p>
 
 <div class="highlight"><pre><span class="p">[</span>
-    <span class="err">response_status:</span> <span class="mi">-1</span><span class="p">,</span>
+    <span class="s2">"response_status"</span> <span class="err">:</span> <span class="mi">-1</span><span class="p">,</span>
     <span class="p">[</span>
-        <span class="s2">"error_code"</span><span class="err">:</span> <span class="err">ERROR_CODE</span><span class="p">,</span>
-        <span class="s2">"error_message"</span><span class="err">:</span> <span class="s2">"error message"</span><span class="p">,</span>
+        <span class="s2">"error_code"</span> <span class="err">:</span> <span class="err">ERROR_CODE</span><span class="p">,</span>
+        <span class="s2">"error_message"</span> <span class="err">:</span> <span class="s2">"error message"</span><span class="p">,</span>
     <span class="p">]</span>
 <span class="p">]</span>
 </pre></div>
@@ -159,7 +157,7 @@ optional arguments:
 
 <p>Requesting to put 'key'/'value' pair.</p>
 
-<div class="highlight"><pre><span class="p">[</span><span class="err">'theamazingdatabasewewannaupdatemd</span><span class="mi">5</span><span class="err">hash'</span><span class="p">,</span> <span class="err">'PUT'</span><span class="p">,</span> <span class="p">[</span><span class="err">'key'</span><span class="p">,</span> <span class="err">'value'</span><span class="p">]]</span>
+<div class="highlight"><pre><span class="p">[</span><span class="s2">"theamazingdatabasewewannaupdatemd5hash"</span><span class="p">,</span> <span class="s2">"PUT"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"key"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">]]</span>
 </pre></div>
 
 <p><em>would return</em></p>
