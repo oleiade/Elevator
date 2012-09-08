@@ -287,7 +287,39 @@ Here's their definition.</p>
 <span class="ne">KeyError</span><span class="p">:</span> <span class="s">"Key not found"</span>
 </pre></div>
 
-<h3>Thanks</h3>
+<h4>Api</h4>
+
+<p><strong>Elevator object</strong></p>
+
+<ul>
+<li>
+<em>Methods</em>
+
+<ul>
+<li>Get(key), fetches a specific key in connected db</li>
+<li>Put(key, value), inserts key/value pair in connected db</li>
+<li>Delete(key), deletes the specified key in connected db</li>
+<li>Range(start=None, limit=None), returns a whole lot of data following the specified key range,
+note that limit can whether be a key to stop to, or an offset.</li>
+<li>RangeIter(start=None, limit=None), idem, but returns an iterator</li>
+<li>connect(db_name), connects the current Elevator instance to a database</li>
+<li>listdb(), lists server databases</li>
+<li>createdb(db_name), creates a database</li>
+</ul>
+</li>
+</ul><p><strong>WriteBatch object</strong></p>
+
+<ul>
+<li>
+<em>Methods</em>
+
+<ul>
+<li>Put(key, value), stack a command to insert a key/value pair in WriteBatch instance</li>
+<li>Delete(key), stack a command to delete the key in WriteBatch</li>
+<li>Write(), applies the WriteBatch server-side</li>
+</ul>
+</li>
+</ul><h3>Thanks</h3>
 
 <p>Thanks to srinikom for its leveldb-server which was a very good base to start from. Thanks to Google, for its amazing database. Thanks to ZeroMQ team, you changed my life!</p>
         </section>
