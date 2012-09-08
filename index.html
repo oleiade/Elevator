@@ -33,33 +33,29 @@
         <section id="main_content">
           <h1>Elevator</h1>
 
-<p>Minimalistic database engine written in Python and based on levelDB.</p>
+<p>Minimalistic key/value store powered by levelDB and written in Python.
+Allows async, remote acces to a multithreaded leveldb backend. Handles multiple database access and storage. Elevator tries to sublimate leveldb amazing features (disk persistent fast writes/reads, batching system, [...]) by plugging it into a transparent rpc-like service.</p>
 
-<p>Allows async, multithreaded and/or remote acces to a multidb backend.</p>
-
-<p>Relying on the zeromq network library and msgpack serialization format, it is made to be portable between languages and platforms.</p>
+<p>Relies on the zeromq network library and msgpack serialization format, it is made to be portable between languages and platforms. See <em>message system</em></p>
 
 <h2>Dependencies</h2>
 
-<ul>
-<li>pyzmq</li>
-<li>leveldb</li>
-<li>snappy</li>
-<li>py-leveldb</li>
-<li>Installation</li>
-<li>pip install fabric</li>
-<li>fab install_dependencies</li>
-<li>python setup.py install</li>
-</ul><h2>Installation</h2>
+<div class="highlight"><pre>pyzmq
+leveldb
+snappy
+py-leveldb
+</pre></div>
+
+<h2>Installation</h2>
 
 <div class="highlight"><pre>pip install fabric
 fab build
 python setup.py install
 </pre></div>
 
-<h2>Usage</h2>
+<h2>Server</h2>
 
-<h3>Server</h3>
+<h3>Usage</h3>
 
 <p>When elevator is installed, you can then launch the server using the elevator executable. Note that a --daemon option is disposable, and allows you to run elevator server as a daemon, storing it's pid in .pid file in /tmp.</p>
 
@@ -80,6 +76,82 @@ optional arguments:
   --bind BIND
   --port PORT
   --db DB
+</pre></div>
+
+<h3>Configuration</h3>
+
+<p>Server configuration relies on a INI file you can pass it as --config argument. All the configuration options key/value are then loaded in a server specific singleton Environment object, which any part of the server can eventually access.</p>
+
+<p><strong>example config</strong> (<em>config/elevator.conf</em>)</p>
+
+<div class="highlight"><pre><span class="k">[global]</span>
+<span class="c"># By default Elevator does not run as a daemon. Use 'yes' if you need it.</span>
+<span class="c"># Note that Elevator will write a pid file in /var/run/elevator.pid when daemonized.</span>
+<span class="na">daemonize</span> <span class="o">=</span> <span class="s">no</span>
+
+<span class="c"># When running daemonized, Elevator writes a pid file in /var/run/elevator.pid by</span>
+<span class="c"># default. You can specify a custom pid file location here.</span>
+<span class="na">pidfile</span> <span class="o">=</span> <span class="s">/var/run/elevator.pid</span>
+
+<span class="c"># Where databases files should be store on the filesystem.</span>
+<span class="na">database_store</span> <span class="o">=</span> <span class="s">/var/lib/elevator</span>
+
+<span class="c">#Default database</span>
+<span class="na">default_db</span> <span class="o">=</span> <span class="s">default</span>
+
+<span class="c"># Accept connections on the specified port, default is 4141.</span>
+<span class="c"># If port 0 is specified Elevator will not listen on a TCP socket.</span>
+<span class="na">port</span> <span class="o">=</span> <span class="s">4141</span>
+
+<span class="c"># If you want you can bind a single interface, if the bind option is not</span>
+<span class="c"># specified all the interfaces will listen for incoming connections.</span>
+<span class="c">#</span>
+<span class="na">bind</span> <span class="o">=</span> <span class="s">127.0.0.1</span>
+
+<span class="c"># Specify the path for the unix socket that will be used to listen for</span>
+<span class="c"># incoming connections. There is no default, so Elevator will not listen</span>
+<span class="c"># on a unix socket when not specified.</span>
+<span class="c">#</span>
+<span class="c"># unixsocket = /tmp/elevator.sock</span>
+</pre></div>
+
+<h3>Messages</h3>
+
+<p>Typically, Server and client communicates via a tcp:// socket handled by zeromq network library. Server spawns worker (threads) which it communicates with using an inproc:// method. Every messages passed between client and server, or server and it's workers are serialized using msgpack.</p>
+
+<p><strong>NOTA</strong> as Elevator uses XREP and XREQ sockets, every commands passed through sockets are signed with a client id prefixing every sent datas. </p>
+
+<h4>Client/Server message format (Request)</h4>
+
+<div class="highlight"><pre><span class="p">[</span>
+    <span class="err">database</span> <span class="err">uid</span><span class="p">,</span>  <span class="err">#</span> <span class="err">md</span><span class="mi">5</span> <span class="err">hash</span> <span class="err">of</span> <span class="err">the</span> <span class="err">database</span> <span class="err">name</span> <span class="err">you're</span> <span class="err">working</span> <span class="err">on</span>
+    <span class="err">command</span> <span class="err">code</span><span class="p">,</span>  <span class="err">#</span> <span class="err">String</span> <span class="err">ex:</span> <span class="err">'PUT'</span> <span class="err">or</span> <span class="err">'GET'</span>
+    <span class="p">[</span><span class="err">command</span> <span class="err">args</span><span class="p">]</span>  <span class="err">#</span> <span class="err">command</span> <span class="err">arguments</span> <span class="err">list</span>
+<span class="p">]</span>
+</pre></div>
+
+<h4>Server/Client message format (Response)</h4>
+
+<pre><code>socket id,  # request socket id to respond to,
+</code></pre>
+
+<p><strong>If the command succeeded</strong></p>
+
+<div class="highlight"><pre><span class="p">[</span>
+    <span class="err">response</span> <span class="err">status</span><span class="p">,</span>  <span class="err">#</span> <span class="mi">0</span> <span class="err">if</span> <span class="err">the</span> <span class="err">command</span> <span class="err">succeed</span><span class="p">,</span> <span class="mi">-1</span> <span class="err">if</span> <span class="err">it</span> <span class="err">failed</span>
+    <span class="err">resulting</span> <span class="err">datas</span><span class="p">,</span>  <span class="err">#</span> <span class="err">command</span> <span class="err">output</span>
+<span class="p">]</span>
+</pre></div>
+
+<p><strong>If the command failed</strong></p>
+
+<div class="highlight"><pre><span class="p">[</span>
+    <span class="err">response</span> <span class="err">status</span><span class="p">,</span>
+    <span class="p">[</span>
+        <span class="err">error</span> <span class="err">code</span><span class="p">,</span>  <span class="err">#</span> <span class="err">Server</span> <span class="err">constant</span> <span class="err">describing</span> <span class="err">the</span> <span class="err">error</span>
+        <span class="err">error</span> <span class="err">message</span><span class="p">,</span>
+    <span class="p">]</span>
+<span class="p">]</span>
 </pre></div>
 
 <h3>Client</h3>
