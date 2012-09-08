@@ -22,7 +22,6 @@ def init_parser():
 
     parser.add_argument('--port', action='store', type=str, default='4141')
 
-    parser.add_argument('--db', action='store', type=str,
-                        default='/var/lib/elevator/default')
+    parser.add_argument('--workers', action='store', type=int, default=4)
 
     return parser

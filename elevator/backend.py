@@ -60,7 +60,7 @@ class Worker(threading.Thread):
 
 
 class WorkersPool():
-    def __init__(self, db, workers_count=4, **kwargs):
+    def __init__(self, workers_count=4, **kwargs):
         env = Environment()
         self.databases = DatabasesHandler(env['global']['database_store'])
 

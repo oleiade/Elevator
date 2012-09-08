@@ -18,7 +18,7 @@ ARGS = conf.init_parser().parse_args(sys.argv[1:])
 def runserver(env):
     args = ARGS
 
-    workers_pool = WorkersPool(args.db)
+    workers_pool = WorkersPool(args.workers)
     proxy = Proxy('tcp://%s:%s' % (args.bind, args.port))
 
     poll = zmq.Poller()
