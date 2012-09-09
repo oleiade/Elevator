@@ -66,7 +66,7 @@ python setup.py install
 <p><strong>Example:</strong></p>
 
 <div class="highlight"><pre>elevator --help
-usage: elevator <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--daemon<span class="o">]</span> <span class="o">[</span>--config CONFIG<span class="o">]</span> <span class="o">[</span>--bind BIND<span class="o">]</span> <span class="o">[</span>--port PORT<span class="o">]</span>
+usage: elevator <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--daemon<span class="o">]</span> <span class="o">[</span>--config CONFIG<span class="o">]</span> <span class="o">[</span>--bind BIND<span class="o">]</span> <span class="o">[</span>--port PORT<span class="o">]</span> <span class="o">[</span>--workers WORKERS COUNT<span class="o">]</span>
 
 Elevator <span class="nb">command </span>line manager
 
@@ -76,6 +76,7 @@ optional arguments:
   --config      Path to elevator server config file, eventually
   --bind        Ip to <span class="nb">bind </span>server to
   --port        Port the server should listen on
+  --workers     How many workers should be spawned?
 </pre></div>
 
 <h3>Configuration</h3>
@@ -107,6 +108,12 @@ optional arguments:
 <span class="c"># specified all the interfaces will listen for incoming connections.</span>
 <span class="c">#</span>
 <span class="na">bind</span> <span class="o">=</span> <span class="s">127.0.0.1</span>
+
+<span class="c"># Path to file were server activity should be logged</span>
+<span class="na">activity_log</span> <span class="o">=</span> <span class="s">/var/log/elevator.log</span>
+
+<span class="c"># Path to file were server warnings, errors, exceptions should be logged</span>
+<span class="na">errors_log</span> <span class="o">=</span> <span class="s">/var/log/elevator_errors.log</span>
 
 <span class="c"># Specify the path for the unix socket that will be used to listen for</span>
 <span class="c"># incoming connections. There is no default, so Elevator will not listen</span>
@@ -177,6 +184,35 @@ optional arguments:
 </pre></div>
 
 <h3>Constants</h3>
+
+<h4>Commands</h4>
+
+<p>Server responds to some constants whenever it comes to give it commands. In the following listing, dbuid represents the database unique uid to operate the command over, it can be retrieved from a database name via 'CONNECT'. And batch_uid represents a valid server-side created batch (using BCREATE) to run commands over.</p>
+
+<div class="highlight"><pre><span class="s">'GET'</span><span class="p">,</span> <span class="p">[</span><span class="n">dbuid</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>  <span class="c"># Get a value from a db</span>
+<span class="s">'PUT'</span><span class="p">,</span> <span class="p">[</span><span class="n">dbuid</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">]</span>  <span class="c"># Insert a value in a db</span>
+<span class="s">'DELETE'</span><span class="p">,</span> <span class="p">[</span><span class="n">dbuid</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>  <span class="c"># Delete a value from a db</span>
+<span class="s">'RANGE'</span><span class="p">,</span> <span class="p">[</span><span class="n">dbuid</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">limit</span><span class="p">]</span>  <span class="c"># Retrieve a range of key/value pair from a db</span>
+<span class="s">'BPUT'</span><span class="p">,</span> <span class="p">[</span><span class="n">batch_uid</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">]</span>  <span class="c"># Inserts a value in a server-side batch</span>
+<span class="s">'BDELETE'</span><span class="p">,</span> <span class="p">[</span><span class="n">batch_uid</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>  <span class="c"># Deletes a value from a server-side batch </span>
+<span class="s">'BWRITE'</span><span class="p">,</span> <span class="p">[</span><span class="n">batch_uid</span><span class="p">]</span>  <span class="c"># Apply all batch operations server-side</span>
+<span class="s">'BCLEAR'</span><span class="p">,</span> <span class="p">[</span><span class="n">batch_uid</span><span class="p">]</span>  <span class="c"># Empty a server-side batch</span>
+<span class="s">'DBCONNECT'</span><span class="p">,</span> <span class="p">[</span><span class="n">db_name</span><span class="p">]</span>  <span class="c"># Connects a db via retrieving it's server-side uid</span>
+<span class="s">'DBCREATE'</span><span class="p">,</span> <span class="p">[</span><span class="n">db_name</span><span class="p">,</span> <span class="n">db_options</span><span class="p">]</span>  <span class="c"># Creates a db, with db_options</span>
+<span class="s">'DBLIST'</span><span class="p">,</span> <span class="p">[]</span>  <span class="c"># Lists all server's dbs</span>
+<span class="s">'DBREPAIR'</span><span class="p">,</span> <span class="p">[</span><span class="n">dbuid</span><span class="p">]</span>  <span class="c"># Repairs a broken (or too slow) database</span>
+</pre></div>
+
+<p><strong>About db creation options</strong>: Leveldb offers nice options when it comes to configure the backend storage and caching behavior. They should be passed in the msgpack message supplied to server on db creation as a hash. Only values set by yourself will override default values. Here is a description offered by py-leveldb of the available options.</p>
+
+<div class="highlight"><pre><span class="n">create_if_missing</span>  <span class="c">#(default: True)           if True, creates a new database if none exists</span>
+<span class="n">error_if_exists</span>    <span class="c">#(default: False)          if True, raises and error if the database already exists</span>
+<span class="n">paranoid_checks</span>    <span class="c">#(default: False)          if True, raises an error as soon as an internal corruption is detected</span>
+<span class="n">block_cache_size</span>   <span class="c">#(default: 8 * (2 &lt;&lt; 20))  maximum allowed size for the block cache in bytes</span>
+<span class="n">write_buffer_size</span>  <span class="c">#(default  2 * (2 &lt;&lt; 20))  </span>
+<span class="n">block_size</span>         <span class="c">#(default: 4096)           unit of transfer for the block cache in bytes</span>
+<span class="n">max_open_files</span><span class="p">:</span>    <span class="c">#(default: 1000)</span>
+</pre></div>
 
 <h4>Error types codes</h4>
 
