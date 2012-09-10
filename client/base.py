@@ -9,6 +9,7 @@ from elevator.constants import FAILURE_STATUS
 
 from elevator.db import DatabaseOptions
 
+
 class Client(object):
     def __init__(self, *args, **kwargs):
         self.bind = kwargs.pop('bind', '127.0.0.1')
@@ -32,7 +33,7 @@ class Client(object):
         self.context.term()
 
     def connect(self, db_name):
-        status, self.db_uid = self.send(db_name, 'DBCONNECT', {'db_name': db_name})
+        self.db_uid = self.send(db_name, 'DBCONNECT', {'db_name': db_name})
         self.db_name = db_name
         return
 

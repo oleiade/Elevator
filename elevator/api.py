@@ -224,7 +224,8 @@ class Handler(object):
         if command == 'DBCONNECT':
             # Here db_uid is in fact a db name, and connect
             # returns the valid seek db uid.
-            return SUCCESS_STATUS, self.DBConnect(db_name=message.data['db_name'], *args, **kwargs)
+            status, value = self.DBConnect(db_name=message.data['db_name'], *args, **kwargs)
+            return status, value
 
         if (not db_uid or
             (db_uid and (not db_uid in self.databases))):
