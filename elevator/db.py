@@ -3,6 +3,9 @@ import uuid
 import leveldb
 import ujson as json
 
+from .constants import FAILURE_STATUS, SUCCESS_STATUS,\
+                       OS_ERROR, KEY_ERROR
+
 
 class DatabaseOptions(dict):
     def __init__(self, *args, **kwargs):
@@ -55,6 +58,22 @@ class DatabasesHandler(dict):
 
     def add(self, db_name, db_options=None):
         new_db_name = db_name
+
+        # if db_name is a full path too, use it as name and path
+        # in the same time
+        if (not new_db_name.startswith('.')) and ('/' in new_db_name):
+            try:
+                new_db_path = db_name
+                os.mkdir(new_db_path)
+            except OSError as e:
+                return (FAILURE_STATUS,
+                        [OS_ERROR, e.strerror])
+        elif (new_db_name.startswith('.') or ('/' in new_db_name)):
+            return (FAILURE_STATUS,
+                    [KEY_ERROR, "Canno't create database from relative path"])
+        else:
+            new_db_path = os.path.join(self.dest, new_db_name)
+
         new_db_desc = {
             'path': os.path.join(self.dest, new_db_name),
             'uid': str(uuid.uuid4()),
@@ -66,6 +85,8 @@ class DatabasesHandler(dict):
         self['reverse_index'].update({new_db_desc['uid']: new_db_name})
         self['paths_index'].update({new_db_desc['uid']: new_db_desc['path']})
         self.update({new_db_desc['uid']: leveldb.LevelDB(new_db_desc['path'], **new_db_desc['options'])})
+
+        return SUCCESS_STATUS, None
 
     def drop(self, db_name):
         db_uid = self['index'].pop(db_name)

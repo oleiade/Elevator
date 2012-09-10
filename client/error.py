@@ -8,4 +8,5 @@ ELEVATOR_ERROR = {
     VALUE_ERROR: ValueError,
     INDEX_ERROR: IndexError,
     RUNTIME_ERROR: RuntimeError,
+    OS_ERROR: OSError,
 }

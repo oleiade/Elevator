@@ -199,7 +199,8 @@ class Handler(object):
             return (FAILURE_STATUS,
                     [KEY_ERROR, "Database %s already exists" % db_name])
 
-        self.databases.add(db_name, db_options)
+        status, content = self.databases.add(db_name, db_options)
+        return status, content
 
         return SUCCESS_STATUS, None
 
