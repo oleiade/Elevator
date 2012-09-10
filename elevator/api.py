@@ -195,7 +195,7 @@ class Handler(object):
         db_options = kwargs.pop('db_options', DatabaseOptions())
 
         if db_name in self.databases['index']:
-            self.errors_logger.error("Database %s already exists" % db_name)            
+            self.errors_logger.error("Database %s already exists" % db_name)
             return (FAILURE_STATUS,
                     [KEY_ERROR, "Database %s already exists" % db_name])
 

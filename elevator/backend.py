@@ -62,7 +62,9 @@ class Worker(threading.Thread):
 class WorkersPool():
     def __init__(self, workers_count=4, **kwargs):
         env = Environment()
-        self.databases = DatabasesHandler(env['global']['database_store'])
+        database_store = env['global']['database_store']
+        databases_storage = env['global']['databases_storage_path']
+        self.databases = DatabasesHandler(database_store, databases_storage)
 
         # context used to stack datas, and share it
         # between workers. For batches for example.
