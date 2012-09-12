@@ -55,9 +55,6 @@ def runserver(env):
                'Ready to accept '
                'connections on port %s' % args.port)
 
-        # print >> sys.stdout, "Elevator server started"
-        # print >> sys.stdout, "The server is now ready to accept " \
-        #                      "connections on port %s" % args.port
         while True:
             sockets = dict(poll.poll())
             if proxy.socket in sockets:

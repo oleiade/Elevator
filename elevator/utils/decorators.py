@@ -104,9 +104,9 @@ def time_it(function):
     """
     Decorator whichs times a function execution.
     """
-    def wrap(*arg):
+    def wrap(*args, **kwargs):
         start = time.time()
-        r = function(*arg)
+        r = function(*args, **kwargs)
         end = time.time()
         print "%s (%0.3f ms)" % (function.func_name, (end - start) * 1000)
         return r

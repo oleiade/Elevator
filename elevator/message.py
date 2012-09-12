@@ -1,3 +1,4 @@
+import lz4
 import msgpack
 
 
@@ -11,16 +12,10 @@ class RequestFormatError(Exception):
 
 class Request(object):
     """Handler objects for frontend->backend objects messages"""
-    def __init__(self, message):
-        if not self.is_valid(message):
-            raise RequestFormatError("Bad Message format")
-        self.id = message[0]
-        self.db_uid, self.command, self.data = msgpack.unpackb(message[1])
+    def __init__(self, message, compressed=False):
+        message_content = lz4.loads(message) if compressed else message
+        self.db_uid, self.command, self.data = msgpack.unpackb(message_content)
 
-    def is_valid(self, message):
-        if len(message) != 2:
-            return False
-        return True
 
 
 class Response(tuple):

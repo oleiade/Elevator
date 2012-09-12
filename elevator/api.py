@@ -4,6 +4,7 @@
 import leveldb
 import logging
 
+from .utils.decorators import time_it
 from .constants import KEY_ERROR, TYPE_ERROR,\
                        INDEX_ERROR, RUNTIME_ERROR,\
                        SUCCESS_STATUS, FAILURE_STATUS
@@ -29,6 +30,7 @@ class Handler(object):
             'PUT': self.Put,
             'DELETE': self.Delete,
             'RANGE': self.Range,
+            'BATCH': self.Batch,
             'BGET': self.BGet,
             'BPUT': self.BPut,
             'BDELETE': self.BDelete,
@@ -156,6 +158,16 @@ class Handler(object):
                 return (FAILURE_STATUS,
                         [KEY_ERROR, error_msg])
         return SUCCESS_STATUS, value
+
+    def Batch(self, db, context, *args, **kwargs):
+        collection = args[0]
+        batch = leveldb.WriteBatch()
+
+        for (key, value) in collection:
+            batch.Put(key, value)
+        db.Write(batch)
+
+        return SUCCESS_STATUS, None
 
     def BPut(self, db, context, *args, **kwargs):
         key, value, bid = args

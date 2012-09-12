@@ -1,4 +1,5 @@
 import zmq
+import msgpack
 import threading
 
 from time import sleep
@@ -28,7 +29,9 @@ class Worker(threading.Thread):
 
         while (self.state == self.STATES.RUNNING):
             try:
-                msg = self.socket.recv_multipart()
+                msg_id, msg_options, raw_msg = self.socket.recv_multipart()
+                msg_options = msgpack.unpackb(msg_options)
+                msg = raw_msg
             except zmq.ZMQError:
                 self.state = self.STATES.STOPPED
                 continue
@@ -36,7 +39,7 @@ class Worker(threading.Thread):
             self.processing = True
 
             try:
-                message = Request(msg)
+                message = Request(msg, **msg_options)
             except RequestFormatError:
                 value = 'None'
                 reply = [msg[0], value]
@@ -46,7 +49,7 @@ class Worker(threading.Thread):
             # Handle message, and execute the requested
             # command in leveldb
             status, datas = self.handler.command(message, self.context, env=self.env)
-            response = Response(message.id, status=status, datas=datas)
+            response = Response(msg_id, status=status, datas=datas)
             self.socket.send_multipart(response)
             self.processing = False
 
