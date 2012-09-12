@@ -1,9 +1,4 @@
-Elevator==0.0.1
-Fabric==1.4.1
-ipython==0.12.1
 msgpack-python
-pycrypto==2.5
-ssh==1.7.13
-thrift==0.8.0
+lz4
+pyzmq
 ujson==1.18
-wsgiref==0.1.2

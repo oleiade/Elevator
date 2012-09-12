@@ -37,6 +37,7 @@ setup(
 
     packages=[
         'elevator',
+        'client',
         'elevator.utils',
     ],
     package_dir={'': '.'},
