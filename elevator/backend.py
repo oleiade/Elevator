@@ -1,9 +1,9 @@
 import zmq
-import msgpack
 import threading
 
 from time import sleep
 
+from .constants import FAILURE_STATUS
 from .env import Environment
 from .api import Handler
 from .message import Request, RequestFormatError, Response
@@ -38,9 +38,8 @@ class Worker(threading.Thread):
             try:
                 message = Request(msg)
             except RequestFormatError:
-                value = 'None'
-                reply = [msg[0], value]
-                self.socket.send_multipart(reply)
+                response = Response(msg_id, status=FAILURE_STATUS, datas=None)
+                self.socket.send_multipart(response)
                 continue
 
             # Handle message, and execute the requested
