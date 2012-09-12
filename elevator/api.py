@@ -129,15 +129,18 @@ class Handler(object):
                    [INDEX_ERROR, error_msg])
 
         from_key, limit = args
+        # Operate over a snapshot in order to return
+        # a consistent state of the db
+        db_snapshot = db.CreateSnapshot()
 
         # Right argument is to_key
         if isinstance(limit, str):
-            for node in db.RangeIter(from_key, limit):
+            for node in db_snapshot.RangeIter(from_key, limit):
                 value.append(node)
         # Right argument is a step value
         elif isinstance(limit, int):
             pos = 0
-            it = db.RangeIter(from_key)
+            it = db_snapshot.RangeIter(from_key)
 
             while pos < limit:
                 try:
