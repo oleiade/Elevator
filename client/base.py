@@ -2,9 +2,8 @@ from __future__ import absolute_import
 
 import zmq
 import msgpack
-import lz4
 
-from .message import Message, MessageOptions
+from .message import Message
 from .error import ELEVATOR_ERROR
 
 from elevator.constants import FAILURE_STATUS
@@ -54,11 +53,7 @@ class Client(object):
         return self.send(self.db_uid, 'DBREPAIR', {})
 
     def send(self, db_uid, command, datas):
-        msg_options = MessageOptions(compressed=True)
-        msg = Message(db_uid=db_uid, command=command, data=datas, compression=lz4.dumps)
-        import sys
-        print sys.getsizeof(msg), len(msg)
-        self.socket.send_multipart([msg_options, msg])
+        self.socket.send_multipart([Message(db_uid=db_uid, command=command, data=datas)])
         status, content = msgpack.unpackb(self.socket.recv_multipart()[0])
 
         if status == FAILURE_STATUS:

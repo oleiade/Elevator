@@ -1,4 +1,3 @@
-import lz4
 import msgpack
 
 
@@ -13,8 +12,7 @@ class RequestFormatError(Exception):
 class Request(object):
     """Handler objects for frontend->backend objects messages"""
     def __init__(self, message, compressed=False):
-        message_content = lz4.loads(message) if compressed else message
-        self.db_uid, self.command, self.data = msgpack.unpackb(message_content)
+        self.db_uid, self.command, self.data = msgpack.unpackb(message)
 
 
 

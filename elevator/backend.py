@@ -29,9 +29,7 @@ class Worker(threading.Thread):
 
         while (self.state == self.STATES.RUNNING):
             try:
-                msg_id, msg_options, raw_msg = self.socket.recv_multipart()
-                msg_options = msgpack.unpackb(msg_options)
-                msg = raw_msg
+                msg_id, msg = self.socket.recv_multipart()
             except zmq.ZMQError:
                 self.state = self.STATES.STOPPED
                 continue
@@ -39,7 +37,7 @@ class Worker(threading.Thread):
             self.processing = True
 
             try:
-                message = Request(msg, **msg_options)
+                message = Request(msg)
             except RequestFormatError:
                 value = 'None'
                 reply = [msg[0], value]
