@@ -33,7 +33,7 @@ class Handler(object):
             'DBREPAIR': self.DBRepair,
         }
 
-    def Get(self, db, *args, **kwargs):
+    def Get(self, db, key, *args, **kwargs):
         """
         Handles GET message command.
         Executes a Get operation over the leveldb backend.
@@ -42,17 +42,16 @@ class Handler(object):
         *args   =>      (key) to fetch
         """
         try:
-            return SUCCESS_STATUS, db.Get(*args)
+            return SUCCESS_STATUS, db.Get(key)
         except KeyError:
-            error_msg = "Key %r does not exist" % args[0]
+            error_msg = "Key %r does not exist" % key
             self.errors_logger.exception(error_msg)
             return (FAILURE_STATUS,
                     [KEY_ERROR, error_msg])
 
         return FAILURE_STATUS, None
 
-    def MGet(self, db, *args, **kwargs):
-        keys = args[0]
+    def MGet(self, db, keys, *args, **kwargs):
         value = []
 
         for key in keys:
@@ -65,7 +64,7 @@ class Handler(object):
                         [KEY_ERROR, error_msg])
         return SUCCESS_STATUS, value
 
-    def Put(self, db, *args, **kwargs):
+    def Put(self, db, key, value, *args, **kwargs):
         """
         Handles Put message command.
         Executes a Put operation over the leveldb backend.
@@ -75,16 +74,16 @@ class Handler(object):
 
         """
         try:
-            return SUCCESS_STATUS, db.Put(*args)
+            return SUCCESS_STATUS, db.Put(key, value)
         except TypeError:
-            error_msg = "Unsupported value type : %s" % type(args[1])
+            error_msg = "Unsupported value type : %s" % type(value)
             self.errors_logger.exception(error_msg)
             return (FAILURE_STATUS,
                    [TYPE_ERROR, error_msg])
 
         return FAILURE_STATUS, None
 
-    def Delete(self, db, *args, **kwargs):
+    def Delete(self, db, key, *args, **kwargs):
         """
         Handles Delete message command
         Executes a Delete operation over the leveldb backend.
@@ -93,9 +92,9 @@ class Handler(object):
         *args   =>      (key) to delete from backend
 
         """
-        return SUCCESS_STATUS, db.Delete(*args)
+        return SUCCESS_STATUS, db.Delete(key)
 
-    def Range(self, db, *args, **kwargs):
+    def Range(self, db, from_key, limit, *args, **kwargs):
         """
         Handles RANGE message command.
         Executes a RangeIter operation over the leveldb backend.
@@ -128,7 +127,6 @@ class Handler(object):
             return (FAILURE_STATUS,
                    [INDEX_ERROR, error_msg])
 
-        from_key, limit = args
         # Operate over a snapshot in order to return
         # a consistent state of the db
         db_snapshot = db.CreateSnapshot()
@@ -152,8 +150,7 @@ class Handler(object):
 
         return SUCCESS_STATUS, value
 
-    def Batch(self, db, *args, **kwargs):
-        collection = args[0]
+    def Batch(self, db, collection, *args, **kwargs):
         batch = leveldb.WriteBatch()
 
         for (key, value) in collection:
@@ -162,9 +159,7 @@ class Handler(object):
 
         return SUCCESS_STATUS, None
 
-    def DBConnect(self, *args, **kwargs):
-        db_name = kwargs.pop('db_name', None)
-
+    def DBConnect(self, db_name=None, *args, **kwargs):
         if (not db_name or
             (db_name and (not db_name in self.databases['index']))):
             error_msg = "Database %s doesn't exist" % db_name
@@ -174,9 +169,8 @@ class Handler(object):
 
         return SUCCESS_STATUS, self.databases['index'][db_name]
 
-    def DBCreate(self, db, *args, **kwargs):
-        db_name = args[0]
-        db_options = kwargs.pop('db_options', DatabaseOptions())
+    def DBCreate(self, db, db_name, db_options=None, *args, **kwargs):
+        db_options = DatabaseOptions() if db_options is None else db_options
 
         if db_name in self.databases['index']:
             error_msg = "Database %s already exists" % db_name
@@ -187,10 +181,7 @@ class Handler(object):
         status, content = self.databases.add(db_name, db_options)
         return status, content
 
-    def DBDrop(self, db, *args, **kwargs):
-        db_name = args[0]
-
-        import pdb; pdb.set_trace()
+    def DBDrop(self, db, db_name, *args, **kwargs):
         if not db_name in self.databases['index']:
             error_msg = "Database %s does not exist" % db_name
             self.errors_logger.error(error_msg)
@@ -203,8 +194,7 @@ class Handler(object):
     def DBList(self, db, *args, **kwargs):
         return SUCCESS_STATUS, self.databases.list()
 
-    def DBRepair(self, db, *args, **kwargs):
-        db_uid = kwargs.pop('db_uid')
+    def DBRepair(self, db, db_uid, *args, **kwargs):
         db_path = self.databases['paths_index'][db_uid]
 
         leveldb.RepairDB(db_path)
@@ -221,7 +211,7 @@ class Handler(object):
         if command == 'DBCONNECT':
             # Here db_uid is in fact a db name, and connect
             # returns the valid seek db uid.
-            status, value = self.DBConnect(db_name=message.data['db_name'], *args, **kwargs)
+            status, value = self.DBConnect(db_name=message.data['db_name'])
             return status, value
 
         if (not db_uid or
