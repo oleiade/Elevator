@@ -6,8 +6,8 @@ class Elevator(Client):
     def Get(self, key):
         return self.send(self.db_uid, 'GET', [key])
 
-    def BGet(self, keys):
-        return self.send(self.db_uid, 'BGET', [keys])
+    def MGet(self, keys):
+        return self.send(self.db_uid, 'MGET', [keys])
 
     def Put(self, key, value):
         return self.send(self.db_uid, 'PUT', [key, value])

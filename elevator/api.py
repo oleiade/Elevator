@@ -25,7 +25,7 @@ class Handler(object):
             'DELETE': self.Delete,
             'RANGE': self.Range,
             'BATCH': self.Batch,
-            'BGET': self.BGet,
+            'MGET': self.MGet,
             'DBCONNECT': self.DBConnect,
             'DBCREATE': self.DBCreate,
             'DBDROP': self.DBDrop,
@@ -50,6 +50,20 @@ class Handler(object):
                     [KEY_ERROR, error_msg])
 
         return FAILURE_STATUS, None
+
+    def MGet(self, db, *args, **kwargs):
+        keys = args[0]
+        value = []
+
+        for key in keys:
+            try:
+                value.append([key, db.Get(key)])
+            except KeyError:
+                error_msg = "Key %r does not exist" % key
+                self.errors_logger.exception(error_msg)
+                return (FAILURE_STATUS,
+                        [KEY_ERROR, error_msg])
+        return SUCCESS_STATUS, value
 
     def Put(self, db, *args, **kwargs):
         """
@@ -133,20 +147,6 @@ class Handler(object):
                 pos += 1
         value = None if not value else value
 
-        return SUCCESS_STATUS, value
-
-    def BGet(self, db, *args, **kwargs):
-        keys = args[0]
-        value = []
-
-        for key in keys:
-            try:
-                value.append([key, db.Get(key)])
-            except KeyError:
-                error_msg = "Key %r does not exist" % key
-                self.errors_logger.exception(error_msg)
-                return (FAILURE_STATUS,
-                        [KEY_ERROR, error_msg])
         return SUCCESS_STATUS, value
 
     def Batch(self, db, *args, **kwargs):
