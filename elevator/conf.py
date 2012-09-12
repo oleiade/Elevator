@@ -17,6 +17,10 @@ def init_parser():
     parser.add_argument('--config', action='store', type=str,
                         default=DEFAULT_CONFIG_FILE)
 
+    # tcp or ipc
+    parser.add_argument('--protocol', action='store', type=str,
+                        default='tcp')
+
     parser.add_argument('--bind', action='store', type=str,
                         default='127.0.0.1')
 

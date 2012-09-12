@@ -13,11 +13,12 @@ from elevator.db import DatabaseOptions
 
 class Client(object):
     def __init__(self, db_name='default', *args, **kwargs):
+        self.protocol = kwargs.pop('protocol', 'tcp')
         self.bind = kwargs.pop('bind', '127.0.0.1')
         self.port = kwargs.pop('port', '4141')
         self._db_uid = None
         self.timeout = kwargs.pop('timeout', 10 * 10000)
-        self.host = "tcp://%s:%s" % (self.bind, self.port)
+        self.host = "%s://%s:%s" % (self.protocol, self.bind, self.port)
 
         self._connect(db_name=db_name)
 

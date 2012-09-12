@@ -44,7 +44,7 @@ def runserver(env):
     activity_logger = logging.getLogger("activity_logger")
 
     workers_pool = WorkersPool(args.workers)
-    proxy = Proxy('tcp://%s:%s' % (args.bind, args.port))
+    proxy = Proxy('%s://%s:%s' % (args.protocol, args.bind, args.port))
 
     poll = zmq.Poller()
     poll.register(workers_pool.socket, zmq.POLLIN)
