@@ -4,11 +4,9 @@
 import leveldb
 import logging
 
-from .utils.decorators import time_it
 from .constants import KEY_ERROR, TYPE_ERROR,\
                        INDEX_ERROR, RUNTIME_ERROR,\
                        SUCCESS_STATUS, FAILURE_STATUS
-from .env import Environment
 from .db import DatabaseOptions
 
 
@@ -17,14 +15,10 @@ class Handler(object):
     Class that handles commands server side.
     Translates, messages commands to it's methods calls.
     """
-    def __init__(self, databases, context):
+    def __init__(self, databases):
         self.databases = databases
         self.activity_logger = logging.getLogger('activity_logger')
         self.errors_logger = logging.getLogger('errors_logger')
-        # Each handlers is formatted following
-        # the pattern : [ command,
-        #                 default return value,
-        #                 raised error ]
         self.handlers = {
             'GET': self.Get,
             'PUT': self.Put,
@@ -32,10 +26,6 @@ class Handler(object):
             'RANGE': self.Range,
             'BATCH': self.Batch,
             'BGET': self.BGet,
-            'BPUT': self.BPut,
-            'BDELETE': self.BDelete,
-            'BWRITE': self.BWrite,
-            'BCLEAR': self.BClear,
             'DBCONNECT': self.DBConnect,
             'DBCREATE': self.DBCreate,
             'DBDROP': self.DBDrop,
@@ -43,7 +33,7 @@ class Handler(object):
             'DBREPAIR': self.DBRepair,
         }
 
-    def Get(self, db, context, *args, **kwargs):
+    def Get(self, db, *args, **kwargs):
         """
         Handles GET message command.
         Executes a Get operation over the leveldb backend.
@@ -61,7 +51,7 @@ class Handler(object):
 
         return FAILURE_STATUS, None
 
-    def Put(self, db, context, *args, **kwargs):
+    def Put(self, db, *args, **kwargs):
         """
         Handles Put message command.
         Executes a Put operation over the leveldb backend.
@@ -80,7 +70,7 @@ class Handler(object):
 
         return FAILURE_STATUS, None
 
-    def Delete(self, db, context, *args, **kwargs):
+    def Delete(self, db, *args, **kwargs):
         """
         Handles Delete message command
         Executes a Delete operation over the leveldb backend.
@@ -91,7 +81,7 @@ class Handler(object):
         """
         return SUCCESS_STATUS, db.Delete(*args)
 
-    def Range(self, db, context, *args, **kwargs):
+    def Range(self, db, *args, **kwargs):
         """
         Handles RANGE message command.
         Executes a RangeIter operation over the leveldb backend.
@@ -145,7 +135,7 @@ class Handler(object):
 
         return SUCCESS_STATUS, value
 
-    def BGet(self, db, context, *args, **kwargs):
+    def BGet(self, db, *args, **kwargs):
         keys = args[0]
         value = []
 
@@ -159,7 +149,7 @@ class Handler(object):
                         [KEY_ERROR, error_msg])
         return SUCCESS_STATUS, value
 
-    def Batch(self, db, context, *args, **kwargs):
+    def Batch(self, db, *args, **kwargs):
         collection = args[0]
         batch = leveldb.WriteBatch()
 
@@ -167,47 +157,6 @@ class Handler(object):
             batch.Put(key, value)
         db.Write(batch)
 
-        return SUCCESS_STATUS, None
-
-    def BPut(self, db, context, *args, **kwargs):
-        key, value, bid = args
-
-        # if the sought batch to update with Put
-        # operation is not yet present in the
-        # context, create it
-        if not bid in context:
-            context[bid] = leveldb.WriteBatch()
-
-        context[bid].Put(key, value)
-        return SUCCESS_STATUS, None
-
-    def BDelete(self, db, context, *args, **kwargs):
-        key, bid = args
-
-        # if the sought batch to update with Put
-        # operation is not yet present in the
-        # context, create it
-        if not bid in context:
-            context[bid] = leveldb.WriteBatch()
-
-        context[bid].Delete(key)
-        return SUCCESS_STATUS, None
-
-    def BWrite(self, db, context, *args, **kwargs):
-        bid = args[0]
-
-        # FIXME : an error should be raised
-        # whenever the batch object to write
-        # doesn't exist or is empty.
-        if bid in context:
-            db.Write(context[bid])
-        return SUCCESS_STATUS, None
-
-    def BClear(self, db, context, *args, **kwargs):
-        bid = args[0]
-
-        if bid in context:
-            del context[bid]
         return SUCCESS_STATUS, None
 
     def DBConnect(self, *args, **kwargs):
@@ -222,7 +171,7 @@ class Handler(object):
 
         return SUCCESS_STATUS, self.databases['index'][db_name]
 
-    def DBCreate(self, db, context, *args, **kwargs):
+    def DBCreate(self, db, *args, **kwargs):
         db_name = args[0]
         db_options = kwargs.pop('db_options', DatabaseOptions())
 
@@ -235,7 +184,7 @@ class Handler(object):
         status, content = self.databases.add(db_name, db_options)
         return status, content
 
-    def DBDrop(self, db, context, *args, **kwargs):
+    def DBDrop(self, db, *args, **kwargs):
         db_name = args[0]
 
         import pdb; pdb.set_trace()
@@ -248,10 +197,10 @@ class Handler(object):
         status, content = self.databases.drop(db_name)
         return status, content
 
-    def DBList(self, db, context, *args, **kwargs):
+    def DBList(self, db, *args, **kwargs):
         return SUCCESS_STATUS, self.databases.list()
 
-    def DBRepair(self, db, context, *args, **kwargs):
+    def DBRepair(self, db, *args, **kwargs):
         db_uid = kwargs.pop('db_uid')
         db_path = self.databases['paths_index'][db_uid]
 
@@ -259,7 +208,7 @@ class Handler(object):
 
         return SUCCESS_STATUS, None
 
-    def command(self, message, context, *args, **kwargs):
+    def command(self, message, *args, **kwargs):
         db_uid = message.db_uid
         command = message.command
         args = message.data
@@ -285,6 +234,6 @@ class Handler(object):
             return (FAILURE_STATUS,
                     [KEY_ERROR, error_msg])
 
-        status, value = self.handlers[command](self.databases[db_uid], context, *args, **kwargs)
+        status, value = self.handlers[command](self.databases[db_uid], *args, **kwargs)
 
         return status, value

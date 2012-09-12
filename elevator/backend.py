@@ -12,16 +12,15 @@ from .utils.patterns import enum
 
 
 class Worker(threading.Thread):
-    def __init__(self, zmq_context, databases, context, *args, **kwargs):
+    def __init__(self, zmq_context, databases, *args, **kwargs):
         threading.Thread.__init__(self)
         self.STATES = enum('RUNNING', 'IDLE', 'STOPPED')
         self.zmq_context = zmq_context
         self.state = self.STATES.RUNNING
         self.databases = databases
-        self.context = context
         self.env = Environment()
         self.socket = self.zmq_context.socket(zmq.XREQ)
-        self.handler = Handler(databases, context)
+        self.handler = Handler(databases)
 
     def run(self):
         self.socket.connect('inproc://elevator')
@@ -46,7 +45,7 @@ class Worker(threading.Thread):
 
             # Handle message, and execute the requested
             # command in leveldb
-            status, datas = self.handler.command(message, self.context, env=self.env)
+            status, datas = self.handler.command(message, env=self.env)
             response = Response(msg_id, status=status, datas=datas)
             self.socket.send_multipart(response)
             self.processing = False
@@ -66,16 +65,12 @@ class WorkersPool():
         database_store = env['global']['database_store']
         databases_storage = env['global']['databases_storage_path']
         self.databases = DatabasesHandler(database_store, databases_storage)
-
-        # context used to stack datas, and share it
-        # between workers. For batches for example.
-        self.context = {}
         self.pool = []
 
         self.zmq_context = zmq.Context()
         self.socket = self.zmq_context.socket(zmq.XREQ)
         self.socket.bind('inproc://elevator')
-        self.init_workers(workers_count, self.context)
+        self.init_workers(workers_count)
 
     def __del__(self):
         for worker in self.pool:
@@ -83,13 +78,12 @@ class WorkersPool():
 
         del self.pool
         self.socket.close()
-        self.context.term()
 
-    def init_workers(self, count, context):
+    def init_workers(self, count):
         pos = 0
 
         while pos < count:
-            worker = Worker(self.zmq_context, self.databases, context)
+            worker = Worker(self.zmq_context, self.databases)
             worker.start()
             self.pool.append(worker)
             pos += 1
