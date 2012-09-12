@@ -11,15 +11,14 @@ from elevator.db import DatabaseOptions
 
 
 class Client(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, db_name='default', *args, **kwargs):
         self.bind = kwargs.pop('bind', '127.0.0.1')
         self.port = kwargs.pop('port', '4141')
         self._db_uid = None
         self.timeout = kwargs.pop('timeout', 10 * 10000)
         self.host = "tcp://%s:%s" % (self.bind, self.port)
 
-        database = kwargs.pop('database', 'default')
-        self._connect(db_name=database)
+        self._connect(db_name=db_name)
 
     def __del__(self):
         self._close()
