@@ -17,12 +17,14 @@ class Client(object):
         self._db_uid = None
         self.timeout = kwargs.pop('timeout', 10 * 10000)
         self.host = "tcp://%s:%s" % (self.bind, self.port)
-        self._connect()
+
+        database = kwargs.pop('database', 'default')
+        self._connect(db_name=database)
 
     def __del__(self):
         self._close()
 
-    def _connect(self, db_name='default'):
+    def _connect(self, db_name):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.XREQ)
         self.socket.connect(self.host)
@@ -43,6 +45,9 @@ class Client(object):
     def createdb(self, key, db_options=None):
         db_options = db_options if not None else DatabaseOptions()
         return self.send(self.db_uid, 'DBCREATE', [key, db_options])
+
+    def dropdb(self, key):
+        return self.send(self.db_uid, 'DBDROP', [key])
 
     def repairdb(self):
         return self.send(self.db_uid, 'DBREPAIR', {})

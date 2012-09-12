@@ -35,6 +35,7 @@ class Handler(object):
             'BCLEAR': self.BClear,
             'DBCONNECT': self.DBConnect,
             'DBCREATE': self.DBCreate,
+            'DBDROP': self.DBDrop,
             'DBLIST': self.DBList,
             'DBREPAIR': self.DBRepair,
         }
@@ -202,7 +203,17 @@ class Handler(object):
         status, content = self.databases.add(db_name, db_options)
         return status, content
 
-        return SUCCESS_STATUS, None
+    def DBDrop(self, db, context, *args, **kwargs):
+        db_name = args[0]
+
+        import pdb; pdb.set_trace()
+        if not db_name in self.databases['index']:
+            self.errors_logger.error("Database %s does not exist" % db_name)
+            return (FAILURE_STATUS,
+                    [KEY_ERROR, "Database %s does not exist" % db_name])
+
+        status, content = self.databases.drop(db_name)
+        return status, content
 
     def DBList(self, db, context, *args, **kwargs):
         return SUCCESS_STATUS, self.databases.list()

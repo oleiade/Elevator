@@ -3,6 +3,8 @@ import uuid
 import leveldb
 import ujson as json
 
+from shutil import rmtree
+
 from .constants import FAILURE_STATUS, SUCCESS_STATUS,\
                        OS_ERROR, KEY_ERROR
 
@@ -31,11 +33,17 @@ class DatabasesHandler(dict):
         self.store = store
         self.load()
 
-    def load(self):
+    def extract_store_datas(self):
         try:
             store_datas = json.load(open(self.store, 'r'))
         except IOError:
             store_datas = {}
+
+        return store_datas
+
+
+    def load(self):
+        store_datas = self.extract_store_datas()
 
         for db_name, db_desc in store_datas.iteritems():
             self['index'].update({db_name: db_desc['uid']})
@@ -47,13 +55,15 @@ class DatabasesHandler(dict):
         if 'default' not in self['index']:
             self.add('default')
 
-    def persist(self, db_name, db_desc):
-        try:
-            store_datas = json.load(open(self.store, 'r'))
-        except IOError:
-            store_datas = {}
+    def store_update(self, db_name, db_desc):
+        store_datas = self.extract_store_datas()
 
         store_datas.update({db_name: db_desc})
+        json.dump(store_datas, open(self.store, 'w'))
+
+    def store_remove(self, db_name):
+        store_datas = self.extract_store_datas()
+        store_datas.pop(db_name)
         json.dump(store_datas, open(self.store, 'w'))
 
     def add(self, db_name, db_options=None):
@@ -79,7 +89,7 @@ class DatabasesHandler(dict):
             'uid': str(uuid.uuid4()),
             'options': db_options if db_options is not None else DatabaseOptions(),
         }
-        self.persist(new_db_name, new_db_desc)
+        self.store_update(new_db_name, new_db_desc)
 
         self['index'].update({new_db_name: new_db_desc['uid']})
         self['reverse_index'].update({new_db_desc['uid']: new_db_name})
@@ -90,9 +100,15 @@ class DatabasesHandler(dict):
 
     def drop(self, db_name):
         db_uid = self['index'].pop(db_name)
-        del self['db_uid']
-        os.remove(os.path.join(self.dest, db_name))
+        db_path = self['paths_index'][db_uid]
+
+        self['reverse_index'].pop(db_uid)
+        self['paths_index'].pop(db_uid)
         self.pop(db_uid)
+        rmtree(db_path)
+        self.store_remove(db_name)
+
+        return SUCCESS_STATUS, None
 
     def list(self):
         return [db_name for db_name in self['index'].iterkeys()]
