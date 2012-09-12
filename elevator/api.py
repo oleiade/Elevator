@@ -29,6 +29,7 @@ class Handler(object):
             'PUT': self.Put,
             'DELETE': self.Delete,
             'RANGE': self.Range,
+            'BGET': self.BGet,
             'BPUT': self.BPut,
             'BDELETE': self.BDelete,
             'BWRITE': self.BWrite,
@@ -51,9 +52,10 @@ class Handler(object):
         try:
             return SUCCESS_STATUS, db.Get(*args)
         except KeyError:
-            self.errors_logger.exception("Key %r does not exist" % args[0])
+            error_msg = "Key %r does not exist" % args[0]
+            self.errors_logger.exception(error_msg)
             return (FAILURE_STATUS,
-                    [KEY_ERROR, "Key does not exist"])
+                    [KEY_ERROR, error_msg])
 
         return FAILURE_STATUS, None
 
@@ -69,9 +71,10 @@ class Handler(object):
         try:
             return SUCCESS_STATUS, db.Put(*args)
         except TypeError:
-            self.errors_logger.exception("Unsupported value type : %s" % type(args[1]))
+            error_msg = "Unsupported value type : %s" % type(args[1])
+            self.errors_logger.exception(error_msg)
             return (FAILURE_STATUS,
-                   [TYPE_ERROR, "Unsupported value type"])
+                   [TYPE_ERROR, error_msg])
 
         return FAILURE_STATUS, None
 
@@ -113,10 +116,11 @@ class Handler(object):
         value = []
 
         if not len(args) == 2:
-            self.errors_logger.error('Missing argument to_key or step to Range.'
-                                     ' %s supplied' % str(args))
+            error_msg = 'Missing argument to_key or step to Range.'\
+                        ' %s supplied' % str(args)
+            self.errors_logger.error()
             return (FAILURE_STATUS,
-                   [INDEX_ERROR, "Missing argument to_key or step to Range"])
+                   [INDEX_ERROR, error_msg])
 
         from_key, limit = args
 
@@ -137,6 +141,20 @@ class Handler(object):
                 pos += 1
         value = None if not value else value
 
+        return SUCCESS_STATUS, value
+
+    def BGet(self, db, context, *args, **kwargs):
+        keys = args[0]
+        value = []
+
+        for key in keys:
+            try:
+                value.append([key, db.Get(key)])
+            except KeyError:
+                error_msg = "Key %r does not exist" % key
+                self.errors_logger.exception(error_msg)
+                return (FAILURE_STATUS,
+                        [KEY_ERROR, error_msg])
         return SUCCESS_STATUS, value
 
     def BPut(self, db, context, *args, **kwargs):
@@ -185,9 +203,10 @@ class Handler(object):
 
         if (not db_name or
             (db_name and (not db_name in self.databases['index']))):
-            self.errors_logger.error("Database %s doesn't exist" % db_name)
+            error_msg = "Database %s doesn't exist" % db_name
+            self.errors_logger.error(error_msg)
             return (FAILURE_STATUS,
-                    [KEY_ERROR, "Database %s doesn't exist" % db_name])
+                    [KEY_ERROR, error_msg])
 
         return SUCCESS_STATUS, self.databases['index'][db_name]
 
@@ -196,9 +215,10 @@ class Handler(object):
         db_options = kwargs.pop('db_options', DatabaseOptions())
 
         if db_name in self.databases['index']:
-            self.errors_logger.error("Database %s already exists" % db_name)
+            error_msg = "Database %s already exists" % db_name
+            self.errors_logger.error(error_msg)
             return (FAILURE_STATUS,
-                    [KEY_ERROR, "Database %s already exists" % db_name])
+                    [KEY_ERROR, error_msg])
 
         status, content = self.databases.add(db_name, db_options)
         return status, content
@@ -208,9 +228,10 @@ class Handler(object):
 
         import pdb; pdb.set_trace()
         if not db_name in self.databases['index']:
-            self.errors_logger.error("Database %s does not exist" % db_name)
+            error_msg = "Database %s does not exist" % db_name
+            self.errors_logger.error(error_msg)
             return (FAILURE_STATUS,
-                    [KEY_ERROR, "Database %s does not exist" % db_name])
+                    [KEY_ERROR, error_msg])
 
         status, content = self.databases.drop(db_name)
         return status, content
@@ -241,14 +262,16 @@ class Handler(object):
 
         if (not db_uid or
             (db_uid and (not db_uid in self.databases))):
-            self.errors_logger.error("Database %s doesn't exist" % db_uid)
+            error_msg = "Database %s doesn't exist" % db_uid
+            self.errors_logger.error(error_msg)
             return (FAILURE_STATUS,
-                    [RUNTIME_ERROR, "Database does not exist"])
+                    [RUNTIME_ERROR, error_msg])
 
         if not command in self.handlers:
-            self.errors_logger.error("Command %s not handled" % command)
+            error_msg = "Command %s not handled" % command
+            self.errors_logger.error(error_msg)
             return (FAILURE_STATUS,
-                    [KEY_ERROR, "Command not handled"])
+                    [KEY_ERROR, error_msg])
 
         status, value = self.handlers[command](self.databases[db_uid], context, *args, **kwargs)
 
