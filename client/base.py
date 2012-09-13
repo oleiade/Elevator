@@ -20,7 +20,7 @@ class Client(object):
         self.timeout = kwargs.pop('timeout', 10 * 10000)
         self.host = "%s://%s:%s" % (self.protocol, self.bind, self.port)
 
-        db = 'default' if not db else db
+        db = 'default' if db is None else db
         self._connect(db=db)
 
     def __del__(self):
