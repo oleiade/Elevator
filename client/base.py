@@ -12,7 +12,7 @@ from elevator.db import DatabaseOptions
 
 
 class Client(object):
-    def __init__(self, db_name=None, *args, **kwargs):
+    def __init__(self, db=None, *args, **kwargs):
         self.protocol = kwargs.pop('protocol', 'tcp')
         self.bind = kwargs.pop('bind', '127.0.0.1')
         self.port = kwargs.pop('port', '4141')
@@ -20,17 +20,17 @@ class Client(object):
         self.timeout = kwargs.pop('timeout', 10 * 10000)
         self.host = "%s://%s:%s" % (self.protocol, self.bind, self.port)
 
-        db_name = 'default' if not db_name else db_name
-        self._connect(db_name=db_name)
+        db = 'default' if not db else db
+        self._connect(db=db)
 
     def __del__(self):
         self._close()
 
-    def _connect(self, db_name):
+    def _connect(self, db):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.XREQ)
         self.socket.connect(self.host)
-        self.connect(db_name)
+        self.connect(db)
 
     def _close(self):
         self.socket.close()
