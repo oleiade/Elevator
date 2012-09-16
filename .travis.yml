@@ -8,4 +8,7 @@ install:
   - fab build
   - python setup.py install
 
+after_install:
+  - chmod +x tests/*.py
+
 script: nosetests -vs tests/
