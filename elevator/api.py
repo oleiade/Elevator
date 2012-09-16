@@ -49,8 +49,6 @@ class Handler(object):
             return (FAILURE_STATUS,
                     [KEY_ERROR, error_msg])
 
-        return FAILURE_STATUS, None
-
     def MGet(self, db, keys, *args, **kwargs):
         value = []
 
@@ -80,8 +78,6 @@ class Handler(object):
             self.errors_logger.exception(error_msg)
             return (FAILURE_STATUS,
                    [TYPE_ERROR, error_msg])
-
-        return FAILURE_STATUS, None
 
     def Delete(self, db, key, *args, **kwargs):
         """
