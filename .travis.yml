@@ -8,4 +8,4 @@ install:
   - fab build
   - python setup.py install
 
-script: nosetests
+script: nosetests -vs tests/

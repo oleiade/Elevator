@@ -37,7 +37,7 @@ class Client(object):
         self.context.term()
 
     def connect(self, db_name):
-        self.db_uid = self.send(db_name, 'DBCONNECT', {'db_name': db_name})
+        self.db_uid = self.send(db_name, 'DBCONNECT', [db_name])
         self.db_name = db_name
         return
 

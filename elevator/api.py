@@ -6,7 +6,7 @@ import logging
 
 from .constants import KEY_ERROR, TYPE_ERROR,\
                        INDEX_ERROR, RUNTIME_ERROR,\
-                       SUCCESS_STATUS, FAILURE_STATUS
+                       VALUE_ERROR, SUCCESS_STATUS, FAILURE_STATUS
 from .db import DatabaseOptions
 
 
@@ -120,13 +120,6 @@ class Handler(object):
         """
         value = []
 
-        if not len(args) == 2:
-            error_msg = 'Missing argument to_key or step to Range.'\
-                        ' %s supplied' % str(args)
-            self.errors_logger.error()
-            return (FAILURE_STATUS,
-                   [INDEX_ERROR, error_msg])
-
         # Operate over a snapshot in order to return
         # a consistent state of the db
         db_snapshot = db.CreateSnapshot()
@@ -153,8 +146,12 @@ class Handler(object):
     def Batch(self, db, collection, *args, **kwargs):
         batch = leveldb.WriteBatch()
 
-        for (key, value) in collection:
-            batch.Put(key, value)
+        try:
+            for (key, value) in collection:
+                batch.Put(key, value)
+        except ValueError:
+            return (FAILURE_STATUS,
+                    [VALUE_ERROR, "Batch only accepts sequences (list, tuples,...)"])
         db.Write(batch)
 
         return SUCCESS_STATUS, None
@@ -211,7 +208,7 @@ class Handler(object):
         if command == 'DBCONNECT':
             # Here db_uid is in fact a db name, and connect
             # returns the valid seek db uid.
-            status, value = self.DBConnect(db_name=message.data['db_name'])
+            status, value = self.DBConnect(db_name=message.data[0])
             return status, value
 
         if (not db_uid or
