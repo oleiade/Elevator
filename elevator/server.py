@@ -38,7 +38,7 @@ def runserver(env):
     args = ARGS
 
     activity_log = env['global'].pop('activity_log', '/var/log/elevator.log')
-    errors_log = env['global'].pop('errrors_log', '/var/log/elevator_errors.log')
+    errors_log = env['global'].pop('errors_log', '/var/log/elevator_errors.log')
     setup_loggers(activity_log,
                   errors_log)
     activity_logger = logging.getLogger("activity_logger")
