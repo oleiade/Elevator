@@ -74,7 +74,8 @@ class DatabasesHandler(dict):
         if (not new_db_name.startswith('.')) and ('/' in new_db_name):
             try:
                 new_db_path = db_name
-                os.mkdir(new_db_path)
+                if not os.path.exists(new_db_path):
+                    os.mkdir(new_db_path)
             except OSError as e:
                 return (FAILURE_STATUS,
                         [OS_ERROR, e.strerror])
