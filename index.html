@@ -102,7 +102,11 @@ optional arguments:
 <span class="na">pidfile</span> <span class="o">=</span> <span class="s">/var/run/elevator.pid</span>
 
 <span class="c"># Where databases files should be store on the filesystem.</span>
-<span class="na">database_store</span> <span class="o">=</span> <span class="s">/var/lib/elevator</span>
+<span class="na">databases_storage_path</span> <span class="o">=</span> <span class="s">/var/lib/elevator</span>
+
+<span class="c"># Where should the file describing the databases store be</span>
+<span class="c"># put on file system</span>
+<span class="na">database_store</span> <span class="o">=</span> <span class="s">/var/lib/elevator/store.json</span>
 
 <span class="c">#Default database</span>
 <span class="na">default_db</span> <span class="o">=</span> <span class="s">default</span>
