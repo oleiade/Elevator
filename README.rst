@@ -56,7 +56,9 @@ Clients
 -------
 
 *Python* : [py-elevator](http://github.com/oleiade/py-elevator)
+
 *Clojure* : *Coming soon*
+
 *C* : *Coming soon*
 
 
