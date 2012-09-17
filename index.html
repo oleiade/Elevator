@@ -1,37 +1,44 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset='utf-8'>
+    <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
     <title>Elevator by oleiade</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
   </head>
-
   <body>
-    <div id="container">
-      <div class="inner">
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/oleiade/Elevator">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/oleiade/Elevator/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/oleiade/Elevator/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
 
-        <header>
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
           <h1>Elevator</h1>
-          <h2>Minimalistic database engine based on levelDB as a backend, and protocol buffer as a message protocol.</h2>
-        </header>
+          <p>Minimalistic database engine based on levelDB as a backend, and protocol buffer as a message protocol.</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/oleiade">oleiade</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></span>
+        </div>
 
-        <section id="downloads" class="clearfix">
-          <a href="https://github.com/oleiade/Elevator/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
-          <a href="https://github.com/oleiade/Elevator/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
-          <a href="https://github.com/oleiade/Elevator" id="view-on-github" class="button"><span>View on GitHub</span></a>
-        </section>
-
-        <hr>
-
-        <section id="main_content">
-          <h1>Elevator</h1>
+        <h1>Elevator</h1>
 
 <h2>About</h2>
 
@@ -263,121 +270,13 @@ Here's their definition.</p>
 <span class="n">FAILURE_STATUS</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 </pre></div>
 
-<h3>Client</h3>
-
-<p>In order to communicate with elevator, a Python client is avalaible (more to come. Feel free to make your own, I'll be glad to merge it into the repo).</p>
-
-<p>It exposes the Elevator object which api is quite similar to py-leveldb one. This similarity was kept in order to enhance the move from py-leveldb to Elevator in already existing projects. Note that by default, client to 'default' database. As Elevator implements a multi-db system, you can create/list/delete/repair databases. To connect to another database, use the eponyme function .connect()</p>
-
-<p><strong>Here is a demo:</strong></p>
-
-<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">elevator.client</span> <span class="kn">import</span> <span class="n">Elevator</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">E</span> <span class="o">=</span> <span class="n">Elevator</span><span class="p">()</span>  <span class="c"># N.B : connected to 'default'</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">Ebis</span> <span class="o">=</span> <span class="n">Elevator</span><span class="p">(</span><span class="s">'testdb'</span><span class="p">)</span>  <span class="c"># You can even construct your client with desired db to connect to</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">'testdbbis'</span><span class="p">)</span>  <span class="c"># Or even rebind client to a new database</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">Put</span><span class="p">(</span><span class="s">'abc'</span><span class="p">,</span> <span class="s">'cba'</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">Get</span><span class="p">(</span><span class="s">'abc'</span><span class="p">)</span>
-<span class="s">'cba'</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s">'abc'</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
-<span class="o">...</span>     <span class="n">E</span><span class="o">.</span><span class="n">Put</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">Range</span><span class="p">(</span><span class="s">'1'</span><span class="p">,</span> <span class="s">'9'</span><span class="p">)</span>
-<span class="p">[[</span><span class="s">'1'</span><span class="p">,</span><span class="s">'1'</span><span class="p">],</span>
- <span class="p">[</span><span class="s">'2'</span><span class="p">,</span><span class="s">'2'</span><span class="p">],</span>
- <span class="p">[</span><span class="s">'3'</span><span class="p">,</span> <span class="s">'3'</span><span class="p">],</span>
- <span class="p">[</span><span class="s">'4'</span><span class="p">,</span> <span class="s">'4'</span><span class="p">],</span>
- <span class="p">[</span><span class="s">'5'</span><span class="p">,</span> <span class="s">'5'</span><span class="p">],</span>
- <span class="p">[</span><span class="s">'6'</span><span class="p">,</span> <span class="s">'6'</span><span class="p">],</span>
- <span class="p">[</span><span class="s">'7'</span><span class="p">,</span> <span class="s">'7'</span><span class="p">],</span>
- <span class="p">[</span><span class="s">'8'</span><span class="p">,</span> <span class="s">'8'</span><span class="p">],</span>
- <span class="p">[</span><span class="s">'9'</span><span class="p">,</span> <span class="s">'9'</span><span class="p">],</span>
-<span class="p">]</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">Range</span><span class="p">(</span><span class="s">'1'</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="p">[[</span><span class="s">'1'</span><span class="p">,</span> <span class="s">'1'</span><span class="p">],</span>
- <span class="p">[</span><span class="s">'2'</span><span class="p">,</span> <span class="s">'2'</span><span class="p">],</span>
-<span class="p">]</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">it</span> <span class="o">=</span> <span class="n">E</span><span class="o">.</span><span class="n">RangeIter</span><span class="p">(</span><span class="s">'1'</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="nb">list</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
-<span class="p">[[</span><span class="s">'1'</span><span class="p">,</span> <span class="s">'1'</span><span class="p">],</span>
- <span class="p">[</span><span class="s">'2'</span><span class="p">,</span> <span class="s">'2'</span><span class="p">],</span>
-<span class="p">]</span>
-</pre></div>
-
-<p>Batches are implemented too. They're very handy and very fast when it comes to write a lot of datas to the database. See LevelDB documentation for more informations. Use it through the WriteBatch client module class. It has three base methods modeled on LevelDB's Put, Delete, Write.</p>
-
-<p><strong>Example:</strong></p>
-
-<div class="highlight"><pre><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">elevator.client</span> <span class="kn">import</span> <span class="n">WriteBatch</span><span class="p">,</span> <span class="n">Elevator</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">batch</span> <span class="o">=</span> <span class="n">WriteBatch</span><span class="p">()</span>  <span class="c"># N.B : port, host, and timeout options are available here</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">batch</span><span class="o">.</span><span class="n">Put</span><span class="p">(</span><span class="s">'a'</span><span class="p">,</span> <span class="s">'a'</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">batch</span><span class="o">.</span><span class="n">Put</span><span class="p">(</span><span class="s">'b'</span><span class="p">,</span> <span class="s">'b'</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">batch</span><span class="o">.</span><span class="n">Put</span><span class="p">(</span><span class="s">'c'</span><span class="p">,</span> <span class="s">'c'</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">batch</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s">'c'</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">batch</span><span class="o">.</span><span class="n">Write</span><span class="p">()</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">E</span> <span class="o">=</span> <span class="n">Elevator</span><span class="p">()</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">Get</span><span class="p">(</span><span class="s">'a'</span><span class="p">)</span>
-<span class="s">'a'</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">Get</span><span class="p">(</span><span class="s">'b'</span><span class="p">)</span>
-<span class="s">'b'</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">E</span><span class="o">.</span><span class="n">Get</span><span class="p">(</span><span class="s">'c'</span><span class="p">)</span>
-<span class="ne">KeyError</span><span class="p">:</span> <span class="s">"Key not found"</span>
-</pre></div>
-
-<h4>Api</h4>
-
-<p><strong>Elevator object</strong></p>
-
-<ul>
-<li>
-<strong>Methods</strong>
-
-<ul>
-<li>
-<strong>Get(key)</strong>, fetches a specific key in connected db</li>
-<li>
-<strong>Put(key, value)</strong>, inserts key/value pair in connected db</li>
-<li>
-<strong>Delete(key)</strong>, deletes the specified key in connected db</li>
-<li>
-<strong>Range(start=None, limit=None)</strong>, returns a whole lot of data following the specified key range,
-note that limit can whether be a key to stop to, or an offset.</li>
-<li>
-<strong>RangeIter(start=None, limit=None)</strong>, idem, but returns an iterator</li>
-<li>
-<strong>connect(db_name)</strong>, connects the current Elevator instance to a database</li>
-<li>
-<strong>listdb()</strong>, lists server databases</li>
-<li>
-<strong>createdb(db_name)</strong>, creates a database</li>
-</ul>
-</li>
-</ul><p><strong>WriteBatch object</strong></p>
-
-<ul>
-<li>
-<strong>Methods</strong>
-
-<ul>
-<li>
-<strong>Put(key, value)</strong>, stack a command to insert a key/value pair in WriteBatch instance</li>
-<li>
-<strong>Delete(key)</strong>, stack a command to delete the key in WriteBatch</li>
-<li>
-<strong>Write()</strong>, applies the WriteBatch server-side</li>
-</ul>
-</li>
-</ul><h3>Thanks</h3>
+<h3>Thanks</h3>
 
 <p>Thanks to srinikom for its leveldb-server which was a very good base to start from. Thanks to Google, for its amazing database. Thanks to ZeroMQ team, you changed my life!</p>
-        </section>
+      </section>
 
-        <footer>
-          Elevator is maintained by <a href="https://github.com/oleiade">oleiade</a><br>
-          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="http://twitter.com/jasonlong">Jason Long</a>.
-        </footer>
-
-        
-      </div>
     </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
   </body>
 </html>
