@@ -135,7 +135,6 @@ class Handler(object):
                 except StopIteration:
                     break
                 pos += 1
-        value = None if not value else value
 
         return SUCCESS_STATUS, value
 
