@@ -55,7 +55,9 @@ Example:
 Clients
 -------
 
-*Python* : .. _py-elevator: http://github.com/oleiade/py-elevator
+*Python* : py-elevator_
+
+.. _py-elevator: http://github.com/oleiade/py-elevator
 
 *Clojure* : *Coming soon*
 
