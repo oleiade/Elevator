@@ -81,11 +81,11 @@ class Daemon(object):
             so = file(self.stdout, 'a+')
             if self.stderr:
                 se = file(self.stderr, 'a+', 0)
+                os.dup2(se.fileno(), sys.stderr.fileno())
             else:
-                se = so
+                se = sys.stderr
             os.dup2(si.fileno(), sys.stdin.fileno())
             os.dup2(so.fileno(), sys.stdout.fileno())
-            os.dup2(se.fileno(), sys.stderr.fileno())
 
         def sigtermhandler(signum, frame):
             self.daemon_alive = False

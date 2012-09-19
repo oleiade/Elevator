@@ -89,7 +89,7 @@ def main():
     env = Environment(ARGS.config)
 
     if ARGS.daemon:
-        server_daemon = ServerDaemon('/tmp/elevator.pid')
+        server_daemon = ServerDaemon('/var/run/elevator.pid', stderr=None)
         server_daemon.start()
     else:
         runserver(env)
