@@ -5,8 +5,8 @@ import leveldb
 import logging
 
 from .constants import KEY_ERROR, TYPE_ERROR,\
-                       INDEX_ERROR, RUNTIME_ERROR,\
-                       VALUE_ERROR, SUCCESS_STATUS, FAILURE_STATUS
+                       VALUE_ERROR, RUNTIME_ERROR,\
+                       SUCCESS_STATUS, FAILURE_STATUS, WARNING_STATUS
 from .db import DatabaseOptions
 
 
@@ -50,17 +50,19 @@ class Handler(object):
                     [KEY_ERROR, error_msg])
 
     def MGet(self, db, keys, *args, **kwargs):
+        status = SUCCESS_STATUS
         value = []
 
         for key in keys:
             try:
                 value.append([key, db.Get(key)])
             except KeyError:
-                error_msg = "Key %r does not exist" % key
-                self.errors_logger.exception(error_msg)
-                return (FAILURE_STATUS,
-                        [KEY_ERROR, error_msg])
-        return SUCCESS_STATUS, value
+                warning_msg = "Key %r does not exist" % key
+                self.errors_logger.warning(warning_msg)
+                value.append([key, None])
+                status = WARNING_STATUS
+
+        return status, value
 
     def Put(self, db, key, value, *args, **kwargs):
         """
@@ -153,7 +155,7 @@ class Handler(object):
 
     def DBConnect(self, db_name=None, *args, **kwargs):
         if (not db_name or
-            (db_name and (not db_name in self.databases['index']))):
+            not self.databases.exists(db_name)):
             error_msg = "Database %s doesn't exist" % db_name
             self.errors_logger.error(error_msg)
             return (FAILURE_STATUS,
@@ -174,7 +176,7 @@ class Handler(object):
         return status, content
 
     def DBDrop(self, db, db_name, *args, **kwargs):
-        if not db_name in self.databases['index']:
+        if not self.databases.exists(db_name):
             error_msg = "Database %s does not exist" % db_name
             self.errors_logger.error(error_msg)
             return (FAILURE_STATUS,
