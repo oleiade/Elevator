@@ -44,7 +44,9 @@ def runserver(env):
     activity_logger = logging.getLogger("activity_logger")
 
     workers_pool = WorkersPool(args.workers)
-    proxy = Proxy('%s://%s:%s' % (args.protocol, args.bind, args.port))
+    proxy = Proxy('%s://%s:%s' % (env['global']['protocol'],
+                                  env['global']['bind'],
+                                  env['global']['port']))
 
     poll = zmq.Poller()
     poll.register(workers_pool.socket, zmq.POLLIN)
@@ -87,6 +89,12 @@ def main():
     # will point on this one, and conf will be
     # present in it yet.
     env = Environment(ARGS.config)
+
+    env['global'].update({
+        'port': ARGS.port,
+        'bind': ARGS.bind,
+        'protocol': ARGS.protocol,
+        })
 
     if ARGS.daemon:
         server_daemon = ServerDaemon(env['global']['pidfile'], stderr=None)
