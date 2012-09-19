@@ -1,6 +1,7 @@
 # Status codes
 SUCCESS_STATUS = 1
 FAILURE_STATUS = -1
+WARNING_STATUS = -2
 
 # Error codes
 TYPE_ERROR = 0
@@ -9,3 +10,4 @@ VALUE_ERROR = 2
 INDEX_ERROR = 3
 RUNTIME_ERROR = 4
 OS_ERROR = 5
+
