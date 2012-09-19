@@ -37,16 +37,16 @@ def setup_loggers(activity_file, errors_file):
 def runserver(env):
     args = ARGS
 
-    activity_log = env['global'].pop('activity_log', '/var/log/elevator.log')
-    errors_log = env['global'].pop('errors_log', '/var/log/elevator_errors.log')
+    activity_log = env.get('activity_log', '/var/log/elevator.log')
+    errors_log = env.get('errors_log', '/var/log/elevator_errors.log')
     setup_loggers(activity_log,
                   errors_log)
     activity_logger = logging.getLogger("activity_logger")
 
     workers_pool = WorkersPool(args.workers)
-    proxy = Proxy('%s://%s:%s' % (env['global']['protocol'],
-                                  env['global']['bind'],
-                                  env['global']['port']))
+    proxy = Proxy('%s://%s:%s' % (env['protocol'],
+                                  env['bind'],
+                                  env['port']))
 
     poll = zmq.Poller()
     poll.register(workers_pool.socket, zmq.POLLIN)
@@ -88,16 +88,14 @@ def main():
     # every further instanciation of the object
     # will point on this one, and conf will be
     # present in it yet.
-    env = Environment(ARGS.config)
-
-    env['global'].update({
+    env = Environment(ARGS.config, section='global', **{
         'port': ARGS.port,
         'bind': ARGS.bind,
         'protocol': ARGS.protocol,
         })
 
     if ARGS.daemon:
-        server_daemon = ServerDaemon(env['global']['pidfile'], stderr=None)
+        server_daemon = ServerDaemon(env['pidfile'], stderr=None)
         server_daemon.start()
     else:
         runserver(env)

@@ -17,12 +17,13 @@ class Environment(dict):
 
     def __init__(self, env_file='', *args, **kwargs):
         if env_file:
-            self.load(env_file=env_file)  # Has to be called last!
+            self.load(env_file=env_file,
+                      section=kwargs.pop('section', None))
 
         self.update(kwargs)
         dict.__init__(self, *args, **kwargs)
 
-    def load(self, env_file):
+    def load(self, env_file, section=None):
         """
         Updates the environment using an ini file containing
         key/value descriptions.
@@ -30,8 +31,11 @@ class Environment(dict):
         config = ConfigParser()
         config.read(env_file)
 
-        for section in config.sections():
-            self.update({section: items_to_dict(config.items(section))})
+        if section:
+            self.update(items_to_dict(config.items(section)))
+        else:
+            for section in config.sections():
+                self.update({section: items_to_dict(config.items(section))})
 
     def reload(self, env_file=''):
         self.flush(env_file)

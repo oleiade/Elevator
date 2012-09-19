@@ -61,8 +61,8 @@ class Worker(threading.Thread):
 class WorkersPool():
     def __init__(self, workers_count=4, **kwargs):
         env = Environment()
-        database_store = env['global']['database_store']
-        databases_storage = env['global']['databases_storage_path']
+        database_store = env['database_store']
+        databases_storage = env['databases_storage_path']
         self.databases = DatabasesHandler(database_store, databases_storage)
         self.pool = []
 
