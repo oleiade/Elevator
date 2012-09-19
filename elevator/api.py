@@ -153,7 +153,7 @@ class Handler(object):
 
     def DBConnect(self, db_name=None, *args, **kwargs):
         if (not db_name or
-            (db_name and (not db_name in self.databases['index']))):
+            not self.databases.exists(db_name)):
             error_msg = "Database %s doesn't exist" % db_name
             self.errors_logger.error(error_msg)
             return (FAILURE_STATUS,
@@ -174,7 +174,7 @@ class Handler(object):
         return status, content
 
     def DBDrop(self, db, db_name, *args, **kwargs):
-        if not db_name in self.databases['index']:
+        if not self.databases.exists(db_name):
             error_msg = "Database %s does not exist" % db_name
             self.errors_logger.error(error_msg)
             return (FAILURE_STATUS,

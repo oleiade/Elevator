@@ -102,18 +102,31 @@ class DatabasesHandler(dict):
         db_uid = self['index'].pop(db_name)
         db_path = self['paths_index'][db_uid]
 
-        try:
-            rmtree(db_path)
-        except IOError:
-            return (FAILURE_STATUS,
-                    [OS_ERROR, "Database %s path : %s, does not exist"])
-
         self['reverse_index'].pop(db_uid)
         self['paths_index'].pop(db_uid)
         self.pop(db_uid)
         self.store_remove(db_name)
 
+        try:
+            rmtree(db_path)
+        except OSError:
+            pass
+
         return SUCCESS_STATUS, None
 
+    def exists(self, db_name):
+        db_uid = self['index'][db_name] if db_name in self['index'] else None
+
+        if db_uid:
+            if os.path.exists(self['paths_index'][db_uid]):
+                return True
+            else:
+                self.drop(db_name)
+
+        return False
+
     def list(self):
-        return [db_name for db_name in self['index'].iterkeys()]
+        return [db_name for db_name
+                in [key for key
+                    in self['index'].iterkeys()]
+                if self.exists(db_name)]
