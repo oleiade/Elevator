@@ -41,7 +41,6 @@ class DatabasesHandler(dict):
 
         return store_datas
 
-
     def load(self):
         store_datas = self.extract_store_datas()
 
@@ -103,10 +102,15 @@ class DatabasesHandler(dict):
         db_uid = self['index'].pop(db_name)
         db_path = self['paths_index'][db_uid]
 
+        try:
+            rmtree(db_path)
+        except IOError:
+            return (FAILURE_STATUS,
+                    [OS_ERROR, "Database %s path : %s, does not exist"])
+
         self['reverse_index'].pop(db_uid)
         self['paths_index'].pop(db_uid)
         self.pop(db_uid)
-        rmtree(db_path)
         self.store_remove(db_name)
 
         return SUCCESS_STATUS, None
