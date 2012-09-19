@@ -5,6 +5,7 @@ import sys
 import zmq
 import logging
 
+
 from elevator import conf
 from elevator.env import Environment
 from elevator.backend import WorkersPool
@@ -31,7 +32,6 @@ def setup_loggers(activity_file, errors_file):
     errors_formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(funcName)s : %(message)s")
     errors_stream.setFormatter(errors_formatter)
     errors_logger.addHandler(errors_stream)
-
 
 
 def runserver(env):
@@ -75,8 +75,8 @@ def runserver(env):
 
 
 class ServerDaemon(Daemon):
-    def run(self, env):
-        super(self, Daemon).run()
+    def run(self):
+        env = Environment()  # Already bootstraped singleton obj
         while True:
             runserver(env)
 
