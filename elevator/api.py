@@ -4,9 +4,11 @@
 import leveldb
 import logging
 
+from .utils.patterns import destructurate
 from .constants import KEY_ERROR, TYPE_ERROR,\
                        VALUE_ERROR, RUNTIME_ERROR,\
-                       SUCCESS_STATUS, FAILURE_STATUS, WARNING_STATUS
+                       SUCCESS_STATUS, FAILURE_STATUS, WARNING_STATUS,\
+                       SIGNAL_BATCH_PUT, SIGNAL_BATCH_DELETE
 from .db import DatabaseOptions
 
 
@@ -142,10 +144,15 @@ class Handler(object):
 
     def Batch(self, db, collection, *args, **kwargs):
         batch = leveldb.WriteBatch()
+        batch_actions = {
+            SIGNAL_BATCH_PUT: batch.Put,
+            SIGNAL_BATCH_DELETE: batch.Delete,
+        }
 
         try:
-            for (key, value) in collection:
-                batch.Put(key, value)
+            for command in collection:
+                signal, args = destructurate(command)
+                batch_actions[signal](*args)
         except ValueError:
             return (FAILURE_STATUS,
                     [VALUE_ERROR, "Batch only accepts sequences (list, tuples,...)"])

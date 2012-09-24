@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
+from collections import Sequence
 
 # Enums beautiful python implementation
 # Used like this :
@@ -24,3 +22,14 @@ class Singleton(type):
         if cls.instance is None:
             cls.instance = super(Singleton, cls).__call__(*args, **kw)
         return cls.instance
+
+
+def destructurate(container):
+    class DestructurationError(Exception):
+        pass
+
+    if isinstance(container, Sequence):
+        return container[0], container[1:]
+    else:
+        raise DestructurationError("Can't destructurate a non-sequence container")
+    return container
