@@ -156,6 +156,9 @@ class Handler(object):
         except ValueError:
             return (FAILURE_STATUS,
                     [VALUE_ERROR, "Batch only accepts sequences (list, tuples,...)"])
+        except TypeError:
+            return (FAILURE_STATUS,
+                    [TYPE_ERROR, "Invalid type supplied"])
         db.Write(batch)
 
         return SUCCESS_STATUS, None
