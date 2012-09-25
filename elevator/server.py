@@ -4,7 +4,7 @@
 import sys
 import zmq
 import logging
-
+import procname
 
 from elevator import conf
 from elevator.env import Environment
@@ -14,6 +14,16 @@ from elevator.utils.daemon import Daemon
 
 
 ARGS = conf.init_parser().parse_args(sys.argv[1:])
+
+
+def setup_process_name(args):
+    endpoint = ' {0}://{1}:{2} '.format(args.protocol,
+                                        args.bind,
+                                        args.port)
+    config = ' --config {0} '.format(args.config)
+    process_name = 'elevator' + endpoint + config
+
+    procname.setprocname(process_name)
 
 
 def setup_loggers(activity_file, errors_file):
@@ -87,6 +97,7 @@ def main():
     # will point on this one, and conf will be
     # present in it yet.
     env = Environment(ARGS.config)
+    setup_process_name(ARGS)
 
     if ARGS.daemon:
         server_daemon = ServerDaemon('/tmp/elevator.pid')
