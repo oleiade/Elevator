@@ -19,7 +19,7 @@ class DatabaseOptions(dict):
         self['block_size'] = 4096
         self['max_open_files'] = 1000
 
-        for key, value in kwargs:
+        for key, value in kwargs.iteritems():
             if key in self:
                 self[key] = value
 
@@ -66,11 +66,16 @@ class DatabasesHandler(dict):
         json.dump(store_datas, open(self.store, 'w'))
 
     def add(self, db_name, db_options=None):
-        new_db_name = db_name
+        db_options = DatabaseOptions(db_options) or DatabaseOptions
+        db_name_is_path = db_name.startswith('.') or ('/' in db_name)
+        is_abspath = lambda: not db_name.startswith('.') and ('/' in db_name)
 
         # if db_name is a full path too, use it as name and path
         # in the same time
-        if (not new_db_name.startswith('.')) and ('/' in new_db_name):
+        if db_name_is_path:
+            if not is_abspath():
+                return (FAILURE_STATUS,
+                        [KEY_ERROR, "Canno't create database from relative path"])
             try:
                 new_db_path = db_name
                 if not os.path.exists(new_db_path):
@@ -78,23 +83,22 @@ class DatabasesHandler(dict):
             except OSError as e:
                 return (FAILURE_STATUS,
                         [OS_ERROR, e.strerror])
-        elif (new_db_name.startswith('.') or ('/' in new_db_name)):
-            return (FAILURE_STATUS,
-                    [KEY_ERROR, "Canno't create database from relative path"])
         else:
-            new_db_path = os.path.join(self.dest, new_db_name)
+            new_db_path = os.path.join(self.dest, db_name)
 
-        new_db_desc = {
-            'path': os.path.join(self.dest, new_db_name),
-            'uid': str(uuid.uuid4()),
-            'options': db_options if db_options is not None else DatabaseOptions(),
-        }
-        self.store_update(new_db_name, new_db_desc)
+        path = new_db_path
+        uid = str(uuid.uuid4())
+        options = db_options
+        self.store_update(db_name, {
+            'path': path,
+            'uid': uid,
+            'options': options,
+        })
 
-        self['index'].update({new_db_name: new_db_desc['uid']})
-        self['reverse_index'].update({new_db_desc['uid']: new_db_name})
-        self['paths_index'].update({new_db_desc['uid']: new_db_desc['path']})
-        self.update({new_db_desc['uid']: leveldb.LevelDB(new_db_desc['path'], **new_db_desc['options'])})
+        self['index'].update({db_name: uid})
+        self['reverse_index'].update({uid: db_name})
+        self['paths_index'].update({uid: path})
+        self.update({uid: leveldb.LevelDB(path, **options)})
 
         return SUCCESS_STATUS, None
 
