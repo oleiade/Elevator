@@ -31,3 +31,9 @@ asc_sorted = lambda seq: all(seq[i] <= seq[i + 1] for i in xrange(len(seq) - 1))
 
 # idem descending
 desc_sorted = lambda seq: all(seq[i] >= seq[i + 1] for i in xrange(len(seq) - 1))
+
+# Convert bytes to Mo
+from_bytes_to_mo = lambda bytes: bytes / 1048576
+
+#Convert Mo to bytes
+from_mo_to_bytes = lambda mo: mo * 1048576

@@ -5,8 +5,10 @@ import ujson as json
 
 from shutil import rmtree
 
+from .env import Environment
 from .constants import FAILURE_STATUS, SUCCESS_STATUS,\
-                       OS_ERROR, KEY_ERROR
+                       OS_ERROR, KEY_ERROR, RUNTIME_ERROR
+from .utils.snippets import from_bytes_to_mo
 
 
 class DatabaseOptions(dict):
@@ -26,12 +28,33 @@ class DatabaseOptions(dict):
 
 class DatabasesHandler(dict):
     def __init__(self, store, dest, *args, **kwargs):
+        self.env = Environment()
         self['index'] = {}
         self['reverse_index'] = {}
         self['paths_index'] = {}
         self.dest = dest
         self.store = store
+
+        self._global_cache_size = None
+
         self.load()
+
+    @property
+    def global_cache_size(self):
+        store_datas = self.extract_store_datas()
+        max_caches = [int(db["options"]["block_cache_size"]) for db
+                      in store_datas.itervalues()]
+
+        return sum([from_bytes_to_mo(x) for x in max_caches])
+
+    def _disposable_cache(self, new_cache_size):
+        next_cache_size = self.global_cache_size + from_bytes_to_mo(new_cache_size)
+        ratio = self.env["global"]["max_cache_size"] - next_cache_size
+
+        # Both values are in
+        if ratio < 0:
+            return (False, ratio)
+        return (True, ratio)
 
     def extract_store_datas(self):
         try:
@@ -66,12 +89,18 @@ class DatabasesHandler(dict):
         json.dump(store_datas, open(self.store, 'w'))
 
     def add(self, db_name, db_options=None):
-        db_options = DatabaseOptions(db_options) or DatabaseOptions
+        db_options = db_options or DatabaseOptions()
+        cache_status, ratio = self._disposable_cache(db_options["block_cache_size"])
+        if not cache_status:
+            return (FAILURE_STATUS,
+                    [RUNTIME_ERROR,
+                     "Not enough disposable cache memory "
+                     "%d Mo missing" % ratio])
+
         db_name_is_path = db_name.startswith('.') or ('/' in db_name)
         is_abspath = lambda: not db_name.startswith('.') and ('/' in db_name)
 
-        # if db_name is a full path too, use it as name and path
-        # in the same time
+        # Handle case when a db is a path
         if db_name_is_path:
             if not is_abspath():
                 return (FAILURE_STATUS,
