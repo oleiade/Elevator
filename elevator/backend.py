@@ -1,3 +1,4 @@
+import sys
 import zmq
 import threading
 
@@ -6,7 +7,7 @@ from time import sleep
 from .constants import FAILURE_STATUS
 from .env import Environment
 from .api import Handler
-from .message import Request, RequestFormatError, Response
+from .message import Request, MessageFormatError, Response
 from .db import DatabasesHandler
 from .utils.patterns import enum
 
@@ -36,7 +37,10 @@ class Worker(threading.Thread):
             self.processing = True
 
             try:
+                import msgpack
+                print msgpack.unpackb(msg)
                 message = Request(msg)
+                print message
             except RequestFormatError:
                 response = Response(msg_id, status=FAILURE_STATUS, datas=None)
                 self.socket.send_multipart(response)
