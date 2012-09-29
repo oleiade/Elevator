@@ -37,11 +37,8 @@ class Worker(threading.Thread):
             self.processing = True
 
             try:
-                import msgpack
-                print msgpack.unpackb(msg)
                 message = Request(msg)
-                print message
-            except RequestFormatError:
+            except MessageFormatError:
                 response = Response(msg_id, status=FAILURE_STATUS, datas=None)
                 self.socket.send_multipart(response)
                 continue
