@@ -30,8 +30,16 @@ class Response(tuple):
     def __new__(cls, id, *args, **kwargs):
         response = {
             'STATUS': kwargs.pop('status', 0),
-            'DATAS': kwargs.pop('datas', None)
+            'DATAS': kwargs.pop('datas', [])
         }
 
+        response['DATAS'] = cls._format_datas(response['DATAS'])
         msg = [id, msgpack.packb(response)]
         return tuple.__new__(cls, msg)
+
+    @classmethod
+    def _format_datas(cls, datas):
+        if datas and not isinstance(datas, (tuple, list)):
+            datas = [datas]
+        return datas
+
