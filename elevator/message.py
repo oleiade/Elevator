@@ -41,5 +41,5 @@ class Response(tuple):
     def _format_datas(cls, datas):
         if datas and not isinstance(datas, (tuple, list)):
             datas = [datas]
-        return datas
+        return [unicode(d) for d in datas]
 
