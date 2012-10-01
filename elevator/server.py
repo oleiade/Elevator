@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import sys
+import traceback
 import zmq
 import logging
 import procname
@@ -44,7 +45,20 @@ def setup_loggers(activity_file, errors_file):
     errors_logger.addHandler(errors_stream)
 
 
+def log_uncaught_exceptions(ex_cls, ex, tb):
+    errors_logger = logging.getLogger("errors_logger")
+
+    # Log into errors log
+    errors_logger.critical(''.join(traceback.format_tb(tb)))
+    errors_logger.critical('{0}: {1}'.format(ex_cls, ex))
+
+    # Log into stderr
+    logging.critical(''.join(traceback.format_tb(tb)))
+    logging.critical('{0}: {1}'.format(ex_cls, ex))
+
+
 def runserver(env):
+    sys.excepthook = log_uncaught_exceptions  # Log every uncaught exceptions
     args = ARGS
 
     activity_log = env['global'].pop('activity_log', '/var/log/elevator.log')
