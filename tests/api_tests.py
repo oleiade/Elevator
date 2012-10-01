@@ -10,6 +10,8 @@ from elevator.db import DatabasesHandler
 from elevator.constants import *
 from elevator.message import Request
 
+from .fakers import gen_test_env
+
 
 class ApiTests(unittest2.TestCase):
     def _bootstrap_db(self, db):
@@ -17,6 +19,7 @@ class ApiTests(unittest2.TestCase):
             db.Put(str(val), str(val))
 
     def setUp(self):
+        self.env = gen_test_env()
         self.databases = DatabasesHandler('/tmp/store.json', '/tmp')
         self.default_db_uid = self.databases['index']['default']
         self._bootstrap_db(self.databases[self.default_db_uid])
@@ -26,128 +29,87 @@ class ApiTests(unittest2.TestCase):
         shutil.rmtree('/tmp/default')
         os.remove('/tmp/store.json')
 
+    def request_message(self, command, args, db_uid=None):
+        db_uid = db_uid or self.default_db_uid
+        return Request(msgpack.packb({
+            'DB_UID': db_uid,
+            'COMMAND': command,
+            'ARGS': args,
+        }))
+
     def test_command_with_existing_command(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'GET',
-            ['1'],
-        ]))
+        message = self.request_message('GET', ['1'])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertNotEqual(content, None)
 
     def test_command_with_non_existing_command(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'COTCOT',
-            ['testarg'],
-        ]))
+        message = self.request_message('COTCOT', ['testarg'])
         status, content = self.handler.command(message)
         self.assertEqual(status, FAILURE_STATUS)
         self.assertEqual(len(content), 2)
         self.assertEqual(content[0], KEY_ERROR)
 
     def test_command_with_invalid_db_uid(self):
-        message = Request(msgpack.packb([
-            '123456',
-            'PUT',
-            ['1', '1'],
-        ]))
+        message = self.request_message('PUT', ['1', '1'], db_uid='failinguid')
         status, content = self.handler.command(message)
         self.assertEqual(status, FAILURE_STATUS)
         self.assertEqual(len(content), 2)
         self.assertEqual(content[0], RUNTIME_ERROR)
 
     def test_get_of_existing_key(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'GET',
-            ['1'],
-        ]))
+        message = self.request_message('GET', ['1'])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, '1')
-        
+
     def test_get_of_non_existing_key(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'GET',
-            ['abc123']
-        ]))
+        message = self.request_message('GET', ['abc123'])
         status, content = self.handler.command(message)
         self.assertEqual(status, FAILURE_STATUS)
         self.assertEqual(len(content), 2)
         self.assertEqual(content[0], KEY_ERROR)
 
     def test_mget_of_existing_keys(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'MGET',
-            [['1', '2', '3']],
-        ]))
+        message = self.request_message('MGET', [['1', '2', '3']])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
-        self.assertEqual(content, [['1', '1'], ['2', '2'], ['3', '3'],])
+        self.assertEqual(content, [['1', '1'], ['2', '2'], ['3', '3'], ])
 
     def test_mget_of_not_fully_existing_keys(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'MGET',
-            [['1', '2', 'touptoupidou']],
-        ]))
+        message = self.request_message('MGET', [['1', '2', 'touptoupidou']])
         status, content = self.handler.command(message)
-        self.assertEqual(status, FAILURE_STATUS)
-        self.assertEqual(len(content), 2)
-        self.assertEqual(content[0], KEY_ERROR)        
+        self.assertEqual(status, WARNING_STATUS)
+        self.assertEqual(len(content), 3)
 
     def test_put_of_valid_key(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'PUT',
-            ['a', '1']
-        ]))
+        message = self.request_message('PUT', ['a', '1'])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
 
     def test_put_of_existing_key(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'PUT',
-            ['a', 1]
-        ]))
+        message = self.request_message('PUT', ['a', 1])
         status, content = self.handler.command(message)
         self.assertEqual(status, FAILURE_STATUS)
         self.assertEqual(len(content), 2)
         self.assertEqual(content[0], TYPE_ERROR)
 
     def test_delete(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'DELETE',
-            ['9']
-        ]))
+        message = self.request_message('DELETE', ['9'])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
 
     def test_range_with_to_key(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'RANGE',
-            ['1', '2']
-        ]))
+        message = self.request_message('RANGE', ['1', '2'])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content[0], ('1', '1'))
         self.assertEqual(content[1], ('2', '2'))
-    
-    def test_ramge_with_limit(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'RANGE',
-            ['1', 3]
-        ]))
+
+    def test_range_with_limit(self):
+        message = self.request_message('RANGE', ['1', 3])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content[0], ('1', '1'))
@@ -155,71 +117,49 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(content[2], ('3', '3'))
 
     def test_batch_with_valid_collection(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'BATCH',
-            [[('a', 'a'), ('b', 'b'), ('c', 'c'),]],
-        ]))
+        message = self.request_message('BATCH', args=[
+            [(SIGNAL_BATCH_PUT, 'a', 'a'),
+             (SIGNAL_BATCH_PUT, 'b', 'b'),
+             (SIGNAL_BATCH_PUT, 'c', 'c')],
+        ])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
 
     def test_batch_with_invalid_collection(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'BATCH',
-            [{'a': 'a', 'b': 'b', 'c': 'c'},],
-        ]))
+        message = self.request_message('BATCH', [
+            {'a': 'a', 'b': 'b', 'c': 'c'},
+        ])
         status, content = self.handler.command(message)
         self.assertEqual(status, FAILURE_STATUS)
-        self.assertEqual(content[0], VALUE_ERROR)
+        self.assertEqual(content[0], SIGNAL_ERROR)
 
     def test_connect_to_valid_database(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'DBCONNECT',
-            ['default'],
-        ]))
+        message = self.request_message('DBCONNECT', ['default'])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertIsNotNone(content)
 
     def test_connect_to_invalid_database(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'DBCONNECT',
-            ['dadaislikeadad'],
-        ]))
+        message = self.request_message('DBCONNECT', ['dadaislikeadad'])
         status, content = self.handler.command(message)
         self.assertEqual(status, FAILURE_STATUS)
-        self.assertEqual(content[0], KEY_ERROR)
+        self.assertEqual(content[0], DATABASE_ERROR)
 
     def test_create_valid_db(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'DBCREATE',
-            ['testdb'],
-        ]))
+        message = self.request_message('DBCREATE', ['testdb'])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
-        self.assertEqual(content, None)        
+        self.assertEqual(content, None)
 
     def test_create_already_existing_db(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'DBCREATE',
-            ['default'],
-        ]))
+        message = self.request_message('DBCREATE', ['default'])
         status, content = self.handler.command(message)
         self.assertEqual(status, FAILURE_STATUS)
-        self.assertEqual(content[0], KEY_ERROR)
+        self.assertEqual(content[0], DATABASE_ERROR)
 
     def test_drop_valid_db(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'DBDROP',
-            ['default'],
-        ]))
+        message = self.request_message('DBDROP', ['default'])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
@@ -229,21 +169,13 @@ class ApiTests(unittest2.TestCase):
         os.mkdir('/tmp/default')
 
     def test_drop_non_existing_db(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'DBDROP',
-            ['testdb'],
-        ]))
+        message = self.request_message('DBDROP', ['testdb'])
         status, content = self.handler.command(message)
         self.assertEqual(status, FAILURE_STATUS)
-        self.assertEqual(content[0], KEY_ERROR)
+        self.assertEqual(content[0], DATABASE_ERROR)
 
     def test_list_db(self):
-        message = Request(msgpack.packb([
-            self.default_db_uid,
-            'DBLIST',
-            [],
-        ]))
+        message = self.request_message('DBLIST', [])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(len(content), 1)
