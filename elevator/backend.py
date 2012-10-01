@@ -22,6 +22,8 @@ class Worker(threading.Thread):
         self.env = Environment()
         self.socket = self.zmq_context.socket(zmq.XREQ)
         self.handler = Handler(databases)
+        self.processing = False
+        self.sleep_time = 0.1
 
     def run(self):
         self.socket.connect('inproc://elevator')
@@ -29,9 +31,15 @@ class Worker(threading.Thread):
 
         while (self.state == self.STATES.RUNNING):
             try:
-                msg_id, msg = self.socket.recv_multipart()
-            except zmq.ZMQError:
-                self.state = self.STATES.STOPPED
+                msg_id, msg = self.socket.recv_multipart(flags=zmq.NOBLOCK)
+                print(msg_id, msg)
+                if msg is None:
+                    continue
+            except zmq.ZMQError as e:
+                if e.errno == zmq.EAGAIN:
+                    sleep(self.sleep_time)
+                else:
+                    self.state = self.STATES.STOPPED
                 continue
 
             self.processing = True
@@ -47,15 +55,12 @@ class Worker(threading.Thread):
             # command in leveldb
             status, datas = self.handler.command(message, env=self.env)
             response = Response(msg_id, status=status, datas=datas)
-            self.socket.send_multipart(response)
+            self.socket.send_multipart(response, zmq.NOBLOCK)
             self.processing = False
 
     def close(self):
-        self.running = False
-
-        while self.processing:
-            sleep(1)
-
+        self.state = self.STATES.STOPPED
+        self.join()
         self.socket.close()
 
 
@@ -76,7 +81,6 @@ class WorkersPool():
         for worker in self.pool:
             worker.close()
 
-        del self.pool
         self.socket.close()
 
     def init_workers(self, count):
