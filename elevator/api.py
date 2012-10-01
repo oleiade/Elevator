@@ -6,7 +6,7 @@ import logging
 
 from .utils.patterns import destructurate
 from .constants import KEY_ERROR, TYPE_ERROR, DATABASE_ERROR,\
-                       VALUE_ERROR, RUNTIME_ERROR,\
+                       VALUE_ERROR, RUNTIME_ERROR, SIGNAL_ERROR,\
                        SUCCESS_STATUS, FAILURE_STATUS, WARNING_STATUS,\
                        SIGNAL_BATCH_PUT, SIGNAL_BATCH_DELETE
 from .db import DatabaseOptions
@@ -153,6 +153,9 @@ class Handler(object):
             for command in collection:
                 signal, args = destructurate(command)
                 batch_actions[signal](*args)
+        except KeyError:  # Unrecognized signal
+            return (FAILURE_STATUS,
+                    [SIGNAL_ERROR, "Unrecognized signal received : %r" % signal])
         except ValueError:
             return (FAILURE_STATUS,
                     [VALUE_ERROR, "Batch only accepts sequences (list, tuples,...)"])
