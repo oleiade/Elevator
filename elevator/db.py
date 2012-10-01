@@ -60,7 +60,7 @@ class DatabasesHandler(dict):
     def extract_store_datas(self):
         try:
             store_datas = json.load(open(self.store, 'r'))
-        except IOError:
+        except (IOError, ValueError):
             store_datas = {}
 
         return store_datas
