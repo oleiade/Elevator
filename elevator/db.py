@@ -49,7 +49,7 @@ class DatabasesHandler(dict):
 
     def _disposable_cache(self, new_cache_size):
         next_cache_size = self.global_cache_size + from_bytes_to_mo(new_cache_size)
-        ratio = self.env["global"]["max_cache_size"] - next_cache_size
+        ratio = int(self.env["global"]["max_cache_size"]) - next_cache_size
 
         # Both values are in
         if ratio < 0:
