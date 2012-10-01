@@ -5,7 +5,7 @@ import leveldb
 import logging
 
 from .utils.patterns import destructurate
-from .constants import KEY_ERROR, TYPE_ERROR,\
+from .constants import KEY_ERROR, TYPE_ERROR, DATABASE_ERROR,\
                        VALUE_ERROR, RUNTIME_ERROR,\
                        SUCCESS_STATUS, FAILURE_STATUS, WARNING_STATUS,\
                        SIGNAL_BATCH_PUT, SIGNAL_BATCH_DELETE
@@ -169,7 +169,7 @@ class Handler(object):
             error_msg = "Database %s doesn't exist" % db_name
             self.errors_logger.error(error_msg)
             return (FAILURE_STATUS,
-                    [KEY_ERROR, error_msg])
+                    [DATABASE_ERROR, error_msg])
 
         return SUCCESS_STATUS, self.databases['index'][db_name]
 
@@ -180,7 +180,7 @@ class Handler(object):
             error_msg = "Database %s already exists" % db_name
             self.errors_logger.error(error_msg)
             return (FAILURE_STATUS,
-                    [KEY_ERROR, error_msg])
+                    [DATABASE_ERROR, error_msg])
 
         status, content = self.databases.add(db_name, db_options)
         return status, content
@@ -190,7 +190,7 @@ class Handler(object):
             error_msg = "Database %s does not exist" % db_name
             self.errors_logger.error(error_msg)
             return (FAILURE_STATUS,
-                    [KEY_ERROR, error_msg])
+                    [DATABASE_ERROR, error_msg])
 
         status, content = self.databases.drop(db_name)
         return status, content

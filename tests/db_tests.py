@@ -7,7 +7,7 @@ import shutil
 
 from elevator.utils.snippets import from_mo_to_bytes
 from elevator.constants import SUCCESS_STATUS, FAILURE_STATUS,\
-                               KEY_ERROR, RUNTIME_ERROR
+                               KEY_ERROR, RUNTIME_ERROR, DATABASE_ERROR
 from elevator.db import DatabasesHandler, DatabaseOptions
 
 from .fakers import gen_test_env
@@ -64,6 +64,31 @@ class DatabasesTest(unittest2.TestCase):
         self.handler.store_remove(db_name)
         store_datas = json.load(open(self.handler.store, 'r'))
 
+        self.assertNotIn(db_name, store_datas)
+
+    def test_drop_existing_db(self):
+        db_name = 'default'  # Automatically created on startup
+        status, content = self.handler.drop(db_name)
+
+        self.assertEqual(status, SUCCESS_STATUS)
+        self.assertEqual(content, None)
+
+        store_datas = json.load(open(self.handler.store, 'r'))
+        self.assertNotIn(db_name, store_datas)
+
+    def test_remove_existing_db_which_files_were_erased(self):
+        db_name = 'testdb'  # Automatically created on startup
+        db_path = '/tmp/dbs/testdb'
+        status, content = self.handler.add(db_name)
+        shutil.rmtree(db_path)
+        status, content = self.handler.drop(db_name)
+
+        self.assertEqual(status, FAILURE_STATUS)
+        self.assertIsInstance(content, list)
+        self.assertEqual(len(content), 2)
+        self.assertEqual(content[0], DATABASE_ERROR)
+
+        store_datas = json.load(open(self.handler.store, 'r'))
         self.assertNotIn(db_name, store_datas)
 
     def test_add_from_db_name_without_options_passed(self):
@@ -145,7 +170,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(status, FAILURE_STATUS)
         self.assertIsInstance(content, list)
         self.assertEqual(len(content), 2)
-        self.assertEqual(content[0], KEY_ERROR)
+        self.assertEqual(content[0], DATABASE_ERROR)
 
         store_datas = json.load(open(self.handler.store, 'r'))
         self.assertNotIn(db_path, store_datas)
@@ -162,7 +187,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertIsNotNone(content)
         self.assertIsInstance(content, list)
         self.assertEqual(len(content), 2)
-        self.assertEqual(content[0], RUNTIME_ERROR)
+        self.assertEqual(content[0], DATABASE_ERROR)
 
         self.env["global"]["max_cache_size"] = orig_value
 

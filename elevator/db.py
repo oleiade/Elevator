@@ -7,7 +7,8 @@ from shutil import rmtree
 
 from .env import Environment
 from .constants import FAILURE_STATUS, SUCCESS_STATUS,\
-                       OS_ERROR, KEY_ERROR, RUNTIME_ERROR
+                       OS_ERROR, KEY_ERROR, RUNTIME_ERROR,\
+                       DATABASE_ERROR
 from .utils.snippets import from_bytes_to_mo
 
 
@@ -93,7 +94,7 @@ class DatabasesHandler(dict):
         cache_status, ratio = self._disposable_cache(db_options["block_cache_size"])
         if not cache_status:
             return (FAILURE_STATUS,
-                    [RUNTIME_ERROR,
+                    [DATABASE_ERROR,
                      "Not enough disposable cache memory "
                      "%d Mo missing" % ratio])
 
@@ -104,7 +105,7 @@ class DatabasesHandler(dict):
         if db_name_is_path:
             if not is_abspath():
                 return (FAILURE_STATUS,
-                        [KEY_ERROR, "Canno't create database from relative path"])
+                        [DATABASE_ERROR, "Canno't create database from relative path"])
             try:
                 new_db_path = db_name
                 if not os.path.exists(new_db_path):
@@ -143,7 +144,9 @@ class DatabasesHandler(dict):
         try:
             rmtree(db_path)
         except OSError:
-            pass
+            return (FAILURE_STATUS,
+                    [DATABASE_ERROR,
+                    "Cannot drop db : %s, files not found"])
 
         return SUCCESS_STATUS, None
 
