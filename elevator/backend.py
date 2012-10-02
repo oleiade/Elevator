@@ -1,5 +1,5 @@
-import sys
 import zmq
+import logging
 import threading
 
 from time import sleep
@@ -24,6 +24,7 @@ class Worker(threading.Thread):
         self.handler = Handler(databases)
         self.processing = False
         self.sleep_time = 0.1
+        self.errors_logger = logging.getLogger("errors_logger")
 
     def run(self):
         self.socket.connect('inproc://elevator')
@@ -32,14 +33,13 @@ class Worker(threading.Thread):
         while (self.state == self.STATES.RUNNING):
             try:
                 msg_id, msg = self.socket.recv_multipart(flags=zmq.NOBLOCK)
-                print(msg_id, msg)
-                if msg is None:
-                    continue
             except zmq.ZMQError as e:
                 if e.errno == zmq.EAGAIN:
                     sleep(self.sleep_time)
                 else:
                     self.state = self.STATES.STOPPED
+                    self.errors_logger.warning('Worker %r encountered and error,'
+                                               ' and was forced to stop' % self.ident)
                 continue
 
             self.processing = True
