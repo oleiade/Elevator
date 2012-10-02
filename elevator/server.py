@@ -71,7 +71,7 @@ def runserver(env):
                   errors_log)
     activity_logger = logging.getLogger("activity_logger")
 
-    workers_pool = WorkersPool(args.workers)
+    workers_pool = WorkersPool(args['workers'])
     proxy = Proxy('%s://%s:%s' % (args['protocol'], args['bind'], args['port']))
 
     poll = zmq.Poller()
@@ -119,7 +119,7 @@ def main():
     # present in it yet.
     env = Environment(ARGS.config)
     env.load_from_args('args', ARGS._get_kwargs())
-    setup_process_name(ARGS)
+    setup_process_name(env)
 
     if env['args']['daemon'] is True:
         server_daemon = ServerDaemon('/tmp/elevator.pid')
