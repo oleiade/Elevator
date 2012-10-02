@@ -41,7 +41,7 @@ See config/elevator.conf for an example of Elevator configuration.
 Example:
 ::
     elevator --help
-    usage: elevator [-h] [--daemon] [--config CONFIG] [--bind BIND] [--port PORT]
+    usage: elevator [-h] [--daemon] [--config CONFIG FILE] [--bind BIND] [--port PORT] [--workers WORKERS COUNT]
 
     Elevator command line manager
 
