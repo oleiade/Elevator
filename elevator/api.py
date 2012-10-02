@@ -51,13 +51,13 @@ class Handler(object):
             return (FAILURE_STATUS,
                     [KEY_ERROR, error_msg])
 
-    def MGet(self, db, keys, *args, **kwargs):
+    def MGet(self, db, keys, fill_cache, *args, **kwargs):
         status = SUCCESS_STATUS
         value = []
 
         for key in keys:
             try:
-                value.append([key, db.Get(key)])
+                value.append([key, db.Get(key, fill_cache=fill_cache)])
             except KeyError:
                 warning_msg = "Key %r does not exist" % key
                 self.errors_logger.warning(warning_msg)
