@@ -17,11 +17,12 @@ from elevator.utils.daemon import Daemon
 ARGS = conf.init_parser().parse_args(sys.argv[1:])
 
 
-def setup_process_name(args):
-    endpoint = ' {0}://{1}:{2} '.format(args.protocol,
-                                        args.bind,
-                                        args.port)
-    config = ' --config {0} '.format(args.config)
+def setup_process_name(env):
+    args = env['args']
+    endpoint = ' {0}://{1}:{2} '.format(args['protocol'],
+                                        args['bind'],
+                                        args['port'])
+    config = ' --config {0} '.format(args['config'])
     process_name = 'elevator' + endpoint + config
 
     procname.setprocname(process_name)
@@ -62,7 +63,7 @@ def log_uncaught_exceptions(e, paranoid=False):
 
 
 def runserver(env):
-    args = ARGS
+    args = env['args']
 
     activity_log = env['global'].pop('activity_log', '/var/log/elevator.log')
     errors_log = env['global'].pop('errors_log', '/var/log/elevator_errors.log')
@@ -71,7 +72,7 @@ def runserver(env):
     activity_logger = logging.getLogger("activity_logger")
 
     workers_pool = WorkersPool(args.workers)
-    proxy = Proxy('%s://%s:%s' % (args.protocol, args.bind, args.port))
+    proxy = Proxy('%s://%s:%s' % (args['protocol'], args['bind'], args['port']))
 
     poll = zmq.Poller()
     poll.register(workers_pool.socket, zmq.POLLIN)
@@ -79,7 +80,7 @@ def runserver(env):
 
     activity_logger.info('Elevator server started\n'
            'Ready to accept '
-           'connections on port %s' % args.port)
+           'connections on port %s' % args['port'])
 
     while True:
         try:
@@ -101,7 +102,7 @@ def runserver(env):
             activity_logger.info('Done')
             sys.exit(0)
         except Exception as e:
-            log_uncaught_exceptions(e, paranoid=args.paranoid)
+            log_uncaught_exceptions(e, paranoid=args['paranoid'])
 
 
 class ServerDaemon(Daemon):
@@ -117,9 +118,10 @@ def main():
     # will point on this one, and conf will be
     # present in it yet.
     env = Environment(ARGS.config)
+    env.load_from_args('args', ARGS._get_kwargs())
     setup_process_name(ARGS)
 
-    if ARGS.daemon:
+    if env['args']['daemon'] is True:
         server_daemon = ServerDaemon('/tmp/elevator.pid')
         server_daemon.start()
     else:
