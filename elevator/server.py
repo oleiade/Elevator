@@ -45,20 +45,23 @@ def setup_loggers(activity_file, errors_file):
     errors_logger.addHandler(errors_stream)
 
 
-def log_uncaught_exceptions(ex_cls, ex, tb):
+def log_uncaught_exceptions(e, paranoid=False):
     errors_logger = logging.getLogger("errors_logger")
+    tb = traceback.format_exc()
 
     # Log into errors log
-    errors_logger.critical(''.join(traceback.format_tb(tb)))
-    errors_logger.critical('{0}: {1}'.format(ex_cls, ex))
+    errors_logger.critical(''.join(tb))
+    errors_logger.critical('{0}: {1}'.format(type(e), e.message))
 
     # Log into stderr
-    logging.critical(''.join(traceback.format_tb(tb)))
-    logging.critical('{0}: {1}'.format(ex_cls, ex))
+    logging.critical(''.join(tb))
+    logging.critical('{0}: {1}'.format(type(e), e.message))
+
+    if paranoid:
+        sys.exit(1)
 
 
 def runserver(env):
-    sys.excepthook = log_uncaught_exceptions  # Log every uncaught exceptions
     args = ARGS
 
     activity_log = env['global'].pop('activity_log', '/var/log/elevator.log')
@@ -74,12 +77,12 @@ def runserver(env):
     poll.register(workers_pool.socket, zmq.POLLIN)
     poll.register(proxy.socket, zmq.POLLIN)
 
-    try:
-        activity_logger.info('Elevator server started\n'
-               'Ready to accept '
-               'connections on port %s' % args.port)
+    activity_logger.info('Elevator server started\n'
+           'Ready to accept '
+           'connections on port %s' % args.port)
 
-        while True:
+    while True:
+        try:
             sockets = dict(poll.poll())
             if proxy.socket in sockets:
                 if sockets[proxy.socket] == zmq.POLLIN:
@@ -90,12 +93,15 @@ def runserver(env):
                 if sockets[workers_pool.socket] == zmq.POLLIN:
                     msg = workers_pool.socket.recv_multipart()
                     proxy.socket.send_multipart(msg)
-    except KeyboardInterrupt:
-        activity_logger.info('Gracefully shuthing down workers')
-        del workers_pool
-        activity_logger.info('Stopping proxy')
-        del proxy
-    activity_logger.info('Done')
+        except KeyboardInterrupt:
+            activity_logger.info('Gracefully shuthing down workers')
+            del workers_pool
+            activity_logger.info('Stopping proxy')
+            del proxy
+            activity_logger.info('Done')
+            sys.exit(0)
+        except Exception as e:
+            log_uncaught_exceptions(e, paranoid=args.paranoid)
 
 
 class ServerDaemon(Daemon):
