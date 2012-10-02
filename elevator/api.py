@@ -51,7 +51,7 @@ class Handler(object):
             return (FAILURE_STATUS,
                     [KEY_ERROR, error_msg])
 
-    def MGet(self, db, keys, fill_cache, *args, **kwargs):
+    def MGet(self, db, keys, fill_cache=False, *args, **kwargs):
         status = SUCCESS_STATUS
         value = []
 

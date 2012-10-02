@@ -7,8 +7,7 @@ from shutil import rmtree
 
 from .env import Environment
 from .constants import FAILURE_STATUS, SUCCESS_STATUS,\
-                       OS_ERROR, KEY_ERROR, RUNTIME_ERROR,\
-                       DATABASE_ERROR
+                       OS_ERROR, DATABASE_ERROR
 from .utils.snippets import from_bytes_to_mo
 
 
