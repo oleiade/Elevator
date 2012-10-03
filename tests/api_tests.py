@@ -37,6 +37,7 @@ class ApiTests(unittest2.TestCase):
             'ARGS': args,
         }))
 
+
     def test_command_with_existing_command(self):
         message = self.request_message('GET', ['1'])
         status, content = self.handler.command(message)
@@ -57,6 +58,7 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(len(content), 2)
         self.assertEqual(content[0], RUNTIME_ERROR)
 
+
     def test_get_of_existing_key(self):
         message = self.request_message('GET', ['1'])
         status, content = self.handler.command(message)
@@ -70,6 +72,7 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(len(content), 2)
         self.assertEqual(content[0], KEY_ERROR)
 
+
     def test_mget_of_existing_keys(self):
         message = self.request_message('MGET', [['1', '2', '3']])
         status, content = self.handler.command(message)
@@ -81,6 +84,7 @@ class ApiTests(unittest2.TestCase):
         status, content = self.handler.command(message)
         self.assertEqual(status, WARNING_STATUS)
         self.assertEqual(len(content), 3)
+
 
     def test_put_of_valid_key(self):
         message = self.request_message('PUT', ['a', '1'])
@@ -95,11 +99,13 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(len(content), 2)
         self.assertEqual(content[0], TYPE_ERROR)
 
+
     def test_delete(self):
         message = self.request_message('DELETE', ['9'])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
+
 
     def test_range_with_to_key(self):
         message = self.request_message('RANGE', ['1', '2'])
@@ -115,6 +121,18 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(content[0], ('1', '1'))
         self.assertEqual(content[1], ('2', '2'))
         self.assertEqual(content[2], ('3', '3'))
+
+    def test_range_of_len_one(self):
+        """Should still return a tuple of tuple"""
+        message = self.request_message('RANGE', ['1', '1'])
+        status, content = self.handler.command(message)
+        self.assertEqual(status, SUCCESS_STATUS)
+        self.assertEqual(len(content), 1)
+        self.assertIsInstance(content, (list, tuple))
+
+        self.assertIsInstance(content[0], (list, tuple))
+        self.assertEqual(len(content[0]), 2)
+
 
     def test_batch_with_valid_collection(self):
         message = self.request_message('BATCH', args=[
@@ -134,6 +152,7 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(status, FAILURE_STATUS)
         self.assertEqual(content[0], SIGNAL_ERROR)
 
+
     def test_connect_to_valid_database(self):
         message = self.request_message('DBCONNECT', ['default'])
         status, content = self.handler.command(message)
@@ -146,6 +165,7 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(status, FAILURE_STATUS)
         self.assertEqual(content[0], DATABASE_ERROR)
 
+
     def test_create_valid_db(self):
         message = self.request_message('DBCREATE', ['testdb'])
         status, content = self.handler.command(message)
@@ -157,6 +177,7 @@ class ApiTests(unittest2.TestCase):
         status, content = self.handler.command(message)
         self.assertEqual(status, FAILURE_STATUS)
         self.assertEqual(content[0], DATABASE_ERROR)
+
 
     def test_drop_valid_db(self):
         message = self.request_message('DBDROP', ['default'])
@@ -173,6 +194,7 @@ class ApiTests(unittest2.TestCase):
         status, content = self.handler.command(message)
         self.assertEqual(status, FAILURE_STATUS)
         self.assertEqual(content[0], DATABASE_ERROR)
+
 
     def test_list_db(self):
         message = self.request_message('DBLIST', [])
