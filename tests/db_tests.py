@@ -40,6 +40,21 @@ class DatabasesTest(unittest2.TestCase):
         self.handler.add('test_cache', db_options={'block_cache_size': (8 * (2 << 20))})
         self.assertEqual(self.handler.global_cache_size, 32)
 
+    def test_load(self):
+        db_name = 'testdb'
+        self.handler.add(db_name)
+
+        self.assertIn(db_name, self.handler['index'])
+        db_uid = self.handler['index'][db_name]
+        self.assertIn(db_uid, self.handler)
+
+        self.assertIn(db_uid, self.handler['reverse_index'])
+        self.assertEqual(self.handler['reverse_index'][db_uid], db_name)
+
+        self.assertIn(db_uid, self.handler['paths_index'])
+
+        self.assertIn('default', self.handler['index'])
+
     def test_store_update(self):
         db_name = 'test_db'
         db_desc = {

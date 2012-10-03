@@ -18,7 +18,7 @@ class RequestTest(unittest.TestCase):
 			'DB_UID': '123-456-789',
 			'COMMAND': 'GET',
 		})
-		
+
 		request = Request(request)
 
 	def test_valid_request(self):
@@ -90,7 +90,7 @@ class ResponseTest(unittest.TestCase):
 
 		first_unpacked_response = msgpack.unpackb(first_response[1])
 		second_unpacked_response = msgpack.unpackb(second_response[1])
-		
+
 		self.assertEqual(len(first_unpacked_response), 2)
 		self.assertEqual(len(second_unpacked_response), 2)
 		self.assertIsInstance(first_unpacked_response, dict)
@@ -100,4 +100,3 @@ class ResponseTest(unittest.TestCase):
 		self.assertEqual(first_unpacked_response['DATAS'], ({'res': 'res'}, ))
 		self.assertEqual(second_unpacked_response['DATAS'], ('unicodetest', ))
 
-		

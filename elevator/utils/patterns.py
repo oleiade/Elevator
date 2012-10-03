@@ -23,6 +23,9 @@ class Singleton(type):
             cls.instance = super(Singleton, cls).__call__(*args, **kw)
         return cls.instance
 
+    def __del__(cls, *args, **kw):
+        cls.instance is None
+
 
 def destructurate(container):
     class DestructurationError(Exception):

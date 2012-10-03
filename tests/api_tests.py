@@ -144,13 +144,25 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
 
-    def test_batch_with_invalid_collection(self):
+    def test_batch_with_invalid_signals(self):
         message = self.request_message('BATCH', [
-            {'a': 'a', 'b': 'b', 'c': 'c'},
+            [(-5, 'a', 'a'),
+             (-5, 'b', 'b'),
+             (-5, 'c', 'c')],
         ])
         status, content = self.handler.command(message)
         self.assertEqual(status, FAILURE_STATUS)
         self.assertEqual(content[0], SIGNAL_ERROR)
+
+    def test_batch_with_invalid_collection_datas_type(self):
+        message = self.request_message('BATCH', [
+            [(SIGNAL_BATCH_PUT, 'a', 1),
+             (SIGNAL_BATCH_PUT, 'b', 2),
+             (SIGNAL_BATCH_PUT, 'c', 3)],
+        ])
+        status, content = self.handler.command(message)
+        self.assertEqual(status, FAILURE_STATUS)
+        self.assertEqual(content[0], TYPE_ERROR)
 
 
     def test_connect_to_valid_database(self):
