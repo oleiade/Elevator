@@ -32,7 +32,7 @@
       <section>
         <div id="title">
           <h1>Elevator</h1>
-          <p>Minimalistic key/value store based on levelDB as a backend, zeromq as a network library and msgpack as a message serializer.</p>
+          <p>Key-Value store written in Python and based on levelDB, allows high performance on-disk bulk read/write.</p>
           <hr>
           <span class="credits left">Project maintained by <a href="https://github.com/oleiade">oleiade</a></span>
           <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></span>
@@ -42,8 +42,8 @@
 
 <h2>About</h2>
 
-<p>Minimalistic key/value store powered by levelDB and written in Python.
-Allows async, remote acces to a multithreaded leveldb backend. Handles multiple database access and storage. Elevator tries to sublimate leveldb amazing features (disk persistent fast writes/reads, batching system, [...]) by plugging it into a transparent rpc-like service.</p>
+<p>Key-Value store written in Python and based on levelDB, allows high performance on-disk bulk read/write.
+Allows async, remote acces to a multithreaded leveldb backend. Handles multiple concurrent database access and storage. Elevator tries to sublimate leveldb amazing features (disk persistent fast writes/reads, batching system, atomic updates[...]) by plugging it into a transparent rpc-ish service.</p>
 
 <p>Relies on the zeromq network library and msgpack serialization format, it is made to be portable between languages and platforms. See <em>message system</em></p>
 
@@ -73,17 +73,19 @@ python setup.py install
 <p><strong>Example:</strong></p>
 
 <div class="highlight"><pre>elevator --help
-usage: elevator <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--daemon<span class="o">]</span> <span class="o">[</span>--config CONFIG<span class="o">]</span> <span class="o">[</span>--bind BIND<span class="o">]</span> <span class="o">[</span>--port PORT<span class="o">]</span> <span class="o">[</span>--workers WORKERS COUNT<span class="o">]</span>
+usage: elevator <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--daemon<span class="o">]</span> <span class="o">[</span>--config<span class="o">]</span> <span class="o">[</span>--bind<span class="o">]</span> <span class="o">[</span>--port<span class="o">]</span>
+                <span class="o">[</span>--workers<span class="o">]</span> <span class="o">[</span>--paranoid<span class="o">]</span>
 
 Elevator <span class="nb">command </span>line manager
 
 optional arguments:
   -h, --help       show this <span class="nb">help </span>message and <span class="nb">exit</span>
   --daemon
-  --config      Path to elevator server config file, eventually
-  --bind        Ip to <span class="nb">bind </span>server to
-  --port        Port the server should listen on
-  --workers     How many workers should be spawned?
+  --config      Path to elevator server config file
+  --bind        Ip to <span class="nb">bind </span>server to, default is localhost
+  --port        Port the server should listen on, default is 4141
+  --workers     How many workers should be spawned? default is 4
+  --paranoid    Should it <span class="nb">exit </span>on unhandled exceptions, default is <span class="nb">false</span>
 </pre></div>
 
 <h3>Configuration</h3>
@@ -126,6 +128,13 @@ optional arguments:
 <span class="c"># Path to file were server warnings, errors, exceptions should be logged</span>
 <span class="na">errors_log</span> <span class="o">=</span> <span class="s">/var/log/elevator_errors.log</span>
 
+<span class="c"># Max global leveldb backends cache size in Mo. Note that each spawned leveldb</span>
+<span class="c"># backend by default has a max_cache_size. This LRU cache is used to preload</span>
+<span class="c"># in memory key that you have already fetch and accelerate random GET.</span>
+<span class="c"># In order not to overflow the memory, max_cache_size ensures every backends</span>
+<span class="c"># cache size cumulated does not exceed the provided value.</span>
+<span class="na">max_cache_size</span> <span class="o">=</span> <span class="s">1024</span>
+
 <span class="c"># Specify the path for the unix socket that will be used to listen for</span>
 <span class="c"># incoming connections. There is no default, so Elevator will not listen</span>
 <span class="c"># on a unix socket when not specified.</span>
@@ -135,37 +144,36 @@ optional arguments:
 
 <h3>Messages</h3>
 
-<p>Typically, Server and client communicates via a tcp:// socket handled by zeromq network library. Server spawns worker (threads) which it communicates with using an inproc:// method. Every messages passed between client and server, or server and it's workers are serialized using msgpack.</p>
+<p>Typically, Server and client communicates via a <code>tcp://</code> socket handled by zeromq network library. Server spawns worker (threads) which it communicates with using an <code>inproc://</code> method. Every messages passed between client and server, or server and it's workers are serialized using <strong>msgpack</strong>.</p>
 
-<p><strong>NOTA</strong> as Elevator uses XREP and XREQ sockets, every commands passed through sockets are signed with a client id prefixing every sent datas.</p>
+<p>As Elevator uses <strong>XREP</strong> and <strong>XREQ</strong> sockets, every commands passed through sockets are signed with a client id prefixing every sent datas. Queues messages in order to prevent overload.</p>
 
-<h4>Client/Server message format (Request)</h4>
+<p>In order to handle future features, like compression and chunking over huge packs of datas. Server socket is set to send <strong>multipart</strong> messages.</p>
+
+<h4>Client -&gt; Server messaging format (<strong>Request</strong>)</h4>
 
 <div class="highlight"><pre><span class="p">[</span>
-    <span class="s2">"database_uid"</span> <span class="err">:</span> <span class="s2">"Md5 hash : of the database name you're working on"</span>
-    <span class="s2">"command_code"</span> <span class="err">:</span> <span class="s2">"String : PUT or GET"</span>
-    <span class="s2">"command_args"</span> <span class="err">:</span> <span class="s2">"List : command arguments list"</span>
+    <span class="s">"database_uid"</span> <span class="p">:</span> <span class="s">"Md5 hash of the database name you're working on"</span>
+    <span class="s">"command_code"</span> <span class="p">:</span> <span class="n">PUT</span><span class="o">|</span><span class="n">GET</span><span class="o">|</span><span class="n">DELETE</span><span class="p">[</span><span class="o">...</span><span class="p">]</span>
+    <span class="s">"command_args"</span> <span class="p">:</span> <span class="s">"[ command arguments list ]"</span>
 <span class="p">]</span>
 </pre></div>
 
-<h4>Server/Client message format (Response)</h4>
+<h4>Server -&gt; Client messaging format (Response)</h4>
 
 <p><strong>If the command succeeded</strong></p>
 
-<div class="highlight"><pre><span class="p">[</span>
-    <span class="s2">"response_status"</span> <span class="err">:</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="s2">"resulting_datas"</span> <span class="err">:</span> <span class="s2">""</span><span class="p">,</span>
+<div class="highlight"><pre><span class="p">{</span>
+    <span class="s">"STATUS"</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s">"DATAS"</span> <span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">],</span>
 <span class="p">]</span>
 </pre></div>
 
 <p><strong>If the command failed</strong></p>
 
-<div class="highlight"><pre><span class="p">[</span>
-    <span class="s2">"response_status"</span> <span class="err">:</span> <span class="mi">-1</span><span class="p">,</span>
-    <span class="p">[</span>
-        <span class="s2">"error_code"</span> <span class="err">:</span> <span class="err">ERROR_CODE</span><span class="p">,</span>
-        <span class="s2">"error_message"</span> <span class="err">:</span> <span class="s2">"error message"</span><span class="p">,</span>
-    <span class="p">]</span>
+<div class="highlight"><pre><span class="p">{</span>
+    <span class="s">"STATUS"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="s">"DATAS"</span><span class="p">:</span> <span class="p">[</span><span class="s">"ERROR_CODE"</span><span class="p">,</span> <span class="s">"error message"</span><span class="p">],</span>
 <span class="p">]</span>
 </pre></div>
 
@@ -175,7 +183,11 @@ optional arguments:
 
 <p>Requesting to put 'key'/'value' pair.</p>
 
-<div class="highlight"><pre><span class="p">[</span><span class="s2">"theamazingdatabasewewannaupdatemd5hash"</span><span class="p">,</span> <span class="s2">"PUT"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"key"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">]]</span>
+<div class="highlight"><pre><span class="p">{</span>
+    <span class="s">"DB_UID"</span><span class="p">:</span> <span class="s">"theamazingdatabasewewannaupdatemd5hash"</span><span class="p">,</span>
+    <span class="s">"COMMAND"</span><span class="p">:</span> <span class="s">"PUT"</span><span class="p">,</span>
+    <span class="s">"ARGS"</span><span class="p">:</span> <span class="p">[</span><span class="s">"key"</span><span class="p">,</span> <span class="s">"value"</span><span class="p">],</span>
+<span class="p">}</span>
 </pre></div>
 
 <p><em>would return</em></p>
@@ -184,14 +196,20 @@ optional arguments:
 
 <p>Value has been succesfully added, server responds everything went fine with the SUCCESS_STATUS, and null as return value.</p>
 
-<div class="highlight"><pre><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="kc">null</span><span class="p">]</span>
+<div class="highlight"><pre><span class="p">{</span>
+    <span class="s">"STATUS"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s">"DATAS"</span><span class="p">:</span> <span class="n">null</span>
+<span class="p">}</span>
 </pre></div>
 
 <p><strong>Failure (and sheepish)</strong></p>
 
 <p>Let's say you tried to put an int into Elevator (which he can't as it only handles strings). Note that ERROR_CODE value is 2, which represents a VALUE_ERROR, see <strong>Error types codes</strong></p>
 
-<div class="highlight"><pre><span class="p">[</span><span class="mi">-1</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="s2">"Invalid value type supplied"</span><span class="p">]]</span>
+<div class="highlight"><pre><span class="p">{</span>
+    <span class="nt">"STATUS"</span><span class="p">:</span> <span class="mi">-1</span><span class="p">,</span>
+    <span class="nt">"DATAS"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"2"</span><span class="p">,</span> <span class="s2">"Invalid value type supplied"</span><span class="p">],</span>
+<span class="p">}</span>
 </pre></div>
 
 <h3>Constants</h3>
@@ -200,21 +218,36 @@ optional arguments:
 
 <p>Server responds to some constants whenever it comes to give it commands. In the following listing, dbuid represents the database unique uid to operate the command over, it can be retrieved from a database name via 'CONNECT'. And batch_uid represents a valid server-side created batch (using BCREATE) to run commands over.</p>
 
-<div class="highlight"><pre><span class="s">'GET'</span><span class="p">,</span> <span class="p">[</span><span class="n">dbuid</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>  <span class="c"># Get a value from a db</span>
-<span class="s">'PUT'</span><span class="p">,</span> <span class="p">[</span><span class="n">dbuid</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">]</span>  <span class="c"># Insert a value in a db</span>
-<span class="s">'DELETE'</span><span class="p">,</span> <span class="p">[</span><span class="n">dbuid</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>  <span class="c"># Delete a value from a db</span>
-<span class="s">'RANGE'</span><span class="p">,</span> <span class="p">[</span><span class="n">dbuid</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">limit</span><span class="p">]</span>  <span class="c"># Retrieve a range of key/value pair from a db</span>
-<span class="s">'BPUT'</span><span class="p">,</span> <span class="p">[</span><span class="n">batch_uid</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">]</span>  <span class="c"># Inserts a value in a server-side batch</span>
-<span class="s">'BDELETE'</span><span class="p">,</span> <span class="p">[</span><span class="n">batch_uid</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>  <span class="c"># Deletes a value from a server-side batch </span>
-<span class="s">'BWRITE'</span><span class="p">,</span> <span class="p">[</span><span class="n">batch_uid</span><span class="p">]</span>  <span class="c"># Apply all batch operations server-side</span>
-<span class="s">'BCLEAR'</span><span class="p">,</span> <span class="p">[</span><span class="n">batch_uid</span><span class="p">]</span>  <span class="c"># Empty a server-side batch</span>
-<span class="s">'DBCONNECT'</span><span class="p">,</span> <span class="p">[</span><span class="n">db_name</span><span class="p">]</span>  <span class="c"># Connects a db via retrieving it's server-side uid</span>
-<span class="s">'DBCREATE'</span><span class="p">,</span> <span class="p">[</span><span class="n">db_name</span><span class="p">,</span> <span class="n">db_options</span><span class="p">]</span>  <span class="c"># Creates a db, with db_options</span>
-<span class="s">'DBLIST'</span><span class="p">,</span> <span class="p">[]</span>  <span class="c"># Lists all server's dbs</span>
-<span class="s">'DBREPAIR'</span><span class="p">,</span> <span class="p">[</span><span class="n">dbuid</span><span class="p">]</span>  <span class="c"># Repairs a broken (or too slow) database</span>
+<div class="highlight"><pre><span class="n">GET</span><span class="p">,</span> <span class="p">[</span><span class="n">key</span><span class="p">]</span>  <span class="c"># Gets a value from a db</span>
+<span class="n">MGET</span><span class="p">,</span> <span class="p">[</span><span class="n">keys</span><span class="p">]</span>  <span class="c"># Mass transactional Get (frozen db state reads)</span>
+<span class="n">PUT</span><span class="p">,</span> <span class="p">[</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">]</span> <span class="c"># Insert a value in a db</span>
+<span class="n">DELETE</span><span class="p">,</span> <span class="p">[</span><span class="n">key</span><span class="p">]</span>  <span class="c"># Delete a value from a db</span>
+<span class="n">RANGE</span><span class="p">,</span> <span class="p">[</span><span class="n">start</span><span class="p">,</span> <span class="n">limit</span><span class="p">]</span>  <span class="c"># Retrieve a range of key/value pair from a db</span>
+
+<span class="n">BATCH</span><span class="p">,</span> <span class="p">[</span><span class="n">operations</span><span class="p">]</span>  <span class="c"># Atomically applies all batch operations server-side</span>
+
+<span class="n">DBCONNECT</span> <span class="p">[</span><span class="n">db_name</span><span class="p">]</span>  <span class="c"># Connects a db via retrieving it's server-side uid</span>
+<span class="n">DBCREATE</span> <span class="p">[</span><span class="n">db_name</span><span class="p">,</span> <span class="n">db_options</span><span class="p">]</span>  <span class="c"># Creates a db, with db_options</span>
+<span class="n">DBLIST</span><span class="p">,</span> <span class="p">[]</span>  <span class="c"># Lists all server's dbs</span>
+<span class="n">DBREPAIR</span><span class="p">,</span> <span class="p">[]</span>  <span class="c"># Repairs a broken (or too slow) database you already owns uid</span>
 </pre></div>
 
-<p><strong>About db creation options</strong>: Leveldb offers nice options when it comes to configure the backend storage and caching behavior. They should be passed in the msgpack message supplied to server on db creation as a hash. Only values set by yourself will override default values. Here is a description offered by py-leveldb of the available options.</p>
+<h5>About batches</h5>
+
+<p>operations are treated server-side as signal. Batches exposes two signals:</p>
+
+<div class="highlight"><pre><span class="n">BATCH_SIGNAL_PUT</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">BATCH_SIGNAL_DELETE</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+
+<p>operations should be a list of lists composed following this pattern:</p>
+
+<div class="highlight"><pre><span class="p">[</span><span class="n">BATCH_OPERATION_SIGNAL</span><span class="p">,</span> <span class="s">'key'</span><span class="p">,</span> <span class="s">'value if needed (Put)]</span>
+</pre></div>
+
+<h5>About db creation options</h5>
+
+<p>Leveldb offers nice options when it comes to configure the backend storage and caching behavior. They should be passed in the msgpack message supplied to server on db creation as a hash. Only values set by yourself will override default values. Here is a description offered by py-leveldb of the available options.</p>
 
 <div class="highlight"><pre><span class="n">create_if_missing</span>  <span class="c">#(default: True)           if True, creates a new database if none exists</span>
 <span class="n">error_if_exists</span>    <span class="c">#(default: False)          if True, raises and error if the database already exists</span>
@@ -234,6 +267,9 @@ optional arguments:
 <span class="n">VALUE_ERROR</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="n">INDEX_ERROR</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="n">RUNTIME_ERROR</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">OS_ERROR</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">DATABASE_ERROR</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">SIGNAL_ERROR</span> <span class="o">=</span> <span class="mi">7</span>
 </pre></div>
 
 <p><em>Here's how the integrated python client deals with error codes</em></p>
@@ -249,6 +285,9 @@ optional arguments:
     <span class="n">VALUE_ERROR</span><span class="p">:</span> <span class="ne">ValueError</span><span class="p">,</span>
     <span class="n">INDEX_ERROR</span><span class="p">:</span> <span class="ne">IndexError</span><span class="p">,</span>
     <span class="n">RUNTIME_ERROR</span><span class="p">:</span> <span class="ne">RuntimeError</span><span class="p">,</span>
+    <span class="n">OS_ERROR</span><span class="p">:</span> <span class="ne">OSError</span><span class="p">,</span>
+    <span class="n">DATABASE_ERROR</span><span class="p">:</span> <span class="n">DatabaseError</span><span class="p">,</span>
+    <span class="n">SIGNAL_ERROR</span><span class="p">:</span> <span class="n">SignalError</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="c"># base.py</span>
@@ -272,11 +311,12 @@ Here's their definition.</p>
 <div class="highlight"><pre><span class="c"># Status codes</span>
 <span class="n">SUCCESS_STATUS</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="n">FAILURE_STATUS</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">WARNING_STATUS</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span>  <span class="c"># Indicates the command succeded partially</span>
 </pre></div>
 
 <h3>Thanks</h3>
 
-<p>Thanks to srinikom for its leveldb-server which was a very good base to start from. Thanks to Google, for its amazing database. Thanks to ZeroMQ team, you changed my life!</p>
+<p>Thanks to srinikom for its leveldb-server which was a very good base to start from.</p>
       </section>
 
     </div>
