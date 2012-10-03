@@ -3,6 +3,8 @@ import shutil
 import subprocess
 import tempfile
 import ConfigParser
+import tempfile
+import random
 
 from elevator.env import Environment
 
@@ -25,57 +27,48 @@ def gen_test_env():
     })
 
 
-class TestDaemon(object):
-    CONFIG_DICT = {
-            "pidfile": "/tmp/elevator_test.pid",
-            "databases_storage_path": "",  # Will be randomly set later
-            "database_store": "/tmp/elevator_store.json",
-            "port": "60000",
-            "activity_log": "/tmp/elevator_test.log",
-            "errors_log": "/tmp/elevator_errors_test.log",
+def gen_test_conf():
+    """Generates a ConfigParser object built with test options values"""
+    global_config_options = {
+            "pidfile": tempfile.mkstemp(suffix=".pid", dir='/tmp')[1],
+            "databases_storage_path": tempfile.mkdtemp(dir='/tmp'),  # Will be randomly set later
+            "database_store": tempfile.mkstemp(suffix=".json", dir="/tmp")[1],
+            "port": str(random.randint(4142, 60000)),
+            "activity_log": tempfile.mkstemp(suffix=".log", dir="/tmp")[1],
+            "errors_log": tempfile.mkstemp(suffix="_errors.log", dir="/tmp")[1],
     }
-    FILES_TO_COLLECT = [
-        CONFIG_DICT['pidfile'],
-        CONFIG_DICT['database_store'],
-        CONFIG_DICT['activity_log'],
-        CONFIG_DICT['errors_log'],
-    ]
-    DIRS_TO_COLLECT = [
-        CONFIG_DICT['databases_storage_path']
-    ]
+    config = ConfigParser.ConfigParser()
+    config.add_section('global')
 
+    for key, value in global_config_options.iteritems():
+        config.set('global', key, value)
+
+    return config
+
+
+class TestDaemon(object):
     def __init__(self):
         self.bootstrap_conf()
         self.process = None
 
-        self.port = self.CONFIG_DICT['port']
+        self.port = self.config.get('global', 'port')
 
     def __del__(self):
-        # Remove every generated test files
-        for f in self.FILES_TO_COLLECT:
-            if os.path.exists(f):
-                os.remove(f)
+        for key, value in self.config.items('global'):
+            if os.path.exists(value):
+                if os.path.isfile(value):
+                    os.remove(value)
+                elif os.path.isdir(value):
+                    shutil.rmtree(value)
 
-        # Remove every generated test dirs
-        for d in self.DIRS_TO_COLLECT:
-            if os.path.exists(d):
-                shutil.rmtree(d)
-
-        os.remove(self.conf_file)
+        self.conf_file.close()
+        os.remove(self.conf_file_path)
 
     def bootstrap_conf(self):
-        self.conf_file = '/tmp/elevator_test.conf'
-        conf_file = open(self.conf_file, 'a')
-
-        config = ConfigParser.RawConfigParser()
-        config.add_section('global')
-
-        # Generate by hand the temporary databases storage path
-        self.CONFIG_DICT["databases_storage_path"] = tempfile.mkdtemp(dir='/tmp')
-        for option, value in self.CONFIG_DICT.iteritems():
-            config.set('global', option, value)
-
-        config.write(conf_file)
+        self.conf_file_path = '/tmp/elevator_test.conf'
+        self.config = gen_test_conf()
+        self.conf_file = open(self.conf_file_path, 'a')
+        self.config.write(self.conf_file)
 
     def start(self):
         self.process = subprocess.Popen(['elevator',
