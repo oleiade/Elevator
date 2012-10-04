@@ -8,7 +8,7 @@ root = os.path.abspath(os.path.dirname(__file__))
 
 version = __import__('elevator').__version__
 
-with open(os.path.join(root, 'README.rst')) as f:
+with open(os.path.join(root, 'README.md')) as f:
     README = f.read()
 
 with open(os.path.join(root, 'CHANGES.rst')) as f:
