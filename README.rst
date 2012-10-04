@@ -2,21 +2,26 @@
 Elevator
 ========
 
-Minimalistic database engine written in Python and based on levelDB.
+Key-Value store written in Python and based on levelDB, allows high performance on-disk bulk read/write.
 
-Allows async, multithreaded and/or remote acces to a multidb backend.
+Allows async, multithreaded and/or remote acces to a multi-leveldb backend.
 
 Relying on the zeromq network library and msgpack serialization format, it is made to be portable between languages and
 platforms.
 
+See Documentation_ for more details
 
-Dependencies
+.. _Documentation: http://oleiade.github.com/Elevator/
+
+
+Depends on
 ------------
 
 - zmq
 - pyzmq
 - leveldb
 - py-leveldb
+
 
 Installation
 ------------
@@ -41,7 +46,8 @@ See config/elevator.conf for an example of Elevator configuration.
 Example:
 ::
     elevator --help
-    usage: elevator [-h] [--daemon] [--config CONFIG FILE] [--bind BIND] [--port PORT] [--workers WORKERS COUNT]
+    usage: elevator [-h] [--daemon] [--config CONFIG FILE] [--bind BIND] [--port PORT]
+                    [--workers WORKERS COUNT] [--paranoid SHOULD IT BREAK ON UNHANDLED EXCEPTIONS?]
 
     Elevator command line manager
 
