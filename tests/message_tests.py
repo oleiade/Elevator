@@ -1,4 +1,4 @@
-import unittest
+import unittest2
 import msgpack
 
 from nose.tools import raises
@@ -6,7 +6,7 @@ from nose.tools import raises
 from elevator.message import Request, Response, MessageFormatError
 
 
-class RequestTest(unittest.TestCase):
+class RequestTest(unittest2.TestCase):
     def setUp(self):
         pass
 

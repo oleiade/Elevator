@@ -37,7 +37,6 @@ class ApiTests(unittest2.TestCase):
             'ARGS': args,
         }))
 
-
     def test_command_with_existing_command(self):
         message = self.request_message('GET', ['1'])
         status, content = self.handler.command(message)
