@@ -4,7 +4,7 @@ Elevator
 
 Key-Value store written in Python and based on levelDB, allows high performance on-disk bulk read/write.
 
-Allows async, multithreaded and/or remote acces to a multi-leveldb backend.
+Allows async, multithreaded and/or remote access to a multi-leveldb backend.
 
 Relying on the zeromq network library and msgpack serialization format, it is made to be portable between languages and
 platforms.
