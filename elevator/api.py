@@ -162,7 +162,7 @@ class Handler(object):
         return SUCCESS_STATUS, self.databases['index'][db_name]
 
     def DBCreate(self, db, db_name, db_options=None, *args, **kwargs):
-        db_options = DatabaseOptions() if db_options is None else db_options
+        db_options = DatabaseOptions(**db_options) or DatabaseOptions()
 
         if db_name in self.databases['index']:
             error_msg = "Database %s already exists" % db_name
