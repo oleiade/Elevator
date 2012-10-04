@@ -55,6 +55,7 @@ optional arguments:
     --port        Port the server should listen on
     --workers     How many workers should be spawned (Threads with concurrent access to all the db store)
     --paranoid    If option is set, Elevator will shutdown and log on first unhandled exception
+```
 
 ### Clients
 
