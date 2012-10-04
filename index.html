@@ -222,7 +222,8 @@ optional arguments:
 <span class="n">MGET</span><span class="p">,</span> <span class="p">[</span><span class="n">keys</span><span class="p">]</span>  <span class="c"># Mass transactional Get (frozen db state reads)</span>
 <span class="n">PUT</span><span class="p">,</span> <span class="p">[</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">]</span> <span class="c"># Insert a value in a db</span>
 <span class="n">DELETE</span><span class="p">,</span> <span class="p">[</span><span class="n">key</span><span class="p">]</span>  <span class="c"># Delete a value from a db</span>
-<span class="n">RANGE</span><span class="p">,</span> <span class="p">[</span><span class="n">start</span><span class="p">,</span> <span class="n">limit</span><span class="p">]</span>  <span class="c"># Retrieve a range of key/value pair from a db</span>
+<span class="n">RANGE</span><span class="p">,</span> <span class="p">[</span><span class="n">key_from</span><span class="p">,</span> <span class="n">key_to</span><span class="p">]</span>  <span class="c"># Retrieves a range of key/value pairs from a db</span>
+<span class="n">SLICE</span><span class="p">,</span> <span class="p">[</span><span class="n">key_from</span><span class="p">,</span> <span class="n">offset</span><span class="p">]</span>  <span class="c"># Retrieves a slice of key/value pairs</span>
 
 <span class="n">BATCH</span><span class="p">,</span> <span class="p">[</span><span class="n">operations</span><span class="p">]</span>  <span class="c"># Atomically applies all batch operations server-side</span>
 
