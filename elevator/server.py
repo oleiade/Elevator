@@ -87,13 +87,13 @@ def runserver(env):
             sockets = dict(poll.poll())
             if proxy.socket in sockets:
                 if sockets[proxy.socket] == zmq.POLLIN:
-                    msg = proxy.socket.recv_multipart()
-                    workers_pool.socket.send_multipart(msg)
+                    msg = proxy.socket.recv_multipart(copy=False)
+                    workers_pool.socket.send_multipart(msg, copy=False)
 
             if workers_pool.socket in sockets:
                 if sockets[workers_pool.socket] == zmq.POLLIN:
-                    msg = workers_pool.socket.recv_multipart()
-                    proxy.socket.send_multipart(msg)
+                    msg = workers_pool.socket.recv_multipart(copy=False)
+                    proxy.socket.send_multipart(msg, copy=False)
         except KeyboardInterrupt:
             activity_logger.info('Gracefully shuthing down workers')
             del workers_pool

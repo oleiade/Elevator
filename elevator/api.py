@@ -4,8 +4,6 @@
 import leveldb
 import logging
 
-from collections import deque
-
 from .utils.patterns import destructurate
 from .constants import KEY_ERROR, TYPE_ERROR, DATABASE_ERROR,\
                        VALUE_ERROR, RUNTIME_ERROR, SIGNAL_ERROR,\

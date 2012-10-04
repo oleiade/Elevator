@@ -32,7 +32,7 @@ class Worker(threading.Thread):
 
         while (self.state == self.STATES.RUNNING):
             try:
-                msg_id, msg = self.socket.recv_multipart(flags=zmq.NOBLOCK)
+                msg_id, msg = self.socket.recv_multipart(flags=zmq.NOBLOCK, copy=False)
             except zmq.ZMQError as e:
                 if e.errno == zmq.EAGAIN:
                     sleep(self.sleep_time)
@@ -48,14 +48,14 @@ class Worker(threading.Thread):
                 message = Request(msg)
             except MessageFormatError:
                 response = Response(msg_id, status=FAILURE_STATUS, datas=None)
-                self.socket.send_multipart(response)
+                self.socket.send_multipart(response, copy=False)
                 continue
 
             # Handle message, and execute the requested
             # command in leveldb
             status, datas = self.handler.command(message, env=self.env)
             response = Response(msg_id, status=status, datas=datas)
-            self.socket.send_multipart(response, zmq.NOBLOCK)
+            self.socket.send_multipart(response, zmq.NOBLOCK, copy=False)
             self.processing = False
 
     def close(self):
