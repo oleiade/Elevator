@@ -4,3 +4,4 @@ lz4
 pyzmq
 ujson==1.18
 nose==1.2.1
+procname==0.3

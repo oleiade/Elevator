@@ -2,9 +2,10 @@
 # -*- coding:utf-8 -*-
 
 import sys
+import traceback
 import zmq
 import logging
-
+import procname
 
 from elevator import conf
 from elevator.env import Environment
@@ -14,6 +15,17 @@ from elevator.utils.daemon import Daemon
 
 
 ARGS = conf.init_parser().parse_args(sys.argv[1:])
+
+
+def setup_process_name(env):
+    args = env['args']
+    endpoint = ' {0}://{1}:{2} '.format(args['protocol'],
+                                        args['bind'],
+                                        args['port'])
+    config = ' --config {0} '.format(args['config'])
+    process_name = 'elevator' + endpoint + config
+
+    procname.setprocname(process_name)
 
 
 def setup_loggers(activity_file, errors_file):
@@ -34,46 +46,63 @@ def setup_loggers(activity_file, errors_file):
     errors_logger.addHandler(errors_stream)
 
 
-def runserver(env):
-    args = ARGS
+def log_uncaught_exceptions(e, paranoid=False):
+    errors_logger = logging.getLogger("errors_logger")
+    tb = traceback.format_exc()
 
-    activity_log = env.get('activity_log', '/var/log/elevator.log')
-    errors_log = env.get('errors_log', '/var/log/elevator_errors.log')
+    # Log into errors log
+    errors_logger.critical(''.join(tb))
+    errors_logger.critical('{0}: {1}'.format(type(e), e.message))
+
+    # Log into stderr
+    logging.critical(''.join(tb))
+    logging.critical('{0}: {1}'.format(type(e), e.message))
+
+    if paranoid:
+        sys.exit(1)
+
+
+def runserver(env):
+    args = env['args']
+
+    activity_log = env['global'].pop('activity_log', '/var/log/elevator.log')
+    errors_log = env['global'].pop('errors_log', '/var/log/elevator_errors.log')
     setup_loggers(activity_log,
                   errors_log)
     activity_logger = logging.getLogger("activity_logger")
 
-    workers_pool = WorkersPool(args.workers)
-    proxy = Proxy('%s://%s:%s' % (env['protocol'],
-                                  env['bind'],
-                                  env['port']))
+    workers_pool = WorkersPool(args['workers'])
+    proxy = Proxy('%s://%s:%s' % (args['protocol'], args['bind'], args['port']))
 
     poll = zmq.Poller()
     poll.register(workers_pool.socket, zmq.POLLIN)
     poll.register(proxy.socket, zmq.POLLIN)
 
-    try:
-        activity_logger.info('Elevator server started\n'
-               'Ready to accept '
-               'connections on port %s' % args.port)
+    activity_logger.info('Elevator server started\n'
+           'Ready to accept '
+           'connections on port %s' % args['port'])
 
-        while True:
+    while True:
+        try:
             sockets = dict(poll.poll())
             if proxy.socket in sockets:
                 if sockets[proxy.socket] == zmq.POLLIN:
-                    msg = proxy.socket.recv_multipart()
-                    workers_pool.socket.send_multipart(msg)
+                    msg = proxy.socket.recv_multipart(copy=False)
+                    workers_pool.socket.send_multipart(msg, copy=False)
 
             if workers_pool.socket in sockets:
                 if sockets[workers_pool.socket] == zmq.POLLIN:
-                    msg = workers_pool.socket.recv_multipart()
-                    proxy.socket.send_multipart(msg)
-    except KeyboardInterrupt:
-        activity_logger.info('Gracefully shuthing down workers')
-        del workers_pool
-        activity_logger.info('Stopping proxy')
-        del proxy
-    activity_logger.info('Done')
+                    msg = workers_pool.socket.recv_multipart(copy=False)
+                    proxy.socket.send_multipart(msg, copy=False)
+        except KeyboardInterrupt:
+            activity_logger.info('Gracefully shuthing down workers')
+            del workers_pool
+            activity_logger.info('Stopping proxy')
+            del proxy
+            activity_logger.info('Done')
+            sys.exit(0)
+        except Exception as e:
+            log_uncaught_exceptions(e, paranoid=args['paranoid'])
 
 
 class ServerDaemon(Daemon):
@@ -88,14 +117,12 @@ def main():
     # every further instanciation of the object
     # will point on this one, and conf will be
     # present in it yet.
-    env = Environment(ARGS.config, section='global', **{
-        'port': ARGS.port,
-        'bind': ARGS.bind,
-        'protocol': ARGS.protocol,
-        })
+    env = Environment(ARGS.config)
+    env.load_from_args('args', ARGS._get_kwargs())
+    setup_process_name(env)
 
-    if ARGS.daemon:
-        server_daemon = ServerDaemon(env['pidfile'], stderr=None)
+    if env['args']['daemon'] is True:
+        server_daemon = ServerDaemon('/tmp/elevator.pid')
         server_daemon.start()
     else:
         runserver(env)
