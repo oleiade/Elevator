@@ -4,6 +4,10 @@
 import leveldb
 import logging
 
+from collections import deque
+
+from profilehooks import timecall, profile
+
 from .utils.patterns import destructurate
 from .constants import KEY_ERROR, TYPE_ERROR, DATABASE_ERROR,\
                        VALUE_ERROR, RUNTIME_ERROR, SIGNAL_ERROR,\
@@ -34,6 +38,7 @@ class Handler(object):
             'DBLIST': self.DBList,
             'DBREPAIR': self.DBRepair,
         }
+        self.context = {}
 
     def Get(self, db, key, *args, **kwargs):
         """
@@ -52,17 +57,19 @@ class Handler(object):
                     [KEY_ERROR, error_msg])
 
     def MGet(self, db, keys, fill_cache=True, *args, **kwargs):
-        status = SUCCESS_STATUS
-        value = []
-
-        for key in keys:
+        def get_or_none(key, context):
             try:
-                value.append([key, db.Get(key, fill_cache=fill_cache)])
+                res = db.Get(key, fill_cache=fill_cache)
             except KeyError:
-                warning_msg = "Key %r does not exist" % key
+                warning_msg = "Key {0} does not exist".format(key)
+                context['status'] = WARNING_STATUS
                 self.errors_logger.warning(warning_msg)
-                value.append([key, None])
-                status = WARNING_STATUS
+                res = None
+            return res
+
+        context = {'status': SUCCESS_STATUS}
+        value = [(key, get_or_none(key, context)) for key in keys]
+        status = context['status']
 
         return status, value
 

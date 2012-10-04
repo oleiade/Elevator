@@ -77,7 +77,7 @@ class ApiTests(unittest2.TestCase):
         message = self.request_message('MGET', [['1', '2', '3']])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
-        self.assertEqual(content, [['1', '1'], ['2', '2'], ['3', '3'], ])
+        self.assertEqual(content, [('1', '1'), ('2', '2'), ('3', '3'), ])
 
     def test_mget_of_not_fully_existing_keys(self):
         message = self.request_message('MGET', [['1', '2', 'touptoupidou']])
