@@ -61,6 +61,8 @@ optional arguments:
 
 *Python* : [py-elevator] (http://github.com/oleiade/py-elevator)
 
+*Go* : [go-elevator](http://github.com/oleiade/go-elevator) (Early early, so early version)
+
 *Clojure* : *Coming soon*
 
 *C* : *Coming soon*
