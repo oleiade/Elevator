@@ -27,12 +27,12 @@ class Singleton(type):
         cls.instance is None
 
 
-def destructurate(container):
-    class DestructurationError(Exception):
-        pass
+class DestructurationError(Exception):
+    pass
 
-    if isinstance(container, Sequence):
+
+def destructurate(container):
+    try:
         return container[0], container[1:]
-    else:
+    except (KeyError, AttributeError):
         raise DestructurationError("Can't destructurate a non-sequence container")
-    return container
