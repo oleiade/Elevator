@@ -107,20 +107,12 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(content, None)
 
 
-    def test_range_with_to_key(self):
+    def test_range(self):
         message = self.request_message('RANGE', ['1', '2'])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content[0], ('1', '1'))
         self.assertEqual(content[1], ('2', '2'))
-
-    def test_range_with_limit(self):
-        message = self.request_message('RANGE', ['1', 3])
-        status, content = self.handler.command(message)
-        self.assertEqual(status, SUCCESS_STATUS)
-        self.assertEqual(content[0], ('1', '1'))
-        self.assertEqual(content[1], ('2', '2'))
-        self.assertEqual(content[2], ('3', '3'))
 
     def test_range_of_len_one(self):
         """Should still return a tuple of tuple"""
@@ -132,6 +124,15 @@ class ApiTests(unittest2.TestCase):
 
         self.assertIsInstance(content[0], (list, tuple))
         self.assertEqual(len(content[0]), 2)
+
+
+    def test_slice_with_limit(self):
+        message = self.request_message('SLICE', ['1', 3])
+        status, content = self.handler.command(message)
+        self.assertEqual(status, SUCCESS_STATUS)
+        self.assertEqual(content[0], ('1', '1'))
+        self.assertEqual(content[1], ('2', '2'))
+        self.assertEqual(content[2], ('3', '3'))
 
 
     def test_batch_with_valid_collection(self):

@@ -6,8 +6,6 @@ import logging
 
 from collections import deque
 
-from profilehooks import timecall, profile
-
 from .utils.patterns import destructurate
 from .constants import KEY_ERROR, TYPE_ERROR, DATABASE_ERROR,\
                        VALUE_ERROR, RUNTIME_ERROR, SIGNAL_ERROR,\
@@ -30,6 +28,7 @@ class Handler(object):
             'PUT': self.Put,
             'DELETE': self.Delete,
             'RANGE': self.Range,
+            'SLICE': self.Slice,
             'BATCH': self.Batch,
             'MGET': self.MGet,
             'DBCONNECT': self.DBConnect,
@@ -101,51 +100,32 @@ class Handler(object):
         """
         return SUCCESS_STATUS, db.Delete(key)
 
-    def Range(self, db, from_key, limit, *args, **kwargs):
-        """
-        Handles RANGE message command.
-        Executes a RangeIter operation over the leveldb backend.
-
-        First arg is always `from_key` which defines the starting point
-        for iteration over database.
-
-        If second arg is a string, it is considered as `to_key`
-        and defines until which key to iterate over database.
-        If it is an int, it defines the number of key to iterate over.
-        from from_key, to to_key and returns the result as a list of
-        tuples.
-
-        For example:
-        Range(db_obj, ('a', 'z'))
-            will return [('a', value), ..., ('z', value)]
-        Range(db_obj, ('a', 10)
-            will return [(n, value), (n+1, value), ..., (n+10, value)]
-
-        db      =>      LevelDB object
-        *args   =>      (from_key, to_key/step) to delete from backend
-
-        """
-        value = []
-
+    def Range(self, db, key_from, key_to, *args, **kwargs):
+        """Returns the Range of key/value between
+        `key_from and `key_to`"""
         # Operate over a snapshot in order to return
         # a consistent state of the db
         db_snapshot = db.CreateSnapshot()
+        value = list(db_snapshot.RangeIter(key_from, key_to))
 
-        # Right argument is to_key
-        if isinstance(limit, str):
-            for node in db_snapshot.RangeIter(from_key, limit):
-                value.append(node)
-        # Right argument is a step value
-        elif isinstance(limit, int):
-            pos = 0
-            it = db_snapshot.RangeIter(from_key)
+        return SUCCESS_STATUS, value
 
-            while pos < limit:
-                try:
-                    value.append(it.next())
-                except StopIteration:
-                    break
-                pos += 1
+    def Slice(self, db, key_from, offset, *args, **kwargs):
+        """Returns a slice of the db. `offset` keys,
+        starting a `key_from`"""
+        # Operates over a snapshot in order to return
+        # a consistent state of the db
+        db_snapshot = db.CreateSnapshot()
+        it = db_snapshot.RangeIter(key_from)
+        value = []
+        pos = 0
+
+        while pos < offset:
+            try:
+                value.append(it.next())
+            except StopIteration:
+                break
+            pos += 1
 
         return SUCCESS_STATUS, value
 
@@ -192,8 +172,7 @@ class Handler(object):
             return (FAILURE_STATUS,
                     [DATABASE_ERROR, error_msg])
 
-        status, content = self.databases.add(db_name, db_options)
-        return status, content
+        return self.databases.add(db_name, db_options)
 
     def DBDrop(self, db, db_name, *args, **kwargs):
         if not self.databases.exists(db_name):
