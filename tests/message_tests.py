@@ -44,7 +44,7 @@ class RequestTest(unittest2.TestCase):
         self.assertEqual(request.data, ('key', 'value'))
 
 
-class ResponseTest(unittest.TestCase):
+class ResponseTest(unittest2.TestCase):
     def setUp(self):
         pass
 
