@@ -53,10 +53,10 @@ class Handler(object):
             return (FAILURE_STATUS,
                     [KEY_ERROR, error_msg])
 
-    def MGet(self, db, keys, fill_cache=True, *args, **kwargs):
-        def get_or_none(key, context, fill_cache):
+    def MGet(self, db, keys, *args, **kwargs):
+        def get_or_none(key, context):
             try:
-                res = db.Get(key, fill_cache=fill_cache)
+                res = db.Get(key)
             except KeyError:
                 warning_msg = "Key {0} does not exist".format(key)
                 context['status'] = WARNING_STATUS
@@ -65,7 +65,7 @@ class Handler(object):
             return res
 
         context = {'status': SUCCESS_STATUS}
-        value = [(key, get_or_none(key, context, fill_cache)) for key in keys]
+        value = [(key, get_or_none(key, context)) for key in keys]
         status = context['status']
 
         return status, value
