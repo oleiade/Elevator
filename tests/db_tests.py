@@ -13,6 +13,15 @@ from elevator.db import DatabasesHandler, DatabaseOptions
 from .fakers import gen_test_env
 
 
+class DatabaseOptionsTest(unittest2.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+
+
 class DatabasesTest(unittest2.TestCase):
     def setUp(self):
         self.store = '/tmp/store.json'

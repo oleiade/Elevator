@@ -54,7 +54,7 @@ class Handler(object):
                     [KEY_ERROR, error_msg])
 
     def MGet(self, db, keys, fill_cache=True, *args, **kwargs):
-        def get_or_none(key, context):
+        def get_or_none(key, context, fill_cache):
             try:
                 res = db.Get(key, fill_cache=fill_cache)
             except KeyError:
@@ -65,7 +65,7 @@ class Handler(object):
             return res
 
         context = {'status': SUCCESS_STATUS}
-        value = [(key, get_or_none(key, context)) for key in keys]
+        value = [(key, get_or_none(key, context, fill_cache)) for key in keys]
         status = context['status']
 
         return status, value
