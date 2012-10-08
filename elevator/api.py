@@ -65,7 +65,7 @@ class Handler(object):
             return res
 
         context = {'status': SUCCESS_STATUS}
-        value = [(key, get_or_none(key, context)) for key in keys]
+        value = [get_or_none(key, context) for key in keys]
         status = context['status']
 
         return status, value
