@@ -17,12 +17,18 @@ def _build_pyleveldb():
             local('python setup.py install')
 
 
-@task
-def install_requirements():
-    _build_pyleveldb()
-    local('pip install -r requirements.txt --use-mirrors')
+def _build_zmq3x():
+    with lcd('/tmp'):
+        local('wget http://download.zeromq.org/zeromq-3.2.0-rc1.tar.gz;'
+              'tar xf zeromq-3.2.0-rc1.tar.gz')
+        with lcd('zeromq-3.2.0'):
+            local('chmod -R 777 .')
+            local('./autogen.sh ; ./configure')
+            local('make ; sudo make install')
 
 
 @task
 def build():
-    install_requirements()
+    _build_pyleveldb()
+    _build_zmq3x()
+

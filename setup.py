@@ -40,10 +40,7 @@ setup(
         'elevator.utils',
     ],
     package_dir={'': '.'},
-
-    install_requires=[
-        'pyzmq>=2.1.11',
-    ],
+    zip_safe=False,
 
     # Setting up executable/main functions links
     entry_points={
