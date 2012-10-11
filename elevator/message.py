@@ -1,6 +1,9 @@
 import msgpack
 import logging
 
+from .constants import FAILURE_STATUS, SUCCESS_STATUS,\
+                                   WARNING_STATUS
+
 
 class MessageFormatError(Exception):
     def __init__(self, value):
@@ -8,6 +11,18 @@ class MessageFormatError(Exception):
 
     def __str__(self):
         return repr(self.value)
+
+
+def failure(error_code, error_msg):
+    return (FAILURE_STATUS, [error_code, error_msg])
+
+
+def success(content):
+    return (SUCCESS_STATUS, content)
+
+
+def warning(error_code, error_msg, content):
+    return (WARNING_STATUS, [error_code, error_msg, content])
 
 
 class Request(object):

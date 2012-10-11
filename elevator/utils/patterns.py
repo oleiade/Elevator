@@ -36,3 +36,4 @@ def destructurate(container):
         return container[0], container[1:]
     except (KeyError, AttributeError):
         raise DestructurationError("Can't destructurate a non-sequence container")
+

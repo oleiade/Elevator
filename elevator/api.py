@@ -4,6 +4,7 @@
 import leveldb
 import logging
 
+from .message import failure, success, warning
 from .utils.patterns import destructurate
 from .constants import KEY_ERROR, TYPE_ERROR, DATABASE_ERROR,\
                        VALUE_ERROR, RUNTIME_ERROR, SIGNAL_ERROR,\
@@ -154,22 +155,53 @@ class Handler(object):
 
     def Pipeline(self, db, actions, *args, **kwargs):
         """Pipelines a set of commands, executes them, and
-        returns the last command result as content"""
+        returns the last command result as content.
+
+        Doesn't support Batches.
+
+        FIXME : Limit the input<-actions size?
+                   Limit the content->response size?
+                   Increase default timeout client side?!
+                   NB: bandwith + timeout
+        """
+        def validate_commands(actions):
+            return all(action['COMMAND'] in self.handlers.keys() for action in actions)
+
+        def action_result(index, cmd, content):
+            return {
+                'INDEX': index,
+                'COMMAND': command,
+                'CONTENT': content,
+        }
+
         status = SUCCESS_STATUS
-        return_value = None
+        return_value = []
 
-        try:
-            for action in actions:
-                command, arguments = destructurate(action)
-                status, return_value = self.handlers[command](db, *arguments)
+        # If any of the supplied commands does not exist,
+        # drop a FAILURE
+        if not validate_commands(actions):
+            return failure(KEY_ERROR, "Unrecognized command supplied")
 
-                if status == FAILURE_STATUS:
-                    return (FAILURE_STATUS, return_value)
-        except KeyError:
-            return (FAILURE_STATUS,
-                       [KEY_ERROR, "Unrecognized command received : %s" % command])
+        for index, action in enumerate(actions):
+            command = action['COMMAND']
+            arguments = action['ARGS']
+            status, content = self.handlers[command](db, *arguments)
 
-        return status, return_value
+            if status == FAILURE_STATUS:
+                # If an error is met on the first element,
+                # return a FAILURE
+                if index == 0:
+                    return failure(*content)
+                # If an error is thrown later, return a WARNING,
+                # with partial content
+                else:
+                    return_value.append(action_result(index, command, content))
+                    return warning(error_code=content[0], error_msg=content[1],
+                                           content=return_value)
+            else:
+                return_value.append(action_result(index, command, content))
+
+        return success(return_value)
 
     def DBConnect(self, db_name=None, *args, **kwargs):
         if (not db_name or
