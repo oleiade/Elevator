@@ -34,6 +34,7 @@ class Handler(object):
             'DBDROP': self.DBDrop,
             'DBLIST': self.DBList,
             'DBREPAIR': self.DBRepair,
+            'PIPELINE': self.Pipeline,
         }
         self.context = {}
 
@@ -150,6 +151,25 @@ class Handler(object):
         db.Write(batch)
 
         return SUCCESS_STATUS, None
+
+    def Pipeline(self, db, actions, *args, **kwargs):
+        """Pipelines a set of commands, executes them, and
+        returns the last command result as content"""
+        status = SUCCESS_STATUS
+        return_value = None
+
+        try:
+            for action in actions:
+                command, arguments = destructurate(action)
+                status, return_value = self.handlers[command](db, *arguments)
+
+                if status == FAILURE_STATUS:
+                    return (FAILURE_STATUS, return_value)
+        except KeyError:
+            return (FAILURE_STATUS,
+                       [KEY_ERROR, "Unrecognized command received : %s" % command])
+
+        return status, return_value
 
     def DBConnect(self, db_name=None, *args, **kwargs):
         if (not db_name or

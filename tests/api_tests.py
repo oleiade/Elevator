@@ -166,6 +166,37 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(content[0], TYPE_ERROR)
 
 
+    def test_pipeline_valid_actions(self):
+        message = self.request_message('PIPELINE', [
+            [('PUT', 'abc', '123'),
+             ('PUT', 'easy as', 'do re mi'),
+             ('GET', 'abc')],
+        ])
+        status, content = self.handler.command(message)
+        self.assertEqual(status, SUCCESS_STATUS)
+        self.assertEqual(content, '123')
+
+    def test_pipeline_with_invalid_command(self):
+        message = self.request_message('PIPELINE', [
+            [('PAT', 'abc', '123'),
+             ('POT', 'easy as', 'do re mi'),
+             ('GUT', 'abc')],
+        ])
+        status, content = self.handler.command(message)
+        self.assertEqual(status, FAILURE_STATUS)
+        self.assertEqual(content[0], KEY_ERROR)
+
+    def test_pipeline_with_invalid_input_args(self):
+        message = self.request_message('PIPELINE', [
+            [('PUT', 'abc', 123),  # Type Error
+             ('PUT', 'easy as', 123),  # Type error
+             ('GET', 'touptoupidou')],  # Key error
+        ])
+        status, content = self.handler.command(message)
+        self.assertEqual(status, FAILURE_STATUS)
+        self.assertEqual(content[0], TYPE_ERROR)  # Should raise on first failing cmd
+
+
     def test_connect_to_valid_database(self):
         message = self.request_message('DBCONNECT', ['default'])
         status, content = self.handler.command(message)
