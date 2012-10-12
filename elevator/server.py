@@ -71,7 +71,7 @@ def log_uncaught_exceptions(e, paranoid=False):
 
 def runserver(env):
     args = env['args']
-
+    
     setup_loggers(env)
     activity_logger = logging.getLogger("activity_logger")
 

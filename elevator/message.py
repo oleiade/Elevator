@@ -2,6 +2,9 @@ import msgpack
 import logging
 
 
+errors_logger = logging.getLogger("errors_logger")
+
+
 class MessageFormatError(Exception):
     def __init__(self, value):
         self.value = value
@@ -13,7 +16,6 @@ class MessageFormatError(Exception):
 class Request(object):
     """Handler objects for frontend->backend objects messages"""
     def __init__(self, raw_message, compressed=False):
-        errors_logger = logging.getLogger("errors_logger")
         self.message = msgpack.unpackb(raw_message)
         try:
             self.db_uid = self.message.get('DB_UID')
