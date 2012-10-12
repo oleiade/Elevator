@@ -13,6 +13,8 @@ from .constants import KEY_ERROR, TYPE_ERROR, DATABASE_ERROR,\
 from .db import DatabaseOptions
 
 
+errors_logger = logging.getLogger('errors_logger')
+
 class Handler(object):
     """
     Class that handles commands server side.
@@ -20,8 +22,6 @@ class Handler(object):
     """
     def __init__(self, databases):
         self.databases = databases
-        self.activity_logger = logging.getLogger('activity_logger')
-        self.errors_logger = logging.getLogger('errors_logger')
         self.handlers = {
             'GET': self.Get,
             'PUT': self.Put,
@@ -51,7 +51,7 @@ class Handler(object):
             return SUCCESS_STATUS, db.Get(key)
         except KeyError:
             error_msg = "Key %r does not exist" % key
-            self.errors_logger.exception(error_msg)
+            errors_logger.exception(error_msg)
             return (FAILURE_STATUS,
                     [KEY_ERROR, error_msg])
 
@@ -62,7 +62,7 @@ class Handler(object):
             except KeyError:
                 warning_msg = "Key {0} does not exist".format(key)
                 context['status'] = WARNING_STATUS
-                self.errors_logger.warning(warning_msg)
+                errors_logger.warning(warning_msg)
                 res = None
             return res
 
@@ -85,7 +85,7 @@ class Handler(object):
             return SUCCESS_STATUS, db.Put(key, value)
         except TypeError:
             error_msg = "Unsupported value type : %s" % type(value)
-            self.errors_logger.exception(error_msg)
+            errors_logger.exception(error_msg)
             return (FAILURE_STATUS,
                    [TYPE_ERROR, error_msg])
 
@@ -207,7 +207,7 @@ class Handler(object):
         if (not db_name or
             not self.databases.exists(db_name)):
             error_msg = "Database %s doesn't exist" % db_name
-            self.errors_logger.error(error_msg)
+            errors_logger.error(error_msg)
             return (FAILURE_STATUS,
                     [DATABASE_ERROR, error_msg])
 
@@ -218,7 +218,7 @@ class Handler(object):
 
         if db_name in self.databases['index']:
             error_msg = "Database %s already exists" % db_name
-            self.errors_logger.error(error_msg)
+            errors_logger.error(error_msg)
             return (FAILURE_STATUS,
                     [DATABASE_ERROR, error_msg])
 
@@ -227,7 +227,7 @@ class Handler(object):
     def DBDrop(self, db, db_name, *args, **kwargs):
         if not self.databases.exists(db_name):
             error_msg = "Database %s does not exist" % db_name
-            self.errors_logger.error(error_msg)
+            errors_logger.error(error_msg)
             return (FAILURE_STATUS,
                     [DATABASE_ERROR, error_msg])
 
@@ -260,13 +260,13 @@ class Handler(object):
         if (not db_uid or
             (db_uid and (not db_uid in self.databases))):
             error_msg = "Database %s doesn't exist" % db_uid
-            self.errors_logger.error(error_msg)
+            errors_logger.error(error_msg)
             return (FAILURE_STATUS,
                     [RUNTIME_ERROR, error_msg])
 
         if not command in self.handlers:
             error_msg = "Command %s not handled" % command
-            self.errors_logger.error(error_msg)
+            errors_logger.error(error_msg)
             return (FAILURE_STATUS,
                     [KEY_ERROR, error_msg])
 

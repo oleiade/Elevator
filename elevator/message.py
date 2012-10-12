@@ -5,6 +5,9 @@ from .constants import FAILURE_STATUS, SUCCESS_STATUS,\
                                    WARNING_STATUS
 
 
+errors_logger = logging.getLogger("errors_logger")
+
+
 class MessageFormatError(Exception):
     def __init__(self, value):
         self.value = value
@@ -28,32 +31,38 @@ def warning(error_code, error_msg, content):
 class Request(object):
     """Handler objects for frontend->backend objects messages"""
     def __init__(self, raw_message, compressed=False):
-        errors_logger = logging.getLogger("errors_logger")
-        message = msgpack.unpackb(raw_message)
+        self.message = msgpack.unpackb(raw_message)
         try:
-            self.db_uid = message.pop('DB_UID')
-            self.command = message.pop('COMMAND')
-            self.data = message.pop('ARGS')
+            self.db_uid = self.message.get('DB_UID')
+            self.command = self.message.get('COMMAND')
+            self.data = self.message.get('ARGS')
         except KeyError:
             errors_logger.exception("Invalid request message : %s" %
                                     message)
             raise MessageFormatError("Invalid request message")
 
+    def __str__(self):
+        return '<Request ' + str(self.message) + '>'
+
 
 class Response(tuple):
     """Handler objects for frontend->backend objects messages"""
     def __new__(cls, id, *args, **kwargs):
-        response = {
-            'STATUS': kwargs.pop('status', 0),
-            'DATAS': kwargs.pop('datas', [])
+        cls.response = {
+            'STATUS': kwargs.get('status', 0),
+            'DATAS': kwargs.get('datas', [])
         }
 
-        response['DATAS'] = cls._format_datas(response['DATAS'])
-        msg = [id, msgpack.packb(response)]
+        cls.response['DATAS'] = cls._format_datas(cls.response['DATAS'])
+        msg = [id, msgpack.packb(cls.response)]
         return tuple.__new__(cls, msg)
+
+    def __str__(cls):
+        return '<Response ' + str(cls.response) + '>'
 
     @classmethod
     def _format_datas(cls, datas):
         if datas and not isinstance(datas, (tuple, list)):
             datas = [datas]
         return datas
+

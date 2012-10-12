@@ -22,5 +22,6 @@ def init_parser():
     parser.add_argument('--port', action='store', type=str, default='4141')
     parser.add_argument('--workers', action='store', type=int, default=4)
     parser.add_argument('--paranoid', action='store_true', default=False)
+    parser.add_argument('--log-level', action='store', type=str, default='INFO')
 
     return parser
