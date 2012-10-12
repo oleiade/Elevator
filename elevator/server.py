@@ -83,8 +83,8 @@ def runserver(env):
     poll.register(proxy.socket, zmq.POLLIN)
 
     activity_logger.info('Elevator server started\n'
-           'Ready to accept '
-           'connections on port %s' % args['port'])
+                         'Ready to accept '
+                         'connections on port %s' % args['port'])
 
     while True:
         try:

@@ -24,6 +24,7 @@ class Worker(threading.Thread):
         self.handler = Handler(databases)
         self.processing = False
         self.sleep_time = 0.1
+        self.activity_logger = logging.getLogger("activity_logger")
         self.errors_logger = logging.getLogger("errors_logger")
 
     def run(self):
@@ -46,6 +47,7 @@ class Worker(threading.Thread):
 
             try:
                 message = Request(msg)
+                self.activity_logger.debug(str(message))
             except MessageFormatError:
                 response = Response(msg_id, status=FAILURE_STATUS, datas=None)
                 self.socket.send_multipart(response, copy=False)
@@ -55,6 +57,7 @@ class Worker(threading.Thread):
             # command in leveldb
             status, datas = self.handler.command(message)
             response = Response(msg_id, status=status, datas=datas)
+            self.activity_logger.debug(str(response))
             self.socket.send_multipart(response, zmq.NOBLOCK, copy=False)
             self.processing = False
 
