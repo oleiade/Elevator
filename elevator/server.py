@@ -19,7 +19,7 @@ ARGS = conf.init_parser().parse_args(sys.argv[1:])
 
 def setup_process_name(env):
     args = env['args']
-    endpoint = ' {0}://{1}:{2} '.format(args['protocol'],
+    endpoint = ' {0}://{1}:{2} '.format(args['transport'],
                                         args['bind'],
                                         args['port'])
     config = ' --config {0} '.format(args['config'])
@@ -36,7 +36,7 @@ def setup_loggers(env):
     numeric_level = getattr(logging, env['args']['log_level'].upper(), None)
     if not isinstance(numeric_level, int):
         raise ValueError('Invalid log level: %s' % loglevel)
-    
+
     activity_logger = logging.getLogger("activity_logger")
     activity_logger.setLevel(numeric_level)
     activity_stream = logging.FileHandler(activity_log_file)
@@ -71,12 +71,12 @@ def log_uncaught_exceptions(e, paranoid=False):
 
 def runserver(env):
     args = env['args']
-    
+
     setup_loggers(env)
     activity_logger = logging.getLogger("activity_logger")
 
     workers_pool = WorkersPool(args['workers'])
-    proxy = Proxy('%s://%s:%s' % (args['protocol'], args['bind'], args['port']))
+    proxy = Proxy('%s://%s:%s' % (args['transport'], args['bind'], args['port']))
 
     poll = zmq.Poller()
     poll.register(workers_pool.socket, zmq.POLLIN)
