@@ -76,14 +76,14 @@ class ApiTests(unittest2.TestCase):
         message = self.request_message('MGET', [['1', '2', '3']])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
-        self.assertEqual(content, ['1', '2', '3'])
+        self.assertEqual(content, (['1', '2', '3'], ))
 
     def test_mget_of_not_fully_existing_keys(self):
         message = self.request_message('MGET', [['1', '2', 'touptoupidou']])
         status, content = self.handler.command(message)
         self.assertEqual(status, WARNING_STATUS)
-        self.assertEqual(len(content), 3)
-        self.assertEqual(content, ['1', '2', None])
+        self.assertEqual(len(content), 1)
+        self.assertEqual(content, (['1', '2', None], ))
 
 
     def test_put_of_valid_key(self):

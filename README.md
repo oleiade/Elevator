@@ -14,8 +14,8 @@ See [Documentation](http://oleiade.github.com/Elevator) for more details
 
 ### Depends on
 
-- zmq
-- pyzmq
+- zmq-3.X
+- pyzmq (built with zmq-3.X)
 - leveldb
 - py-leveldb
 
@@ -26,6 +26,7 @@ See [Documentation](http://oleiade.github.com/Elevator) for more details
 ```bash
 $ pip install fabric
 $ fab build
+$ pip install -r requirements.txt
 $ python setup.py install
 ```
 

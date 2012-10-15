@@ -11,6 +11,9 @@ from .message import Request, MessageFormatError, Response
 from .db import DatabasesHandler
 from .utils.patterns import enum
 
+activity_logger = logging.getLogger("activity_logger")
+errors_logger = logging.getLogger("errors_logger")
+
 
 class Worker(threading.Thread):
     def __init__(self, zmq_context, databases, *args, **kwargs):
@@ -24,7 +27,6 @@ class Worker(threading.Thread):
         self.handler = Handler(databases)
         self.processing = False
         self.sleep_time = 0.1
-        self.errors_logger = logging.getLogger("errors_logger")
 
     def run(self):
         self.socket.connect('inproc://elevator')
@@ -38,7 +40,7 @@ class Worker(threading.Thread):
                     sleep(self.sleep_time)
                 else:
                     self.state = self.STATES.STOPPED
-                    self.errors_logger.warning('Worker %r encountered and error,'
+                    errors_logger.warning('Worker %r encountered and error,'
                                                ' and was forced to stop' % self.ident)
                 continue
 
@@ -46,6 +48,7 @@ class Worker(threading.Thread):
 
             try:
                 message = Request(msg)
+                activity_logger.debug(str(message))
             except MessageFormatError:
                 response = Response(msg_id, status=FAILURE_STATUS, datas=None)
                 self.socket.send_multipart(response, copy=False)
@@ -55,6 +58,7 @@ class Worker(threading.Thread):
             # command in leveldb
             status, datas = self.handler.command(message)
             response = Response(msg_id, status=status, datas=datas)
+            activity_logger.debug(str(response))
             self.socket.send_multipart(response, zmq.NOBLOCK, copy=False)
             self.processing = False
 

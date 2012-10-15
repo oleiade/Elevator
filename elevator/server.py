@@ -28,11 +28,18 @@ def setup_process_name(env):
     procname.setprocname(process_name)
 
 
-def setup_loggers(activity_file, errors_file):
+def setup_loggers(env):
+    activity_log_file = env['global']['activity_log']
+    errors_log_file = env['global']['errors_log']
+
     # Setup up activity logger
+    numeric_level = getattr(logging, env['args']['log_level'].upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError('Invalid log level: %s' % loglevel)
+    
     activity_logger = logging.getLogger("activity_logger")
-    activity_logger.setLevel(logging.DEBUG)
-    activity_stream = logging.FileHandler(activity_file)
+    activity_logger.setLevel(numeric_level)
+    activity_stream = logging.FileHandler(activity_log_file)
     activity_formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(funcName)s : %(message)s")
     activity_stream.setFormatter(activity_formatter)
     activity_logger.addHandler(activity_stream)
@@ -40,7 +47,7 @@ def setup_loggers(activity_file, errors_file):
     # Setup up activity logger
     errors_logger = logging.getLogger("errors_logger")
     errors_logger.setLevel(logging.WARNING)
-    errors_stream = logging.FileHandler(errors_file)
+    errors_stream = logging.FileHandler(errors_log_file)
     errors_formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(funcName)s : %(message)s")
     errors_stream.setFormatter(errors_formatter)
     errors_logger.addHandler(errors_stream)
@@ -64,11 +71,8 @@ def log_uncaught_exceptions(e, paranoid=False):
 
 def runserver(env):
     args = env['args']
-
-    activity_log = env['global'].pop('activity_log', '/var/log/elevator.log')
-    errors_log = env['global'].pop('errors_log', '/var/log/elevator_errors.log')
-    setup_loggers(activity_log,
-                  errors_log)
+    
+    setup_loggers(env)
     activity_logger = logging.getLogger("activity_logger")
 
     workers_pool = WorkersPool(args['workers'])
@@ -79,8 +83,8 @@ def runserver(env):
     poll.register(proxy.socket, zmq.POLLIN)
 
     activity_logger.info('Elevator server started\n'
-           'Ready to accept '
-           'connections on port %s' % args['port'])
+                         'Ready to accept '
+                         'connections on port %s' % args['port'])
 
     while True:
         try:
