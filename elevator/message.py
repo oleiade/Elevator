@@ -1,6 +1,9 @@
+from __future__ import absolute_import
+
 import msgpack
 import logging
 
+from .constants import FAILURE_STATUS
 
 errors_logger = logging.getLogger("errors_logger")
 
@@ -14,32 +17,64 @@ class MessageFormatError(Exception):
 
 
 class Request(object):
-    """Handler objects for frontend->backend objects messages"""
+    """Handler objects for client requests messages
+
+    Format :
+    {
+        'meta': {...},
+        'cmd': 'GET',
+        'uid': 'mysuperduperdbuid',
+        'args': [...],
+    }
+    """
     def __init__(self, raw_message, compressed=False):
         self.message = msgpack.unpackb(raw_message)
+
         try:
-            self.db_uid = self.message.get('DB_UID')
-            self.command = self.message.get('COMMAND')
-            self.data = self.message['ARGS']  # __getitem__ will raise if !key
+            self.meta = self.message.get('meta', {})
+            self.db_uid = self.message['uid']
+            self.command = self.message['cmd']
+            self.data = self.message['args']  # __getitem__ will raise if !key
         except KeyError:
-            errors_logger.exception("Invalid request message : %s" %
-                                    self.message)
+            errors_logger.exception("Invalid request message : %s" % self.message)
             raise MessageFormatError("Invalid request message")
 
     def __str__(self):
-        return '<Request ' + str(self.message) + '>'
+        return '<Request ' + ' '.join([self.command, self.args]) + '>'
 
 
 class Response(tuple):
-    """Handler objects for frontend->backend objects messages"""
+    """Handler objects for responses messages
+
+    Format:
+    {
+        'meta': {
+            'status': 1|0|-1,
+            'err_code': null|0|1|[...],
+            'err_msg': '',
+        },
+        'datas': [...],
+    }
+    """
     def __new__(cls, id, *args, **kwargs):
-        cls.response = {
-            'STATUS': kwargs.get('status', 0),
-            'DATAS': kwargs.get('datas', [])
+        status = kwargs['status']
+        datas = cls._format_datas(kwargs['datas'])
+        err_code, err_msg = None, None
+
+        if status == FAILURE_STATUS:
+            err_code, err_message = datas
+            datas = []
+
+        response = {
+            'meta': {
+                'status': status,
+                'err_code': err_code,
+                'err_msg': err_msg,
+            },
+            'datas': datas,
         }
 
-        cls.response['DATAS'] = cls._format_datas(cls.response['DATAS'])
-        msg = [id, msgpack.packb(cls.response)]
+        msg = [id, msgpack.packb(response)]
         return tuple.__new__(cls, msg)
 
     def __str__(cls):
@@ -50,4 +85,3 @@ class Response(tuple):
         if datas and not isinstance(datas, (tuple, list)):
             datas = [datas]
         return datas
-
