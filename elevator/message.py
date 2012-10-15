@@ -20,10 +20,10 @@ class Request(object):
         try:
             self.db_uid = self.message.get('DB_UID')
             self.command = self.message.get('COMMAND')
-            self.data = self.message.get('ARGS')
+            self.data = self.message['ARGS']  # __getitem__ will raise if !key
         except KeyError:
             errors_logger.exception("Invalid request message : %s" %
-                                    message)
+                                    self.message)
             raise MessageFormatError("Invalid request message")
 
     def __str__(self):

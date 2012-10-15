@@ -111,28 +111,55 @@ class ApiTests(unittest2.TestCase):
         message = self.request_message('RANGE', ['1', '2'])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
-        self.assertEqual(content[0], ('1', '1'))
-        self.assertEqual(content[1], ('2', '2'))
+        self.assertIsInstance(content, list)
+        self.assertEqual(len(content), 1)
+
+        datas = content[0]
+        self.assertIsInstance(datas, list)
+        self.assertEqual(len(datas), 2)
+        self.assertEqual(datas[0], ('1', '1'))
+        self.assertEqual(datas[1], ('2', '2'))
 
     def test_range_of_len_one(self):
         """Should still return a tuple of tuple"""
         message = self.request_message('RANGE', ['1', '1'])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
+        self.assertIsInstance(content, list)
         self.assertEqual(len(content), 1)
-        self.assertIsInstance(content, (list, tuple))
 
-        self.assertIsInstance(content[0], (list, tuple))
-        self.assertEqual(len(content[0]), 2)
+        datas = content[0]
+        self.assertIsInstance(datas, list)
+        self.assertEqual(len(datas), 1)
+        self.assertIsInstance(datas[0], tuple)
+        self.assertEqual(datas[0], ('1', '1'))
 
 
     def test_slice_with_limit(self):
         message = self.request_message('SLICE', ['1', 3])
         status, content = self.handler.command(message)
         self.assertEqual(status, SUCCESS_STATUS)
-        self.assertEqual(content[0], ('1', '1'))
-        self.assertEqual(content[1], ('2', '2'))
-        self.assertEqual(content[2], ('3', '3'))
+        self.assertIsInstance(content, list)
+        self.assertEqual(len(content), 1)
+
+        datas = content[0]
+        self.assertIsInstance(datas, list)
+        self.assertEqual(len(datas), 3)
+        self.assertEqual(datas[0], ('1', '1'))
+        self.assertEqual(datas[1], ('2', '2'))
+        self.assertEqual(datas[2], ('3', '3'))
+
+    def test_slice_with_limit_value_of_one(self):
+        message = self.request_message('SLICE', ['1', 1])
+        status, content = self.handler.command(message)
+        self.assertEqual(status, SUCCESS_STATUS)
+        self.assertIsInstance(content, list)
+        self.assertEqual(len(content), 1)
+
+        datas = content[0]
+        self.assertIsInstance(datas, list)
+        self.assertEqual(len(datas), 1)
+        self.assertEqual(datas[0], ('1', '1'))
 
 
     def test_batch_with_valid_collection(self):
