@@ -37,10 +37,10 @@ class Request(object):
             self.data = self.message['args']  # __getitem__ will raise if !key
         except KeyError:
             errors_logger.exception("Invalid request message : %s" % self.message)
-            raise MessageFormatError("Invalid request message")
+            raise MessageFormatError("Invalid request message : %r" % self.message)
 
     def __str__(self):
-        return '<Request ' + ' '.join([self.command, self.args]) + '>'
+        return '<Request ' + self.command + ' ' + ' '.join(self.data) + '>'
 
 
 class Response(tuple):
@@ -65,7 +65,7 @@ class Response(tuple):
             err_code, err_message = datas
             datas = []
 
-        response = {
+        cls.response = {
             'meta': {
                 'status': status,
                 'err_code': err_code,
@@ -74,7 +74,7 @@ class Response(tuple):
             'datas': datas,
         }
 
-        msg = [id, msgpack.packb(response)]
+        msg = [id, msgpack.packb(cls.response)]
         return tuple.__new__(cls, msg)
 
     def __str__(cls):

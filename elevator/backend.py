@@ -4,7 +4,7 @@ import threading
 
 from time import sleep
 
-from .constants import FAILURE_STATUS
+from .constants import FAILURE_STATUS, REQUEST_ERROR
 from .env import Environment
 from .api import Handler
 from .message import Request, MessageFormatError, Response
@@ -49,8 +49,9 @@ class Worker(threading.Thread):
             try:
                 message = Request(msg)
                 activity_logger.debug(str(message))
-            except MessageFormatError:
-                response = Response(msg_id, status=FAILURE_STATUS, datas=None)
+            except MessageFormatError as e:
+                errors_logger.exception(e.value)
+                response = Response(msg_id, status=FAILURE_STATUS, datas=[REQUEST_ERROR, e.value])
                 self.socket.send_multipart(response, copy=False)
                 continue
 
