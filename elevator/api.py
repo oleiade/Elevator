@@ -65,7 +65,7 @@ class Handler(object):
             return res
 
         context = {'status': SUCCESS_STATUS}
-        value = ([get_or_none(key, context) for key in keys], )
+        value = [get_or_none(key, context) for key in keys]
         status = context['status']
 
         return status, value
@@ -104,7 +104,7 @@ class Handler(object):
         # Operate over a snapshot in order to return
         # a consistent state of the db
         db_snapshot = db.CreateSnapshot()
-        value = [list(db_snapshot.RangeIter(key_from, key_to))]
+        value = list(db_snapshot.RangeIter(key_from, key_to))
 
         return SUCCESS_STATUS, value
 
@@ -125,7 +125,7 @@ class Handler(object):
                 break
             pos += 1
 
-        return SUCCESS_STATUS, [value]
+        return SUCCESS_STATUS, value
 
     def Batch(self, db, collection, *args, **kwargs):
         batch = leveldb.WriteBatch()

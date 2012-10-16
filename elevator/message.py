@@ -40,7 +40,7 @@ class Request(object):
             raise MessageFormatError("Invalid request message : %r" % self.message)
 
     def __str__(self):
-        return '<Request ' + self.command + ' ' + ' '.join(self.data) + '>'
+        return '<Request ' + self.command + ' ' + '%r' % str(self.data) + '>'
 
 
 class Response(tuple):
