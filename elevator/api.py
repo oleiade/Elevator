@@ -4,6 +4,7 @@
 import leveldb
 import logging
 
+from .message import ResponseContent, ResponseHeader
 from .utils.patterns import destructurate
 from .constants import KEY_ERROR, TYPE_ERROR, DATABASE_ERROR,\
                        VALUE_ERROR, RUNTIME_ERROR, SIGNAL_ERROR,\
@@ -192,32 +193,41 @@ class Handler(object):
 
         return SUCCESS_STATUS, None
 
-    def command(self, message, *args, **kwargs):
-        db_uid = message.db_uid
-        command = message.command
-        args = message.data
-        kwargs.update({'db_uid': db_uid})  # Just in case
-        status = SUCCESS_STATUS
+    def _gen_response(self, status, value):
+        if status == FAILURE_STATUS:
+            header = ResponseHeader(status=status, err_code=value[0], err_msg=value[1])
+            content = ResponseContent(datas=None)
+        else:
+            header = ResponseHeader(status=status)
+            content = ResponseContent(datas=value)
 
-        if command == 'DBCONNECT':
-            # Here db_uid is in fact a db name, and connect
+        return header, content
+
+    def command(self, message, *args, **kwargs):
+        kwargs.update({'db_uid': message.db_uid})  # Just in case
+        status = SUCCESS_STATUS
+        err_code, err_msg = None, None
+
+        if message.command == 'DBCONNECT':
+            # Here message.db_uid is in fact a db name, and connect
             # returns the valid seek db uid.
             status, value = self.DBConnect(db_name=message.data[0])
-            return status, value
+            return self._gen_response(status, value)
 
-        if (not db_uid or
-            (db_uid and (not db_uid in self.databases))):
-            error_msg = "Database %s doesn't exist" % db_uid
+        # DB does not exist
+        if (not message.db_uid or
+            (message.db_uid and (not message.db_uid in self.databases))):
+            error_msg = "Database %s doesn't exist" % message.db_uid
             errors_logger.error(error_msg)
-            return (FAILURE_STATUS,
-                    [RUNTIME_ERROR, error_msg])
-
-        if not command in self.handlers:
-            error_msg = "Command %s not handled" % command
+            status, value = FAILURE_STATUS, [RUNTIME_ERROR, error_msg]
+        # Command not recognized
+        elif not message.command in self.handlers:
+            error_msg = "Command %s not handled" % message.command
             errors_logger.error(error_msg)
-            return (FAILURE_STATUS,
-                    [KEY_ERROR, error_msg])
+            status, value = FAILURE_STATUS, [KEY_ERROR, error_msg]
+        # Valid request
+        else:
+            status, value = self.handlers[message.command](self.databases[message.db_uid], *message.data, **kwargs)
 
-        status, value = self.handlers[command](self.databases[db_uid], *args, **kwargs)
-
-        return status, value
+        # Will output a valid ResponseHeader and ResponseContent objects
+        return self._gen_response(status, value)

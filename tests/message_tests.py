@@ -5,7 +5,8 @@ import msgpack
 
 from nose.tools import raises
 
-from elevator.message import Request, Response, MessageFormatError
+from elevator.message import Request, ResponseContent,\
+                             ResponseHeader, MessageFormatError
 from elevator.constants import *
 
 
@@ -68,7 +69,7 @@ class RequestTest(unittest2.TestCase):
         self.assertEqual(request.data, ('key', 'value'))
 
 
-class ResponseTest(unittest2.TestCase):
+class ResponseContentTest(unittest2.TestCase):
     def setUp(self):
         pass
 
@@ -76,38 +77,32 @@ class ResponseTest(unittest2.TestCase):
         pass
 
     def test_success_response_with_values(self):
-        response = Response(id="1", status=SUCCESS_STATUS, datas=['thisistheres'])
-
-        self.assertIsInstance(response, tuple)
-        self.assertEqual(len(response), 2)
-
-        unpacked_response = msgpack.unpackb(response[1])
+        response = ResponseContent(datas=['thisistheres'])
+        unpacked_response = msgpack.unpackb(response)
         self.assertIsInstance(unpacked_response, dict)
-        self.assertIn('meta', unpacked_response)
-        self.assertIn('status', unpacked_response['meta'])
         self.assertIn('datas', unpacked_response)
-
-        self.assertEqual(unpacked_response['meta']['status'], SUCCESS_STATUS)
         self.assertEqual(unpacked_response['datas'], ('thisistheres',))
-
-    def test_failure_response_with_values(self):
-        response = Response(id="1", status=FAILURE_STATUS, datas=[OS_ERROR, "this is the os error"])
-
-        self.assertIsInstance(response, tuple)
-        self.assertEqual(len(response), 2)
-
-        unpacked_response = msgpack.unpackb(response[1])
-        self.assertIsInstance(unpacked_response, dict)
-        self.assertIn('meta', unpacked_response)
-        self.assertIn('status', unpacked_response['meta'])
-        self.assertIn('err_code', unpacked_response['meta'])
-        self.assertIn('err_msg', unpacked_response['meta'])
-        self.assertIn('datas', unpacked_response)
-
-        self.assertEqual(unpacked_response['meta']['status'], FAILURE_STATUS)
-        self.assertEqual(unpacked_response['meta']['err_code'], OS_ERROR)
-        self.assertEqual(unpacked_response['datas'], ())
 
     @raises
     def test_success_response_without_values(self):
-        response = Response(id="1")
+        ResponseContent()
+
+
+class ResponseHeaderTest(unittest2.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_success_header(self):
+        header = ResponseHeader(status=SUCCESS_STATUS)
+        unpacked_header = msgpack.unpackb(header)
+
+        self.assertIsInstance(unpacked_header, dict)
+        self.assertIn('status', unpacked_header)
+        self.assertIn('err_code', unpacked_header)
+        self.assertIn('err_msg', unpacked_header)
+        self.assertEqual(unpacked_header['status'], SUCCESS_STATUS)
+        self.assertIsNone(unpacked_header['err_code'], None)
+        self.assertIsNone(unpacked_header['err_msg'], None)

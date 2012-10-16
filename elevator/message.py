@@ -27,7 +27,7 @@ class Request(object):
         'args': [...],
     }
     """
-    def __init__(self, raw_message, compressed=False):
+    def __init__(self, raw_message):
         self.message = msgpack.unpackb(raw_message)
 
         try:
@@ -43,7 +43,7 @@ class Request(object):
         return '<Request ' + self.command + ' ' + '%r' % str(self.data) + '>'
 
 
-class Response(tuple):
+class ResponseContent(tuple):
     """Handler objects for responses messages
 
     Format:
@@ -56,26 +56,12 @@ class Response(tuple):
         'datas': [...],
     }
     """
-    def __new__(cls, id, *args, **kwargs):
-        status = kwargs['status']
-        datas = cls._format_datas(kwargs['datas'])
-        err_code, err_msg = None, None
-
-        if status == FAILURE_STATUS:
-            err_code, err_message = datas
-            datas = []
-
+    def __new__(cls, *args, **kwargs):
         cls.response = {
-            'meta': {
-                'status': status,
-                'err_code': err_code,
-                'err_msg': err_msg,
-            },
-            'datas': datas,
+            'datas': cls._format_datas(kwargs['datas']),
         }
 
-        msg = [id, msgpack.packb(cls.response)]
-        return tuple.__new__(cls, msg)
+        return msgpack.packb(cls.response)
 
     def __str__(cls):
         return '<Response ' + str(cls.response) + '>'
@@ -85,3 +71,20 @@ class Response(tuple):
         if datas and not isinstance(datas, (tuple, list)):
             datas = [datas]
         return datas
+
+
+class ResponseHeader(dict):
+    def __new__(cls, *args, **kwargs):
+        cls.header = {
+            'status': kwargs.pop('status'),
+            'err_code': kwargs.pop('err_code', None),
+            'err_msg': kwargs.pop('err_msg', None),
+        }
+
+        for key, value in kwargs.iteritems():
+            cls.header.update({key: value})
+
+        return msgpack.packb(cls.header)
+
+    def __str__(cls):
+        return '<RequestHeader ' + str(cls.header) + '>'

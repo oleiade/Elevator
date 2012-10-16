@@ -7,7 +7,7 @@ from time import sleep
 from .constants import FAILURE_STATUS, REQUEST_ERROR
 from .env import Environment
 from .api import Handler
-from .message import Request, MessageFormatError, Response
+from .message import Request, MessageFormatError, ResponseContent, ResponseHeader
 from .db import DatabasesHandler
 from .utils.patterns import enum
 
@@ -34,7 +34,7 @@ class Worker(threading.Thread):
 
         while (self.state == self.STATES.RUNNING):
             try:
-                msg_id, msg = self.socket.recv_multipart(flags=zmq.NOBLOCK, copy=False)
+                sender_id, msg = self.socket.recv_multipart(flags=zmq.NOBLOCK, copy=False)
             except zmq.ZMQError as e:
                 if e.errno == zmq.EAGAIN:
                     sleep(self.sleep_time)
@@ -51,16 +51,19 @@ class Worker(threading.Thread):
                 activity_logger.debug(str(message))
             except MessageFormatError as e:
                 errors_logger.exception(e.value)
-                response = Response(msg_id, status=FAILURE_STATUS, datas=[REQUEST_ERROR, e.value])
-                self.socket.send_multipart(response, copy=False)
+                header = ResponseHeader(status=FAILURE_STATUS,
+                                        err_code=REQUEST_ERROR,
+                                        err_msg=e.value)
+                content = ResponseContent(datas={})
+                self.socket.send_multipart([sender_id, header, content], copy=False)
                 continue
 
             # Handle message, and execute the requested
             # command in leveldb
-            status, datas = self.handler.command(message)
-            response = Response(msg_id, status=status, datas=datas)
+            header, response = self.handler.command(message)
             activity_logger.debug(str(response))
-            self.socket.send_multipart(response, zmq.NOBLOCK, copy=False)
+
+            self.socket.send_multipart([sender_id, header, response], flags=zmq.NOBLOCK, copy=False)
             self.processing = False
 
     def close(self):
