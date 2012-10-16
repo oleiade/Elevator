@@ -32,9 +32,9 @@ class ApiTests(unittest2.TestCase):
     def request_message(self, command, args, db_uid=None):
         db_uid = db_uid or self.default_db_uid
         return Request(msgpack.packb({
-            'DB_UID': db_uid,
-            'COMMAND': command,
-            'ARGS': args,
+            'uid': db_uid,
+            'cmd': command,
+            'args': args,
         }))
 
     def test_command_with_existing_command(self):
