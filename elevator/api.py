@@ -15,6 +15,7 @@ from .db import DatabaseOptions
 
 errors_logger = logging.getLogger('errors_logger')
 
+
 class Handler(object):
     """
     Class that handles commands server side.
@@ -193,13 +194,18 @@ class Handler(object):
 
         return SUCCESS_STATUS, None
 
-    def _gen_response(self, status, value):
-        if status == FAILURE_STATUS:
-            header = ResponseHeader(status=status, err_code=value[0], err_msg=value[1])
+    def _gen_response(self, request, cmd_status, cmd_value):
+        if cmd_status == FAILURE_STATUS:
+            header = ResponseHeader(status=cmd_status, err_code=cmd_value[0], err_msg=cmd_value[1])
             content = ResponseContent(datas=None)
         else:
-            header = ResponseHeader(status=status)
-            content = ResponseContent(datas=value)
+            if 'compression' in request.meta:
+                compression = request.meta['compression']
+            else:
+                compression = False
+
+            header = ResponseHeader(status=cmd_status, compression=compression)
+            content = ResponseContent(datas=cmd_value, compression=compression)
 
         return header, content
 
@@ -212,7 +218,7 @@ class Handler(object):
             # Here message.db_uid is in fact a db name, and connect
             # returns the valid seek db uid.
             status, value = self.DBConnect(db_name=message.data[0])
-            return self._gen_response(status, value)
+            return self._gen_response(message, status, value)
 
         # DB does not exist
         if (not message.db_uid or
@@ -230,4 +236,4 @@ class Handler(object):
             status, value = self.handlers[message.command](self.databases[message.db_uid], *message.data, **kwargs)
 
         # Will output a valid ResponseHeader and ResponseContent objects
-        return self._gen_response(status, value)
+        return self._gen_response(message, status, value)

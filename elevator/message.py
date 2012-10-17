@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import msgpack
 import logging
+import lz4
 
 from .constants import FAILURE_STATUS
 
@@ -29,9 +30,9 @@ class Request(object):
     """
     def __init__(self, raw_message):
         self.message = msgpack.unpackb(raw_message)
+        self.meta = self.message.get('meta', {})
 
         try:
-            self.meta = self.message.get('meta', {})
             self.db_uid = self.message['uid']
             self.command = self.message['cmd']
             self.data = self.message['args']  # __getitem__ will raise if !key
@@ -40,7 +41,7 @@ class Request(object):
             raise MessageFormatError("Invalid request message : %r" % self.message)
 
     def __str__(self):
-        return '<Request ' + self.command + ' ' + '%r' % str(self.data) + '>'
+        return '<Request ' + self.command + ' ' + '%r' % str(self.data) + ' %r' % str(self.meta) + '>'
 
 
 class ResponseContent(tuple):
@@ -60,11 +61,15 @@ class ResponseContent(tuple):
         cls.response = {
             'datas': cls._format_datas(kwargs['datas']),
         }
+        msg = msgpack.packb(cls.response)
 
-        return msgpack.packb(cls.response)
+        if kwargs.pop('compression', False) is True:
+            msg = lz4.dumps(msg)
+
+        return msg
 
     def __str__(cls):
-        return '<Response ' + str(cls.response) + '>'
+        return '<Response ' + '%r' % str(cls.response['datas']) + '>'
 
     @classmethod
     def _format_datas(cls, datas):
@@ -79,6 +84,7 @@ class ResponseHeader(dict):
             'status': kwargs.pop('status'),
             'err_code': kwargs.pop('err_code', None),
             'err_msg': kwargs.pop('err_msg', None),
+            'compression': kwargs.pop('compression', False)
         }
 
         for key, value in kwargs.iteritems():
@@ -87,4 +93,4 @@ class ResponseHeader(dict):
         return msgpack.packb(cls.header)
 
     def __str__(cls):
-        return '<RequestHeader ' + str(cls.header) + '>'
+        return '<RequestHeader ' + '%r' % cls.header + '>'
