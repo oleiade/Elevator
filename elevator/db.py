@@ -4,11 +4,38 @@ import leveldb
 import ujson as json
 
 from shutil import rmtree
+from threading import Thread, Event
 
 from .env import Environment
 from .constants import FAILURE_STATUS, SUCCESS_STATUS,\
                        OS_ERROR, DATABASE_ERROR
 from .utils.snippets import from_bytes_to_mo
+
+
+class Ocd(Thread):
+    """Sometimes, you just want your program to have some
+    obsessive compulsive disorder
+
+    Source : http://pastebin.com/xNV7hx8h"""
+    def __init__(self, interval, function, iterations=0, args=[], kwargs={}):
+        Thread.__init__(self)
+        self.interval = interval
+        self.function = function
+        self.iterations = iterations
+        self.args = args
+        self.kwargs = kwargs
+        self.finished = Event()
+
+    def run(self):
+        count = 0
+        while not self.finished.is_set() and (self.iterations <= 0 or count < self.iterations):
+            self.finished.wait(self.interval)
+            if not self.finished.is_set():
+                self.function(*self.args, **self.kwargs)
+                count += 1
+
+    def cancel(self):
+        self.finished.set()
 
 
 class DatabaseOptions(dict):
