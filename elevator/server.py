@@ -35,14 +35,19 @@ def setup_loggers(env):
     # Setup up activity logger
     numeric_level = getattr(logging, env['args']['log_level'].upper(), None)
     if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % loglevel)
+        raise ValueError('Invalid log level: %s' % env['args']['log_level'].upper())
+
+    # Set up activity logger on file and stderr
+    activity_formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(funcName)s : %(message)s")
+    file_stream = logging.FileHandler(activity_log_file)
+    stderr_stream = logging.StreamHandler(sys.stdout)
+    file_stream.setFormatter(activity_formatter)
+    stderr_stream.setFormatter(activity_formatter)
 
     activity_logger = logging.getLogger("activity_logger")
     activity_logger.setLevel(numeric_level)
-    activity_stream = logging.FileHandler(activity_log_file)
-    activity_formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(funcName)s : %(message)s")
-    activity_stream.setFormatter(activity_formatter)
-    activity_logger.addHandler(activity_stream)
+    activity_logger.addHandler(file_stream)
+    activity_logger.addHandler(stderr_stream)
 
     # Setup up activity logger
     errors_logger = logging.getLogger("errors_logger")
@@ -82,9 +87,7 @@ def runserver(env):
     poll.register(workers_pool.socket, zmq.POLLIN)
     poll.register(proxy.socket, zmq.POLLIN)
 
-    activity_logger.info('Elevator server started\n'
-                         'Ready to accept '
-                         'connections on port %s' % args['port'])
+    activity_logger.info('Elevator server started on %s' % proxy.host)
 
     while True:
         try:

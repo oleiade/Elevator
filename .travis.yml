@@ -3,6 +3,9 @@ python:
   - "2.6"
   - "2.7"
 
+before_install:
+  - rm -rf /tmp/*
+
 install:
   - pip install fabric
   - fab build
