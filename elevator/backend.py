@@ -2,9 +2,7 @@ import zmq
 import logging
 import threading
 
-from time import sleep
-
-from .constants import FAILURE_STATUS, REQUEST_ERROR
+from .constants import FAILURE_STATUS, REQUEST_ERROR, WORKER_HALT
 from .env import Environment
 from .api import Handler
 from .message import Request, MessageFormatError, ResponseContent, ResponseHeader
@@ -13,6 +11,10 @@ from .utils.patterns import enum
 
 activity_logger = logging.getLogger("activity_logger")
 errors_logger = logging.getLogger("errors_logger")
+
+
+class HaltException(Exception):
+    pass
 
 
 class Worker(threading.Thread):
@@ -26,7 +28,6 @@ class Worker(threading.Thread):
         self.socket = self.zmq_context.socket(zmq.XREQ)
         self.handler = Handler(databases)
         self.processing = False
-        self.sleep_time = 0.1
 
     def run(self):
         self.socket.connect('inproc://elevator')
@@ -34,15 +35,19 @@ class Worker(threading.Thread):
 
         while (self.state == self.STATES.RUNNING):
             try:
-                sender_id, msg = self.socket.recv_multipart(flags=zmq.NOBLOCK, copy=False)
+                sender_id, msg = self.socket.recv_multipart(copy=False)
+                # If worker pool sends a WORKER_HALT, then close
+                # and return to stop execution
+                if sender_id.bytes == WORKER_HALT:  # copy=False -> zmq.Frame
+                    raise HaltException("Gracefully stopping worker %r" % self.ident)
             except zmq.ZMQError as e:
-                if e.errno == zmq.EAGAIN:
-                    sleep(self.sleep_time)
-                else:
-                    self.state = self.STATES.STOPPED
-                    errors_logger.warning('Worker %r encountered and error,'
-                                               ' and was forced to stop' % self.ident)
-                continue
+                self.state = self.STATES.STOPPED
+                errors_logger.warning('Worker %r encountered and error,'
+                                      ' and was forced to stop' % self.ident)
+                return
+            except HaltException as e:
+                activity_logger.info(e)
+                return self.close()
 
             self.processing = True
 
@@ -61,15 +66,16 @@ class Worker(threading.Thread):
             # Handle message, and execute the requested
             # command in leveldb
             header, response = self.handler.command(message)
-            activity_logger.debug(str(response))
+            activity_logger.debug(' - '.join([str(header), str(response)]))
 
             self.socket.send_multipart([sender_id, header, response], flags=zmq.NOBLOCK, copy=False)
             self.processing = False
 
     def close(self):
         self.state = self.STATES.STOPPED
-        self.join()
-        self.socket.close()
+
+        if not self.socket.closed:
+            self.socket.close()
 
 
 class WorkersPool():
@@ -86,8 +92,11 @@ class WorkersPool():
         self.init_workers(workers_count)
 
     def __del__(self):
+        while any(worker.isAlive() for worker in self.pool):
+            self.socket.send_multipart([WORKER_HALT, ""])
+
         for worker in self.pool:
-            worker.close()
+            worker.join()
 
         self.socket.close()
 

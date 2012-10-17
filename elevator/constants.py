@@ -1,3 +1,8 @@
+## Internals
+WORKER_HALT = "-1"
+
+## Protocol
+
 # Status codes
 SUCCESS_STATUS = 1
 FAILURE_STATUS = -1
