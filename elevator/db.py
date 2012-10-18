@@ -4,11 +4,39 @@ import leveldb
 import ujson as json
 
 from shutil import rmtree
+from threading import Thread, Event
 
 from .env import Environment
 from .constants import FAILURE_STATUS, SUCCESS_STATUS,\
-                       OS_ERROR, DATABASE_ERROR
+                       WARNING_STATUS, OS_ERROR, DATABASE_ERROR
 from .utils.snippets import from_bytes_to_mo
+from .utils.patterns import enum
+
+
+class Ocd(Thread):
+    """Sometimes, you just want your program to have some
+    obsessive compulsive disorder
+
+    Source : http://pastebin.com/xNV7hx8h"""
+    def __init__(self, interval, function, iterations=0, args=[], kwargs={}):
+        Thread.__init__(self)
+        self.interval = interval
+        self.function = function
+        self.iterations = iterations
+        self.args = args
+        self.kwargs = kwargs
+        self.finished = Event()
+
+    def run(self):
+        count = 0
+        while not self.finished.is_set() and (self.iterations <= 0 or count < self.iterations):
+            self.finished.wait(self.interval)
+            if not self.finished.is_set():
+                self.function(*self.args, **self.kwargs)
+                count += 1
+
+    def cancel(self):
+        self.finished.set()
 
 
 class DatabaseOptions(dict):
@@ -27,10 +55,14 @@ class DatabaseOptions(dict):
 
 
 class DatabasesHandler(dict):
+    STATUSES = enum('MOUNTED', 'UNMOUNTED')
+
     def __init__(self, store, dest, *args, **kwargs):
         self.env = Environment()
-        self['index'] = {}
-        self['reverse_index'] = {}
+        self.index = dict().fromkeys('name_to_uid')
+
+        self.index['name_to_uid'] = {}
+        self['reverse_name_index'] = {}
         self['paths_index'] = {}
         self.dest = dest
         self.store = store
@@ -57,6 +89,15 @@ class DatabasesHandler(dict):
         return (True, ratio)
 
     def extract_store_datas(self):
+        """Retrieves database store from file
+
+        If file doesn't exist, or is invalid json,
+        and empty store is returned.
+
+        Return
+        ------
+        store_datas, dict
+        """
         try:
             store_datas = json.load(open(self.store, 'r'))
         except (IOError, ValueError):
@@ -65,30 +106,69 @@ class DatabasesHandler(dict):
         return store_datas
 
     def load(self):
+        """Loads databases from store file"""
         store_datas = self.extract_store_datas()
 
         for db_name, db_desc in store_datas.iteritems():
-            self['index'].update({db_name: db_desc['uid']})
-            self['reverse_index'].update({db_desc['uid']: db_name})
-            self['paths_index'].update({db_desc['uid']: db_desc['path']})
-            self.update({db_desc['uid']: leveldb.LevelDB(db_desc['path'])})
+            self.index['name_to_uid'].update({db_name: db_desc['uid']})
+            self.update({
+                db_desc['uid']: {
+                    'connector': leveldb.LevelDB(db_desc['path']),
+                    'name': db_name,
+                    'path': db_desc['path'],
+                    'status': self.STATUSES.UNMOUNTED,
+                    'ref_count': 0,
+                }
+            })
 
         # Always bootstrap 'default'
-        if 'default' not in self['index']:
+        if 'default' not in self.index['name_to_uid']:
             self.add('default')
 
     def store_update(self, db_name, db_desc):
+        """Updates the database store file db_name
+        key, with db_desc value"""
         store_datas = self.extract_store_datas()
 
         store_datas.update({db_name: db_desc})
         json.dump(store_datas, open(self.store, 'w'))
 
     def store_remove(self, db_name):
+        """Removes a database from store file"""
         store_datas = self.extract_store_datas()
         store_datas.pop(db_name)
         json.dump(store_datas, open(self.store, 'w'))
 
+    def mount(self, db_name):
+        db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
+
+        if self[db_uid]['status'] == self.STATUSES.UNMOUNTED:
+            db_path = self[db_uid]['path']
+
+            self[db_uid]['status'] = self.STATUSES.MOUNTED
+            self[db_uid]['connector'] = leveldb.LevelDB(db_path)
+        else:
+            return (FAILURE_STATUS,
+                    [DATABASE_ERROR, "Database %r already mounted" % db_name])
+
+        return SUCCESS_STATUS, None
+
+    def umount(self, db_name):
+        db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
+
+        if self[db_uid]['status'] == self.STATUSES.MOUNTED:
+            self[db_uid]['status'] = self.STATUSES.UNMOUNTED
+            del self[db_uid]['connector']
+            self[db_uid]['connector'] = None
+        else:
+            return (FAILURE_STATUS,
+                    [DATABASE_ERROR, "Database %r already unmounted" % db_name])
+
+        return SUCCESS_STATUS, None
+
     def add(self, db_name, db_options=None):
+        """Adds a db to the DatabasesHandler object, and sync it
+        to the store file"""
         db_options = db_options or DatabaseOptions()
         cache_status, ratio = self._disposable_cache(db_options["block_cache_size"])
         if not cache_status:
@@ -124,19 +204,25 @@ class DatabasesHandler(dict):
             'options': options,
         })
 
-        self['index'].update({db_name: uid})
-        self['reverse_index'].update({uid: db_name})
-        self['paths_index'].update({uid: path})
-        self.update({uid: leveldb.LevelDB(path, **options)})
+        self.index['name_to_uid'].update({db_name: uid})
+        self.update({
+            uid: {
+                'connector': leveldb.LevelDB(path, **options),
+                'name': db_name,
+                'path': path,
+                'status': self.STATUSES.MOUNTED,
+                'ref_count': 0,
+            },
+        })
 
         return SUCCESS_STATUS, None
 
     def drop(self, db_name):
-        db_uid = self['index'].pop(db_name)
-        db_path = self['paths_index'][db_uid]
+        """Drops a db from the DatabasesHandler, and sync it
+        to store file"""
+        db_uid = self.index['name_to_uid'].pop(db_name)
+        db_path = self[db_uid]['path']
 
-        self['reverse_index'].pop(db_uid)
-        self['paths_index'].pop(db_uid)
         self.pop(db_uid)
         self.store_remove(db_name)
 
@@ -150,10 +236,11 @@ class DatabasesHandler(dict):
         return SUCCESS_STATUS, None
 
     def exists(self, db_name):
-        db_uid = self['index'][db_name] if db_name in self['index'] else None
+        """Checks if a database exists on disk"""
+        db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
 
         if db_uid:
-            if os.path.exists(self['paths_index'][db_uid]):
+            if os.path.exists(self[db_uid]['path']):
                 return True
             else:
                 self.drop(db_name)
@@ -161,7 +248,8 @@ class DatabasesHandler(dict):
         return False
 
     def list(self):
+        """Lists all the DatabasesHandler known databases"""
         return [db_name for db_name
                 in [key for key
-                    in self['index'].iterkeys()]
+                    in self.index['name_to_uid'].iterkeys()]
                 if self.exists(db_name)]
