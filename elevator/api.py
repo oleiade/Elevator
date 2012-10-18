@@ -32,6 +32,8 @@ class Handler(object):
             'BATCH': self.Batch,
             'MGET': self.MGet,
             'DBCONNECT': self.DBConnect,
+            'DBMOUNT': self.DBMount,
+            'DBUMOUNT': self.DBUmount,
             'DBCREATE': self.DBCreate,
             'DBDROP': self.DBDrop,
             'DBLIST': self.DBList,
@@ -161,7 +163,17 @@ class Handler(object):
             return (FAILURE_STATUS,
                     [DATABASE_ERROR, error_msg])
 
-        return SUCCESS_STATUS, self.databases.index['name_to_uid'][db_name]
+        db_uid = self.databases.index['name_to_uid'][db_name]
+        if self.databases[db_uid]['status'] == self.databases.STATUSES.UNMOUNTED:
+            self.databases.mount(db_name)
+
+        return SUCCESS_STATUS, db_uid
+
+    def DBMount(self, db, db_name, *args, **kwargs):
+        return self.databases.mount(db_name)
+
+    def DBUmount(self, db, db_name, *args, **kwargs):
+        return self.databases.umount(db_name)
 
     def DBCreate(self, db, db_name, db_options=None, *args, **kwargs):
         db_options = DatabaseOptions(**db_options) if db_options else DatabaseOptions()

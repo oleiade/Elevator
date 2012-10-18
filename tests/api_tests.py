@@ -2,6 +2,7 @@ import unittest2
 import shutil
 import msgpack
 import os
+import leveldb
 
 from nose.tools import *
 
@@ -258,6 +259,22 @@ class ApiTests(unittest2.TestCase):
 
         self.assertEqual(plain_header['status'], FAILURE_STATUS)
         self.assertEqual(plain_header['err_code'], DATABASE_ERROR)
+
+    def test_connect_automatically_mounts_and_unmounted_db(self):
+        # Unmount by hand the database
+        db_uid = self.handler.databases.index['name_to_uid']['default']
+        self.handler.databases[db_uid]['status'] = self.handler.databases.STATUSES.UNMOUNTED
+        self.handler.databases[db_uid]['connector'] = None
+
+        message = self.request_message('DBCONNECT', ['default'])
+        header, content = self.handler.command(message)
+
+        plain_header = msgpack.unpackb(header)
+        plain_content = msgpack.unpackb(content)
+
+        self.assertEqual(plain_header['status'], SUCCESS_STATUS)
+        self.assertEqual(self.handler.databases[db_uid]['status'], self.handler.databases.STATUSES.MOUNTED)
+        self.assertIsInstance(self.handler.databases[db_uid]['connector'], leveldb.LevelDB)
 
 
     def test_create_valid_db(self):

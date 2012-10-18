@@ -8,7 +8,7 @@ from threading import Thread, Event
 
 from .env import Environment
 from .constants import FAILURE_STATUS, SUCCESS_STATUS,\
-                       OS_ERROR, DATABASE_ERROR
+                       WARNING_STATUS, OS_ERROR, DATABASE_ERROR
 from .utils.snippets import from_bytes_to_mo
 from .utils.patterns import enum
 
@@ -89,6 +89,15 @@ class DatabasesHandler(dict):
         return (True, ratio)
 
     def extract_store_datas(self):
+        """Retrieves database store from file
+
+        If file doesn't exist, or is invalid json,
+        and empty store is returned.
+
+        Return
+        ------
+        store_datas, dict
+        """
         try:
             store_datas = json.load(open(self.store, 'r'))
         except (IOError, ValueError):
@@ -97,6 +106,7 @@ class DatabasesHandler(dict):
         return store_datas
 
     def load(self):
+        """Loads databases from store file"""
         store_datas = self.extract_store_datas()
 
         for db_name, db_desc in store_datas.iteritems():
@@ -116,23 +126,49 @@ class DatabasesHandler(dict):
             self.add('default')
 
     def store_update(self, db_name, db_desc):
+        """Updates the database store file db_name
+        key, with db_desc value"""
         store_datas = self.extract_store_datas()
 
         store_datas.update({db_name: db_desc})
         json.dump(store_datas, open(self.store, 'w'))
 
     def store_remove(self, db_name):
+        """Removes a database from store file"""
         store_datas = self.extract_store_datas()
         store_datas.pop(db_name)
         json.dump(store_datas, open(self.store, 'w'))
 
     def mount(self, db_name):
-        pass
+        db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
+
+        if self[db_uid]['status'] == self.STATUSES.UNMOUNTED:
+            db_path = self[db_uid]['path']
+
+            self[db_uid]['status'] = self.STATUSES.MOUNTED
+            self[db_uid]['connector'] = leveldb.LevelDB(db_path)
+        else:
+            return (FAILURE_STATUS,
+                    [DATABASE_ERROR, "Database %r already mounted" % db_name])
+
+        return SUCCESS_STATUS, None
 
     def umount(self, db_name):
-        pass
+        db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
+
+        if self[db_uid]['status'] == self.STATUSES.MOUNTED:
+            self[db_uid]['status'] = self.STATUSES.UNMOUNTED
+            del self[db_uid]['connector']
+            self[db_uid]['connector'] = None
+        else:
+            return (FAILURE_STATUS,
+                    [DATABASE_ERROR, "Database %r already unmounted" % db_name])
+
+        return SUCCESS_STATUS, None
 
     def add(self, db_name, db_options=None):
+        """Adds a db to the DatabasesHandler object, and sync it
+        to the store file"""
         db_options = db_options or DatabaseOptions()
         cache_status, ratio = self._disposable_cache(db_options["block_cache_size"])
         if not cache_status:
@@ -174,7 +210,7 @@ class DatabasesHandler(dict):
                 'connector': leveldb.LevelDB(path, **options),
                 'name': db_name,
                 'path': path,
-                'status': self.STATUSES.UNMOUNTED,
+                'status': self.STATUSES.MOUNTED,
                 'ref_count': 0,
             },
         })
@@ -182,6 +218,8 @@ class DatabasesHandler(dict):
         return SUCCESS_STATUS, None
 
     def drop(self, db_name):
+        """Drops a db from the DatabasesHandler, and sync it
+        to store file"""
         db_uid = self.index['name_to_uid'].pop(db_name)
         db_path = self[db_uid]['path']
 
@@ -198,6 +236,7 @@ class DatabasesHandler(dict):
         return SUCCESS_STATUS, None
 
     def exists(self, db_name):
+        """Checks if a database exists on disk"""
         db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
 
         if db_uid:
@@ -209,6 +248,7 @@ class DatabasesHandler(dict):
         return False
 
     def list(self):
+        """Lists all the DatabasesHandler known databases"""
         return [db_name for db_name
                 in [key for key
                     in self.index['name_to_uid'].iterkeys()]
