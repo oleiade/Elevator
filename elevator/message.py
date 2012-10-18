@@ -33,7 +33,7 @@ class Request(object):
         self.meta = self.message.get('meta', {})
 
         try:
-            self.db_uid = self.message['uid']
+            self.db_uid = self.message.get('uid')  # In some case db_uid should be None
             self.command = self.message['cmd']
             self.data = self.message['args']  # __getitem__ will raise if !key
         except KeyError:

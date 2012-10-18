@@ -2,6 +2,7 @@ import unittest2
 import shutil
 import msgpack
 import os
+import leveldb
 
 from nose.tools import *
 
@@ -21,8 +22,8 @@ class ApiTests(unittest2.TestCase):
     def setUp(self):
         self.env = gen_test_env()
         self.databases = DatabasesHandler('/tmp/store.json', '/tmp')
-        self.default_db_uid = self.databases['index']['default']
-        self._bootstrap_db(self.databases[self.default_db_uid])
+        self.default_db_uid = self.databases.index['name_to_uid']['default']
+        self._bootstrap_db(self.databases[self.default_db_uid]['connector'])
         self.handler = Handler(self.databases)
 
     def tearDown(self):
@@ -240,7 +241,11 @@ class ApiTests(unittest2.TestCase):
 
 
     def test_connect_to_valid_database(self):
-        message = self.request_message('DBCONNECT', ['default'])
+        message = Request(msgpack.packb({
+            'uid': None,
+            'cmd': 'DBCONNECT',
+            'args': ['default'],
+        }))
         header, content = self.handler.command(message)
 
         plain_header = msgpack.unpackb(header)
@@ -250,7 +255,11 @@ class ApiTests(unittest2.TestCase):
         self.assertIsNotNone(plain_content)
 
     def test_connect_to_invalid_database(self):
-        message = self.request_message('DBCONNECT', ['dadaislikeadad'])
+        message = Request(msgpack.packb({
+                'uid': None,
+                'cmd': 'DBCONNECT',
+                'args': ['dadaislikeadad']
+        }))
         header, content = self.handler.command(message)
 
         plain_header = msgpack.unpackb(header)
@@ -258,6 +267,26 @@ class ApiTests(unittest2.TestCase):
 
         self.assertEqual(plain_header['status'], FAILURE_STATUS)
         self.assertEqual(plain_header['err_code'], DATABASE_ERROR)
+
+    def test_connect_automatically_mounts_and_unmounted_db(self):
+        # Unmount by hand the database
+        db_uid = self.handler.databases.index['name_to_uid']['default']
+        self.handler.databases[db_uid]['status'] = self.handler.databases.STATUSES.UNMOUNTED
+        self.handler.databases[db_uid]['connector'] = None
+
+        message = Request(msgpack.packb({
+                'db_uid': None,
+                'cmd': 'DBCONNECT',
+                'args': ['default']
+        }))
+        header, content = self.handler.command(message)
+
+        plain_header = msgpack.unpackb(header)
+        plain_content = msgpack.unpackb(content)
+
+        self.assertEqual(plain_header['status'], SUCCESS_STATUS)
+        self.assertEqual(self.handler.databases[db_uid]['status'], self.handler.databases.STATUSES.MOUNTED)
+        self.assertIsInstance(self.handler.databases[db_uid]['connector'], leveldb.LevelDB)
 
 
     def test_create_valid_db(self):

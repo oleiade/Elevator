@@ -32,6 +32,8 @@ class Handler(object):
             'BATCH': self.Batch,
             'MGET': self.MGet,
             'DBCONNECT': self.DBConnect,
+            'DBMOUNT': self.DBMount,
+            'DBUMOUNT': self.DBUmount,
             'DBCREATE': self.DBCreate,
             'DBDROP': self.DBDrop,
             'DBLIST': self.DBList,
@@ -153,7 +155,9 @@ class Handler(object):
 
         return SUCCESS_STATUS, None
 
-    def DBConnect(self, db_name=None, *args, **kwargs):
+    def DBConnect(self, *args, **kwargs):
+        db_name = args[0]
+
         if (not db_name or
             not self.databases.exists(db_name)):
             error_msg = "Database %s doesn't exist" % db_name
@@ -161,12 +165,22 @@ class Handler(object):
             return (FAILURE_STATUS,
                     [DATABASE_ERROR, error_msg])
 
-        return SUCCESS_STATUS, self.databases['index'][db_name]
+        db_uid = self.databases.index['name_to_uid'][db_name]
+        if self.databases[db_uid]['status'] == self.databases.STATUSES.UNMOUNTED:
+            self.databases.mount(db_name)
+
+        return SUCCESS_STATUS, db_uid
+
+    def DBMount(self, db, db_name, *args, **kwargs):
+        return self.databases.mount(db_name)
+
+    def DBUmount(self, db, db_name, *args, **kwargs):
+        return self.databases.umount(db_name)
 
     def DBCreate(self, db, db_name, db_options=None, *args, **kwargs):
         db_options = DatabaseOptions(**db_options) if db_options else DatabaseOptions()
 
-        if db_name in self.databases['index']:
+        if db_name in self.databases.index['name_to_uid']:
             error_msg = "Database %s already exists" % db_name
             errors_logger.error(error_msg)
             return (FAILURE_STATUS,
@@ -210,19 +224,11 @@ class Handler(object):
         return header, content
 
     def command(self, message, *args, **kwargs):
-        kwargs.update({'db_uid': message.db_uid})  # Just in case
         status = SUCCESS_STATUS
         err_code, err_msg = None, None
 
-        if message.command == 'DBCONNECT':
-            # Here message.db_uid is in fact a db name, and connect
-            # returns the valid seek db uid.
-            status, value = self.DBConnect(db_name=message.data[0])
-            return self._gen_response(message, status, value)
-
         # DB does not exist
-        if (not message.db_uid or
-            (message.db_uid and (not message.db_uid in self.databases))):
+        if message.db_uid and (not message.db_uid in self.databases):
             error_msg = "Database %s doesn't exist" % message.db_uid
             errors_logger.error(error_msg)
             status, value = FAILURE_STATUS, [RUNTIME_ERROR, error_msg]
@@ -233,7 +239,11 @@ class Handler(object):
             status, value = FAILURE_STATUS, [KEY_ERROR, error_msg]
         # Valid request
         else:
-            status, value = self.handlers[message.command](self.databases[message.db_uid], *message.data, **kwargs)
+            if not message.db_uid:
+                status, value = self.handlers[message.command](*message.data, **kwargs)
+            else:
+                database = self.databases[message.db_uid]['connector']
+                status, value = self.handlers[message.command](database, *message.data, **kwargs)
 
         # Will output a valid ResponseHeader and ResponseContent objects
         return self._gen_response(message, status, value)
