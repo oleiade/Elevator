@@ -21,8 +21,8 @@ class ApiTests(unittest2.TestCase):
     def setUp(self):
         self.env = gen_test_env()
         self.databases = DatabasesHandler('/tmp/store.json', '/tmp')
-        self.default_db_uid = self.databases['index']['default']
-        self._bootstrap_db(self.databases[self.default_db_uid])
+        self.default_db_uid = self.databases.index['name_to_uid']['default']
+        self._bootstrap_db(self.databases[self.default_db_uid]['connector'])
         self.handler = Handler(self.databases)
 
     def tearDown(self):

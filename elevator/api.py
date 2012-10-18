@@ -161,12 +161,12 @@ class Handler(object):
             return (FAILURE_STATUS,
                     [DATABASE_ERROR, error_msg])
 
-        return SUCCESS_STATUS, self.databases['index'][db_name]
+        return SUCCESS_STATUS, self.databases.index['name_to_uid'][db_name]
 
     def DBCreate(self, db, db_name, db_options=None, *args, **kwargs):
         db_options = DatabaseOptions(**db_options) if db_options else DatabaseOptions()
 
-        if db_name in self.databases['index']:
+        if db_name in self.databases.index['name_to_uid']:
             error_msg = "Database %s already exists" % db_name
             errors_logger.error(error_msg)
             return (FAILURE_STATUS,
@@ -233,7 +233,7 @@ class Handler(object):
             status, value = FAILURE_STATUS, [KEY_ERROR, error_msg]
         # Valid request
         else:
-            status, value = self.handlers[message.command](self.databases[message.db_uid], *message.data, **kwargs)
+            status, value = self.handlers[message.command](self.databases[message.db_uid]['connector'], *message.data, **kwargs)
 
         # Will output a valid ResponseHeader and ResponseContent objects
         return self._gen_response(message, status, value)

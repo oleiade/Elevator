@@ -10,6 +10,7 @@ from .env import Environment
 from .constants import FAILURE_STATUS, SUCCESS_STATUS,\
                        OS_ERROR, DATABASE_ERROR
 from .utils.snippets import from_bytes_to_mo
+from .utils.patterns import enum
 
 
 class Ocd(Thread):
@@ -54,10 +55,14 @@ class DatabaseOptions(dict):
 
 
 class DatabasesHandler(dict):
+    STATUSES = enum('MOUNTED', 'UNMOUNTED')
+
     def __init__(self, store, dest, *args, **kwargs):
         self.env = Environment()
-        self['index'] = {}
-        self['reverse_index'] = {}
+        self.index = dict().fromkeys('name_to_uid')
+
+        self.index['name_to_uid'] = {}
+        self['reverse_name_index'] = {}
         self['paths_index'] = {}
         self.dest = dest
         self.store = store
@@ -95,13 +100,19 @@ class DatabasesHandler(dict):
         store_datas = self.extract_store_datas()
 
         for db_name, db_desc in store_datas.iteritems():
-            self['index'].update({db_name: db_desc['uid']})
-            self['reverse_index'].update({db_desc['uid']: db_name})
-            self['paths_index'].update({db_desc['uid']: db_desc['path']})
-            self.update({db_desc['uid']: leveldb.LevelDB(db_desc['path'])})
+            self.index['name_to_uid'].update({db_name: db_desc['uid']})
+            self.update({
+                db_desc['uid']: {
+                    'connector': leveldb.LevelDB(db_desc['path']),
+                    'name': db_name,
+                    'path': db_desc['path'],
+                    'status': self.STATUSES.UNMOUNTED,
+                    'ref_count': 0,
+                }
+            })
 
         # Always bootstrap 'default'
-        if 'default' not in self['index']:
+        if 'default' not in self.index['name_to_uid']:
             self.add('default')
 
     def store_update(self, db_name, db_desc):
@@ -114,6 +125,12 @@ class DatabasesHandler(dict):
         store_datas = self.extract_store_datas()
         store_datas.pop(db_name)
         json.dump(store_datas, open(self.store, 'w'))
+
+    def mount(self, db_name):
+        pass
+
+    def umount(self, db_name):
+        pass
 
     def add(self, db_name, db_options=None):
         db_options = db_options or DatabaseOptions()
@@ -151,19 +168,23 @@ class DatabasesHandler(dict):
             'options': options,
         })
 
-        self['index'].update({db_name: uid})
-        self['reverse_index'].update({uid: db_name})
-        self['paths_index'].update({uid: path})
-        self.update({uid: leveldb.LevelDB(path, **options)})
+        self.index['name_to_uid'].update({db_name: uid})
+        self.update({
+            uid: {
+                'connector': leveldb.LevelDB(path, **options),
+                'name': db_name,
+                'path': path,
+                'status': self.STATUSES.UNMOUNTED,
+                'ref_count': 0,
+            },
+        })
 
         return SUCCESS_STATUS, None
 
     def drop(self, db_name):
-        db_uid = self['index'].pop(db_name)
-        db_path = self['paths_index'][db_uid]
+        db_uid = self.index['name_to_uid'].pop(db_name)
+        db_path = self[db_uid]['path']
 
-        self['reverse_index'].pop(db_uid)
-        self['paths_index'].pop(db_uid)
         self.pop(db_uid)
         self.store_remove(db_name)
 
@@ -177,10 +198,10 @@ class DatabasesHandler(dict):
         return SUCCESS_STATUS, None
 
     def exists(self, db_name):
-        db_uid = self['index'][db_name] if db_name in self['index'] else None
+        db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
 
         if db_uid:
-            if os.path.exists(self['paths_index'][db_uid]):
+            if os.path.exists(self[db_uid]['path']):
                 return True
             else:
                 self.drop(db_name)
@@ -190,5 +211,5 @@ class DatabasesHandler(dict):
     def list(self):
         return [db_name for db_name
                 in [key for key
-                    in self['index'].iterkeys()]
+                    in self.index['name_to_uid'].iterkeys()]
                 if self.exists(db_name)]
