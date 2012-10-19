@@ -171,10 +171,10 @@ class Handler(object):
 
         return SUCCESS_STATUS, db_uid
 
-    def DBMount(self, db, db_name, *args, **kwargs):
+    def DBMount(self, db_name, *args, **kwargs):
         return self.databases.mount(db_name)
 
-    def DBUmount(self, db, db_name, *args, **kwargs):
+    def DBUmount(self, db_name, *args, **kwargs):
         return self.databases.umount(db_name)
 
     def DBCreate(self, db, db_name, db_options=None, *args, **kwargs):
