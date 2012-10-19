@@ -70,6 +70,7 @@ class DatabasesHandler(dict):
         self._global_cache_size = None
 
         self.load()
+        self.mount('default')  # Always mount default
 
     @property
     def global_cache_size(self):
@@ -113,7 +114,7 @@ class DatabasesHandler(dict):
             self.index['name_to_uid'].update({db_name: db_desc['uid']})
             self.update({
                 db_desc['uid']: {
-                    'connector': leveldb.LevelDB(db_desc['path']),
+                    'connector': None,
                     'name': db_name,
                     'path': db_desc['path'],
                     'status': self.STATUSES.UNMOUNTED,
