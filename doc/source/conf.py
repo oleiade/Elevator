@@ -293,4 +293,3 @@ intersphinx_mapping = {'http://docs.python.org/': None}
 sys.path.append(os.path.abspath('_themes'))
 html_theme_path = ['_themes']
 html_theme = 'flask'
-github_fork = 'http://github.com/oleiade/Elevator.git'
