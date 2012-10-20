@@ -12,4 +12,7 @@ It was made with portability, stability, and focus on performance in mind.
 
 Elevator depends on `zmq <http://zeromq.org>`_ and `leveldb <http://code.google.com/p/leveldb/>`_ and both their respective python clients `py-leveldb <http://code.google.com/p/py-leveldb>`_ and `pyzmq <https://github.com/zeromq/pyzmq>`_
 
+Elevator is an open source software under the MIT license. Any hackers interested in improving it (or even users interested in how Elevator is put together) please see the :ref:`Development <development>` page. It contains comprehensive info on contributing, repository layout, our release strategy, and more.
+
+
 .. include:: contents.rst.inc
