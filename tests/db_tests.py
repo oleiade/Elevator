@@ -22,13 +22,13 @@ class DatabaseOptionsTest(unittest2.TestCase):
         pass
 
 
-
 class DatabasesTest(unittest2.TestCase):
     def setUp(self):
         self.store = '/tmp/store.json'
         self.dest = '/tmp/dbs'
         self.env = gen_test_env()
-        os.mkdir(self.dest)
+        if not os.path.exists(self.dest):
+            os.mkdir(self.dest)
         self.handler = DatabasesHandler(self.store, self.dest)
 
     def tearDown(self):

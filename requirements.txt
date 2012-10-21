@@ -1,3 +1,4 @@
+lz4
 msgpack-python
 pyzmq
 unittest2
