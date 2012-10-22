@@ -19,25 +19,10 @@ The Elevator developers manage the project’s source code with the Git. To get 
 
     $ git://github.com/oleiade/Elevator.git
 
-.. _installation:
-
-Installation
-=======
-
-.. code-block:: bash
-
-    $ pip install fabric
-    $ fab build
-    $ pip install -r requirements.txt
-    $ python setup.py install
-
-**Nota** :
-
 .. _dependencies:
 
 Dependencies
-------------------
-
+==================
 
 Elevator depends on:
 
@@ -48,25 +33,44 @@ Elevator depends on:
 * Python packages listed in `requirements.txt`
 
 Python
-~~~~~~~~~
+-----------
 
 Elevator requires Python version 2.6 or 2.7. It has not yet been tested on Python 3.x and is thus likely to be incompatible with it.
 
 Setuptools
-~~~~~~~~~~~~~
+-----------------
 
 Setuptools comes with some Python installations by default; if yours doesn’t, you’ll need to grab it. In such situations it’s typically packaged as python-setuptools, py27-setuptools or similar.
 
-
-
 Requirements
-~~~~~~~~~~~~~~~~
+-------------------
 
 Requirements.txt packages should be installed via the package manager `Pip <http://pypi.python.org/pypi/pip>`_:
 
 .. code-block:: bash
 
     $ pip install -r requirements.txt
+
+
+.. _installation:
+
+Installation
+==================
+
+Both `pip <http://www.pip-installer.org>`_ and `fabric <http://docs.fabfile.org/en/1.4.3>`_ are not mandatory dependencies
+in order to succesfuly install Elevator, but, hey, believe me, they'll make your life easier. But if you're still one
+of these 'by hand' thing junkie, of course, you can go through the process of installing zmq, leveldb and all the python
+packages 'by hand'. Up to you.
+
+.. code-block:: bash
+
+    $ pip install fabric
+    $ fab build
+    $ pip install -r requirements.txt
+    $ python setup.py install
+
+**Nota** :
+
 
 .. _usage:
 
@@ -76,26 +80,33 @@ Usage
 .. code-block:: bash
 
     $ elevator --help
-    usage: elevator [-h]
-                    [--daemon]
-                    [--config CONFIG FILE]
-                    [--bind BIND]
-                    [--port PORT]
-                    [--workers WORKERS COUNT]
-                    [--paranoid SHOULD IT BREAK ON UNHANDLED EXCEPTIONS?]
+    usage: elevator [-h] [-dctbpwPv]
 
     Elevator command line manager
 
     optional arguments:
-        -h, --help    show this help message and exit
-        --daemon      Launch elevator as a daemon
-        --config      Path to elevator server config file, eventually
-        --bind        Ip to bind server to
-        --port        Port the server should listen on
-        --workers     How many workers should be spawned (Threads
-                      with concurrent access to all the db store)
-        --paranoid    If option is set, Elevator will shutdown
-                      and log on first unhandled exception
+        -h, --help        show this help message and exit
+
+        -d, --daemon      Launch elevator as a daemon
+
+        -c, --config      Path to elevator server config file, eventually
+
+        -t, --transport   Transport layer : tcp | ipc
+
+        -b, --bind        If tcp transport is selected: ip the server
+                          socket should be listening on.
+
+        -p, --port        Port the server should listen on
+
+        -w, --workers     How many workers should be spawned (Threads
+                          with concurrent access to all the db store)
+
+        -P, --paranoid    If option is set, Elevator will shutdown
+                          and log on first unhandled exception
+
+        -v, --log-level   Log level, see python logging documentation
+                          for more information :
+                          http://docs.python.org/library/logging.html#logger-objects
 
 
 .. _configuration:
@@ -155,9 +166,7 @@ Server configuration relies on a INI file you can pass it as --config argument. 
     max_cache_size = 1024
 
     # Specify the path for the unix socket that will be used to listen for
-    # incoming connections. There is no default, so Elevator will not listen
-    # on a unix socket when not specified.
-    #
+    # incoming connections when Elevator is set to use an ipc socket.
     # unixsocket = /tmp/elevator.sock
 
 .. _clients:
@@ -180,4 +189,4 @@ to implement your own client in your language.
 Deployment
 =======
 
-TEST
+(coming soon)
