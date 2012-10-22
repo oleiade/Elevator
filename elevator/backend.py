@@ -59,7 +59,6 @@ class Worker(threading.Thread):
 
             try:
                 message = Request(msg)
-                activity_logger.debug(str(message))
             except MessageFormatError as e:
                 errors_logger.exception(e.value)
                 header = ResponseHeader(status=FAILURE_STATUS,
@@ -72,7 +71,6 @@ class Worker(threading.Thread):
             # Handle message, and execute the requested
             # command in leveldb
             header, response = self.handler.command(message)
-            activity_logger.debug(' - '.join([str(header), str(response)]))
 
             self.socket.send_multipart([sender_id, header, response], flags=zmq.NOBLOCK, copy=False)
             self.processing = False
