@@ -28,10 +28,12 @@ class Environment(dict):
         key/value descriptions.
         """
         config = ConfigParser()
-        config.read(env_file)
 
-        for section in config.sections():
-            self.update({section: items_to_dict(config.items(section))})
+        with open(env_file, 'r') as f:
+            config.readfp(f)
+
+            for section in config.sections():
+                self.update({section: items_to_dict(config.items(section))})
 
     def reload_from_file(self, env_file=''):
         self.flush(env_file)
