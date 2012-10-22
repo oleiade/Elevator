@@ -120,6 +120,28 @@ and the second one is the content.
     }
 
 
+.. _meta:
+
+Meta
+~~~~~~~~~~~
+
+As you might have noticed, both requests and response header have a meta field. Though it's presence is mandatory in requests
+you can perfectly leave it as an empty hash map if you don't need it.
+
+It's goal is to let the client and server set options when they're exchanging requests and response. Today, only one option is
+supported, but their might be more coming as the development stream flows.
+
+*Meta options*:
+
+* ``compression`` : ``true`` | ``false``
+    When you're dealing with huge masses of datas (and I mean, **really** huge), you might notice Elevator slowing
+    down sometimes
+
+    That's because of the Response size which has to be sent over network (when your dealing with Elevator on your local
+    machine : generally ther's no problem). To fight the transfer time, and reduce the response size, Elevator can compress the responses
+    using lz4.
+
+
 .. _commands:
 
 Commands
