@@ -1,15 +1,22 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+# Copyright (c) 2012 theo crevon
+#
+# See the file LICENSE for copying permission.
 
 import leveldb
 import logging
 
+from .message import ResponseContent, ResponseHeader
 from .utils.patterns import destructurate
 from .constants import KEY_ERROR, TYPE_ERROR, DATABASE_ERROR,\
                        VALUE_ERROR, RUNTIME_ERROR, SIGNAL_ERROR,\
                        SUCCESS_STATUS, FAILURE_STATUS, WARNING_STATUS,\
                        SIGNAL_BATCH_PUT, SIGNAL_BATCH_DELETE
 from .db import DatabaseOptions
+
+
+errors_logger = logging.getLogger('errors_logger')
 
 
 class Handler(object):
@@ -19,8 +26,6 @@ class Handler(object):
     """
     def __init__(self, databases):
         self.databases = databases
-        self.activity_logger = logging.getLogger('activity_logger')
-        self.errors_logger = logging.getLogger('errors_logger')
         self.handlers = {
             'GET': self.Get,
             'PUT': self.Put,
@@ -30,6 +35,8 @@ class Handler(object):
             'BATCH': self.Batch,
             'MGET': self.MGet,
             'DBCONNECT': self.DBConnect,
+            'DBMOUNT': self.DBMount,
+            'DBUMOUNT': self.DBUmount,
             'DBCREATE': self.DBCreate,
             'DBDROP': self.DBDrop,
             'DBLIST': self.DBList,
@@ -49,23 +56,23 @@ class Handler(object):
             return SUCCESS_STATUS, db.Get(key)
         except KeyError:
             error_msg = "Key %r does not exist" % key
-            self.errors_logger.exception(error_msg)
+            errors_logger.exception(error_msg)
             return (FAILURE_STATUS,
                     [KEY_ERROR, error_msg])
 
-    def MGet(self, db, keys, fill_cache=True, *args, **kwargs):
+    def MGet(self, db, keys, *args, **kwargs):
         def get_or_none(key, context):
             try:
-                res = db.Get(key, fill_cache=fill_cache)
+                res = db.Get(key)
             except KeyError:
                 warning_msg = "Key {0} does not exist".format(key)
                 context['status'] = WARNING_STATUS
-                self.errors_logger.warning(warning_msg)
+                errors_logger.warning(warning_msg)
                 res = None
             return res
 
         context = {'status': SUCCESS_STATUS}
-        value = [(key, get_or_none(key, context)) for key in keys]
+        value = [get_or_none(key, context) for key in keys]
         status = context['status']
 
         return status, value
@@ -83,7 +90,7 @@ class Handler(object):
             return SUCCESS_STATUS, db.Put(key, value)
         except TypeError:
             error_msg = "Unsupported value type : %s" % type(value)
-            self.errors_logger.exception(error_msg)
+            errors_logger.exception(error_msg)
             return (FAILURE_STATUS,
                    [TYPE_ERROR, error_msg])
 
@@ -151,22 +158,34 @@ class Handler(object):
 
         return SUCCESS_STATUS, None
 
-    def DBConnect(self, db_name=None, *args, **kwargs):
+    def DBConnect(self, *args, **kwargs):
+        db_name = args[0]
+
         if (not db_name or
             not self.databases.exists(db_name)):
             error_msg = "Database %s doesn't exist" % db_name
-            self.errors_logger.error(error_msg)
+            errors_logger.error(error_msg)
             return (FAILURE_STATUS,
                     [DATABASE_ERROR, error_msg])
 
-        return SUCCESS_STATUS, self.databases['index'][db_name]
+        db_uid = self.databases.index['name_to_uid'][db_name]
+        if self.databases[db_uid]['status'] == self.databases.STATUSES.UNMOUNTED:
+            self.databases.mount(db_name)
+
+        return SUCCESS_STATUS, db_uid
+
+    def DBMount(self, db_name, *args, **kwargs):
+        return self.databases.mount(db_name)
+
+    def DBUmount(self, db_name, *args, **kwargs):
+        return self.databases.umount(db_name)
 
     def DBCreate(self, db, db_name, db_options=None, *args, **kwargs):
-        db_options = DatabaseOptions() if db_options is None else db_options
+        db_options = DatabaseOptions(**db_options) if db_options else DatabaseOptions()
 
-        if db_name in self.databases['index']:
+        if db_name in self.databases.index['name_to_uid']:
             error_msg = "Database %s already exists" % db_name
-            self.errors_logger.error(error_msg)
+            errors_logger.error(error_msg)
             return (FAILURE_STATUS,
                     [DATABASE_ERROR, error_msg])
 
@@ -175,7 +194,7 @@ class Handler(object):
     def DBDrop(self, db, db_name, *args, **kwargs):
         if not self.databases.exists(db_name):
             error_msg = "Database %s does not exist" % db_name
-            self.errors_logger.error(error_msg)
+            errors_logger.error(error_msg)
             return (FAILURE_STATUS,
                     [DATABASE_ERROR, error_msg])
 
@@ -192,32 +211,42 @@ class Handler(object):
 
         return SUCCESS_STATUS, None
 
+    def _gen_response(self, request, cmd_status, cmd_value):
+        if cmd_status == FAILURE_STATUS:
+            header = ResponseHeader(status=cmd_status, err_code=cmd_value[0], err_msg=cmd_value[1])
+            content = ResponseContent(datas=None)
+        else:
+            if 'compression' in request.meta:
+                compression = request.meta['compression']
+            else:
+                compression = False
+
+            header = ResponseHeader(status=cmd_status, compression=compression)
+            content = ResponseContent(datas=cmd_value, compression=compression)
+
+        return header, content
+
     def command(self, message, *args, **kwargs):
-        db_uid = message.db_uid
-        command = message.command
-        args = message.data
-        kwargs.update({'db_uid': db_uid})  # Just in case
         status = SUCCESS_STATUS
+        err_code, err_msg = None, None
 
-        if command == 'DBCONNECT':
-            # Here db_uid is in fact a db name, and connect
-            # returns the valid seek db uid.
-            status, value = self.DBConnect(db_name=message.data[0])
-            return status, value
+        # DB does not exist
+        if message.db_uid and (not message.db_uid in self.databases):
+            error_msg = "Database %s doesn't exist" % message.db_uid
+            errors_logger.error(error_msg)
+            status, value = FAILURE_STATUS, [RUNTIME_ERROR, error_msg]
+        # Command not recognized
+        elif not message.command in self.handlers:
+            error_msg = "Command %s not handled" % message.command
+            errors_logger.error(error_msg)
+            status, value = FAILURE_STATUS, [KEY_ERROR, error_msg]
+        # Valid request
+        else:
+            if not message.db_uid:
+                status, value = self.handlers[message.command](*message.data, **kwargs)
+            else:
+                database = self.databases[message.db_uid]['connector']
+                status, value = self.handlers[message.command](database, *message.data, **kwargs)
 
-        if (not db_uid or
-            (db_uid and (not db_uid in self.databases))):
-            error_msg = "Database %s doesn't exist" % db_uid
-            self.errors_logger.error(error_msg)
-            return (FAILURE_STATUS,
-                    [RUNTIME_ERROR, error_msg])
-
-        if not command in self.handlers:
-            error_msg = "Command %s not handled" % command
-            self.errors_logger.error(error_msg)
-            return (FAILURE_STATUS,
-                    [KEY_ERROR, error_msg])
-
-        status, value = self.handlers[command](self.databases[db_uid], *args, **kwargs)
-
-        return status, value
+        # Will output a valid ResponseHeader and ResponseContent objects
+        return self._gen_response(message, status, value)

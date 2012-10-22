@@ -17,10 +17,9 @@ with open(os.path.join(root, 'CHANGES.rst')) as f:
 setup(
     name='Elevator',
     version=version,
-    license='BSD',
+    license='MIT',
 
-    description='Minimalistic database engine based on levelDB. Allows async, '
-                'multithreaded and/or remote acces to a leveldb backend.',
+    description='On disk key/value store based on levelDB backend',
     long_description=README + '\n\n' + CHANGES,
 
     author='Oleiade',
@@ -28,7 +27,7 @@ setup(
     url='http://github.com/oleiade/Elevator',
 
     classifiers=[
-        'Development Status :: 0.0.1 - Early Alpha',
+        'Development Status :: 0.3d',
         'Environment :: Unix-like Systems',
         'Programming Language :: Python',
         'Operating System :: Unix-like',
@@ -40,10 +39,7 @@ setup(
         'elevator.utils',
     ],
     package_dir={'': '.'},
-
-    install_requires=[
-        'pyzmq>=2.1.11',
-    ],
+    zip_safe=False,
 
     # Setting up executable/main functions links
     entry_points={

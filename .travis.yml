@@ -3,12 +3,16 @@ python:
   - "2.6"
   - "2.7"
 
+before_install:
+  - rm -rf /tmp/*
+
 install:
   - pip install fabric
   - fab build
+  - pip install -r requirements.txt --upgrade
   - python setup.py install
 
 after_install:
   - chmod +x tests/*.py
 
-script: nosetests -vs tests/
+script: nosetests -vs tests

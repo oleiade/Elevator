@@ -1,9 +1,14 @@
+# -*- coding: utf-8 -*-
+
+# Copyright (c) 2012 theo crevon
+#
+# See the file LICENSE for copying permission.
+
 import os
 import shutil
 import subprocess
 import tempfile
 import ConfigParser
-import tempfile
 import random
 
 from elevator.env import Environment
@@ -55,24 +60,24 @@ class TestDaemon(object):
 
     def __del__(self):
         for key, value in self.config.items('global'):
-            if os.path.exists(value):
+            if not isinstance(value, (int, float)) and os.path.exists(value):
                 if os.path.isfile(value):
                     os.remove(value)
                 elif os.path.isdir(value):
                     shutil.rmtree(value)
 
-        self.conf_file.close()
         os.remove(self.conf_file_path)
 
     def bootstrap_conf(self):
-        self.conf_file_path = '/tmp/elevator_test.conf'
+        self.conf_file_path = tempfile.mkstemp(suffix=".conf", dir="/tmp")
         self.config = gen_test_conf()
-        self.conf_file = open(self.conf_file_path, 'a')
-        self.config.write(self.conf_file)
+
+        with open(self.conf_file_path) as f:
+            self.config.write(f)
 
     def start(self):
         self.process = subprocess.Popen(['elevator',
-                                         '--config', self.conf_file,
+                                         '--config', self.conf_file_path,
                                          '--port', self.port])
 
     def stop(self):

@@ -14,8 +14,8 @@ See [Documentation](http://oleiade.github.com/Elevator) for more details
 
 ### Depends on
 
-- zmq
-- pyzmq
+- zmq-3.X
+- pyzmq (built with zmq-3.X)
 - leveldb
 - py-leveldb
 
@@ -26,6 +26,7 @@ See [Documentation](http://oleiade.github.com/Elevator) for more details
 ```bash
 $ pip install fabric
 $ fab build
+$ pip install -r requirements.txt
 $ python setup.py install
 ```
 
@@ -42,19 +43,21 @@ See config/elevator.conf for an example of Elevator configuration.
 
 ```bash
 $ elevator --help
-usage: elevator [-h] [--daemon] [--config CONFIG FILE] [--bind BIND] [--port PORT]
+usage: elevator [-h]
+                [--daemon] [--config CONFIG FILE] [--transport tcp | ipc] [--bind BIND] [--port PORT]
                 [--workers WORKERS COUNT] [--paranoid SHOULD IT BREAK ON UNHANDLED EXCEPTIONS?]
 
 Elevator command line manager
 
 optional arguments:
     -h, --help       show this help message and exit
-    --daemon      Launch elevator as a daemon
-    --config      Path to elevator server config file, eventually
-    --bind        Ip to bind server to
-    --port        Port the server should listen on
-    --workers     How many workers should be spawned (Threads with concurrent access to all the db store)
-    --paranoid    If option is set, Elevator will shutdown and log on first unhandled exception
+    -d, --daemon      Launch elevator as a daemon
+    -c, --config      Path to elevator server config file, eventually
+    -t, --transport   Transfert protocol (tcp | ipc)
+    -b, --bind        Ip to bind server to
+    -p, --port        Port the server should listen on
+    -w, --workers     How many workers should be spawned (Threads with concurrent access to all the db store)
+    -P, --paranoid    If option is set, Elevator will shutdown and log on first unhandled exception
 ```
 
 ### Clients

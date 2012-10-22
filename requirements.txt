@@ -1,7 +1,7 @@
-msgpack-python
-unittest2
 lz4
+msgpack-python
 pyzmq
+unittest2
 ujson==1.18
 nose==1.2.1
 procname==0.3

@@ -1,5 +1,8 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+# Copyright (c) 2012 theo crevon
+#
+# See the file LICENSE for copying permission.
 
 from ConfigParser import ConfigParser
 
@@ -28,10 +31,12 @@ class Environment(dict):
         key/value descriptions.
         """
         config = ConfigParser()
-        config.read(env_file)
 
-        for section in config.sections():
-            self.update({section: items_to_dict(config.items(section))})
+        with open(env_file, 'r') as f:
+            config.readfp(f)
+
+            for section in config.sections():
+                self.update({section: items_to_dict(config.items(section))})
 
     def reload_from_file(self, env_file=''):
         self.flush(env_file)
