@@ -215,6 +215,11 @@ Elevator tries to free as much cache it used as possible.
 
 ``DBREPAIR`` : Repairs a broken (or too slow) database you already owns uid
 
+**Notes** :
+    * ``errors`` : In order not to expose too much information about Elevator internal errors to the client,
+    only simple but explicit enough errors will be thrown by the database management commands. But, more
+    (useful) informations will be logged in errors logs.
+
 .. _database options:
 
 Database Options

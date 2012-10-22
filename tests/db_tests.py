@@ -4,6 +4,7 @@ import unittest2
 import os
 import json
 import shutil
+import tempfile
 import leveldb
 
 from elevator.utils.snippets import from_mo_to_bytes
@@ -12,6 +13,7 @@ from elevator.constants import SUCCESS_STATUS, FAILURE_STATUS,\
 from elevator.db import DatabasesHandler, DatabaseOptions
 
 from .fakers import gen_test_env
+from .utils import rm_from_pattern
 
 
 class DatabaseOptionsTest(unittest2.TestCase):
@@ -228,6 +230,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertIsNotNone(self.handler[db_uid]['connector'])
         self.assertIsInstance(self.handler[db_uid]['connector'], leveldb.LevelDB)
 
+
     def test_mount_unmounted_db(self):
         db_name = 'testdb'  # Automatically created on startup
         status, content = self.handler.add(db_name)
@@ -248,6 +251,20 @@ class DatabasesTest(unittest2.TestCase):
     def test_mount_already_mounted_db(self):
         db_name = 'testdb'  # Automatically created on startup
         status, content = self.handler.add(db_name)
+
+        status, content = self.handler.mount(db_name)
+        self.assertEqual(status, FAILURE_STATUS)
+        self.assertEqual(len(content), 2)
+        self.assertEqual(content[0], DATABASE_ERROR)
+
+    def test_mount_corrupted_db(self):
+        db_name = 'testdb'
+        status, content = self.handler.add(db_name)
+        db_uid = self.handler.index['name_to_uid'][db_name]
+
+        # Intetionaly rm db MANIFEST in order for a corruption
+        # to appear.
+        rm_from_pattern(self.handler[db_uid]['path'], 'MANIFEST*')
 
         status, content = self.handler.mount(db_name)
         self.assertEqual(status, FAILURE_STATUS)

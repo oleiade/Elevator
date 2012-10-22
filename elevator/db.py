@@ -6,17 +6,23 @@
 
 import os
 import uuid
+import logging
 import leveldb
 import ujson as json
 
 from shutil import rmtree
 from threading import Thread, Event
+from leveldb import LevelDBError
 
 from .env import Environment
 from .constants import FAILURE_STATUS, SUCCESS_STATUS,\
                        WARNING_STATUS, OS_ERROR, DATABASE_ERROR
 from .utils.snippets import from_bytes_to_mo
 from .utils.patterns import enum
+
+
+activity_logger = logging.getLogger("activity_logger")
+errors_logger = logging.getLogger("errors_logger")
 
 
 class Ocd(Thread):
@@ -95,6 +101,16 @@ class DatabasesHandler(dict):
             return (False, ratio)
         return (True, ratio)
 
+    def _get_db_connector(self, path, *args, **kwargs):
+        connector = None
+
+        try:
+            connector = leveldb.LevelDB(path, *args, **kwargs)
+        except LevelDBError as e:
+            errors_logger.exception(e.message)
+
+        return connector
+
     def extract_store_datas(self):
         """Retrieves database store from file
 
@@ -151,6 +167,11 @@ class DatabasesHandler(dict):
 
         if self[db_uid]['status'] == self.STATUSES.UNMOUNTED:
             db_path = self[db_uid]['path']
+            connector = self._get_db_connector(db_path)
+
+            if connector is None:
+                return (FAILURE_STATUS,
+                        [DATABASE_ERROR, "Database %s could not be mounted" % db_path])
 
             self[db_uid]['status'] = self.STATUSES.MOUNTED
             self[db_uid]['connector'] = leveldb.LevelDB(db_path)
@@ -203,6 +224,13 @@ class DatabasesHandler(dict):
             new_db_path = os.path.join(self.dest, db_name)
 
         path = new_db_path
+        connector = self._get_db_connector(path)
+
+        if connector is None:
+            return (FAILURE_STATUS,
+                    [DATABASE_ERROR, "Database %s could not be created" % path])
+
+        # Adding db to store, and updating handler
         uid = str(uuid.uuid4())
         options = db_options
         self.store_update(db_name, {
@@ -214,7 +242,7 @@ class DatabasesHandler(dict):
         self.index['name_to_uid'].update({db_name: uid})
         self.update({
             uid: {
-                'connector': leveldb.LevelDB(path, **options),
+                'connector': connector,
                 'name': db_name,
                 'path': path,
                 'status': self.STATUSES.MOUNTED,
