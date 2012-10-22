@@ -1,5 +1,16 @@
 
-0.3d / 2012-10-19 
+0.4 / 2012-10-22
+==================
+
+  * Add: restore theme
+  * Add : Base sphinx documentation
+  * Update : new License MIT
+  * Fix #86: IOError when bad config file supplied as cmdline argument
+  * Fix #95: Elevator will start and log errors even though some databases are corrupted
+  * Fix : log-level debug messages format
+  * Fix : travis, tests, requirements
+
+0.3d / 2012-10-19
 ==================
 
   * Add : Request error for invalid request messages
