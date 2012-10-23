@@ -1,4 +1,4 @@
-# Elevator
+[![Elevator](http://dl.dropbox.com/u/2497327/baneer.png)](http://elevator.readthedocs.org)
 
 [![Build Status](https://secure.travis-ci.org/oleiade/Elevator.png)](http://travis-ci.org/oleiade/Elevator)
 
