@@ -1,0 +1,16 @@
+Source: elevator
+Maintainer: Theo crevon <tcrevon@gmail.com>
+Section: database
+Priority: optional
+Build-Depends: python-setuptools (>= 0.6b3), python (>= 2.6.6-3), debhelper (>= 7.4.3), python-pip (>= 1.0)
+Standards-Version: 3.9.1
+
+Package: elevator
+Architecture: all
+Pre-Depends: libzmq-dev, libleveldb-dev
+Depends: ${misc:Depends}, ${python:Depends}
+Description: On disk key-value store written based on levelDB.
+ Allows high performance on-disk bulk read/write.
+ Provides async, multithreaded and/or remote access to a multi-leveldb backend.
+ Relies on the zeromq network library and msgpack serialization format.
+ Made to be portable between languages and platforms.

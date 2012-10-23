@@ -1,0 +1,203 @@
+Description: Upstream changes introduced in version 0.0.4-1
+ This patch has been created by dpkg-source during the package build.
+ Here's the last changelog entry, hopefully it gives details on why
+ those changes were made:
+ .
+ elevator (0.0.4-1) unstable; urgency=low
+ .
+   * source package automatically created by stdeb 0.6.0+git
+ .
+ The person named in the Author field signed this changelog entry.
+Author: Theo crevon <tcrevon@gmail.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- /dev/null
++++ elevator-0.0.4/Elevator.egg-info/entry_points.txt
+@@ -0,0 +1,3 @@
++[console_scripts]
++elevator = elevator.server:main
++
+--- /dev/null
++++ elevator-0.0.4/Elevator.egg-info/top_level.txt
+@@ -0,0 +1 @@
++elevator
+--- /dev/null
++++ elevator-0.0.4/Elevator.egg-info/SOURCES.txt
+@@ -0,0 +1,24 @@
++setup.py
++./elevator/__init__.py
++./elevator/api.py
++./elevator/backend.py
++./elevator/conf.py
++./elevator/constants.py
++./elevator/db.py
++./elevator/env.py
++./elevator/frontend.py
++./elevator/message.py
++./elevator/server.py
++./elevator/helpers/__init__.py
++./elevator/helpers/internals.py
++./elevator/utils/__init__.py
++./elevator/utils/daemon.py
++./elevator/utils/decorators.py
++./elevator/utils/patterns.py
++./elevator/utils/snippets.py
++Elevator.egg-info/PKG-INFO
++Elevator.egg-info/SOURCES.txt
++Elevator.egg-info/dependency_links.txt
++Elevator.egg-info/entry_points.txt
++Elevator.egg-info/not-zip-safe
++Elevator.egg-info/top_level.txt
+\ No newline at end of file
+--- /dev/null
++++ elevator-0.0.4/Elevator.egg-info/dependency_links.txt
+@@ -0,0 +1 @@
++
+--- /dev/null
++++ elevator-0.0.4/Elevator.egg-info/PKG-INFO
+@@ -0,0 +1,129 @@
++Metadata-Version: 1.0
++Name: Elevator
++Version: 0.0.4
++Summary: On disk key/value store based on levelDB backend
++Home-page: http://github.com/oleiade/Elevator
++Author: Oleiade
++Author-email: tcrevon@gmail.com
++License: MIT
++Description: [![Elevator](http://dl.dropbox.com/u/2497327/baneer.png)](http://elevator.readthedocs.org)
++        
++        [![Build Status](https://secure.travis-ci.org/oleiade/Elevator.png)](http://travis-ci.org/oleiade/Elevator)
++        
++        Key-Value store written in Python and based on levelDB, allows high performance on-disk bulk read/write.
++        
++        Allows async, multithreaded and/or remote access to a multi-leveldb backend.
++        
++        Relying on the zeromq network library and msgpack serialization format, it is made to be portable between languages and
++        platforms.
++        
++        See [Documentation](http://oleiade.github.com/Elevator) for more details
++        
++        
++        ### Depends on
++        
++        - zmq-3.X
++        - pyzmq (built with zmq-3.X)
++        - leveldb
++        - py-leveldb
++        
++        
++        ### Installation
++        
++        
++        ```bash
++        $ pip install fabric
++        $ fab build
++        $ pip install -r requirements.txt
++        $ python setup.py install
++        ```
++        
++        
++        ### Usage
++        
++        When elevator is installed, you can then launch the server using the elevator executable.
++        Note that a --daemon option is disposable, and allows you to run elevator server as a daemon,
++        storing it's pid in .pid file in /tmp.
++        
++        See config/elevator.conf for an example of Elevator configuration.
++        
++        *Example*:
++        
++        ```bash
++        $ elevator --help
++        usage: elevator [-h]
++                        [--daemon] [--config CONFIG FILE] [--transport tcp | ipc] [--bind BIND] [--port PORT]
++                        [--workers WORKERS COUNT] [--paranoid SHOULD IT BREAK ON UNHANDLED EXCEPTIONS?]
++        
++        Elevator command line manager
++        
++        optional arguments:
++            -h, --help       show this help message and exit
++            -d, --daemon      Launch elevator as a daemon
++            -c, --config      Path to elevator server config file, eventually
++            -t, --transport   Transfert protocol (tcp | ipc)
++            -b, --bind        Ip to bind server to
++            -p, --port        Port the server should listen on
++            -w, --workers     How many workers should be spawned (Threads with concurrent access to all the db store)
++            -P, --paranoid    If option is set, Elevator will shutdown and log on first unhandled exception
++        ```
++        
++        ### Clients
++        
++        *Python* : [py-elevator] (http://github.com/oleiade/py-elevator)
++        
++        *Go* : [go-elevator](http://github.com/oleiade/go-elevator) (Early early, so early version)
++        
++        *Clojure* : *Coming soon*
++        
++        *C* : *Coming soon*
++        
++        
++        ### Thanks
++        
++        Thanks to [srinikom](https://github.com/srinikom) for its [leveldb-server](https://github.com/srinikom/leveldb-server) which was a very good base to start from.
++        
++        
++        
++        0.4 / 2012-10-22
++        ==================
++        
++          * Add: restore theme
++          * Add : Base sphinx documentation
++          * Update : new License MIT
++          * Fix #86: IOError when bad config file supplied as cmdline argument
++          * Fix #95: Elevator will start and log errors even though some databases are corrupted
++          * Fix : log-level debug messages format
++          * Fix : travis, tests, requirements
++        
++        0.3d / 2012-10-19
++        ==================
++        
++          * Add : Request error for invalid request messages
++          * Update #91: Mount default at server startup
++          * Update #91: Mount/Unmount command + auto-mount on connect
++          * Update #91: add a ticker class, which executes a function every x seconds
++          * Update #30, Update #99: Compress Responses on demande (request.meta['compression'])
++          * Update #88, Update #99: now responses comes in two parts header+content
++          * Update #88: Fix MGet, Range, Slice return values types to suite with new responses format
++          * Update #88: Refactored Request/Responses format
++          * Update : Refactored DatabasesHandler internal storage
++          * Update : Few refactoring on loggers handling
++          * Update : Refactored DBConnect no more db_uid to provide in request
++          * Fix #97: provide mono-letters args
++          * Fix #89: Log requests/responses on log-level=DEBUG
++          * Fix #87: Refactored logging
++          * Fix #100: Non blocking workers, graceful shutdown == PERFORMANCES
++          * Fix #98: Activity logging on both file and stdout
++          * Fix #101: fixed ipc handling
++          * Fix : api tests for compatibility with new Req/Resp
++          * Fix : refactored tests for new Range/Slice behavior when size == 1
++          * Fix : Mount/Unmount passed args
++        
++        
++Keywords: elevator leveldb database key-value
++Platform: UNKNOWN
++Classifier: Development Status :: 0.3d
++Classifier: Environment :: Unix-like Systems
++Classifier: Programming Language :: Python
++Classifier: Operating System :: Unix-like
+--- /dev/null
++++ elevator-0.0.4/Elevator.egg-info/not-zip-safe
+@@ -0,0 +1 @@
++

@@ -1,0 +1,8 @@
+Format: http://anonscm.debian.org/viewvc/dep/web/deps/dep5.mdwn?revision=174&view=co
+Upstream-Name: elevator
+Upstream-Contact: Theo crevon <tcrevon@gmail.com>
+Source: https://github.com/oleiade/Elevator
+
+Files: *
+Copyright: 2012 Theo crevon
+License: MIT
