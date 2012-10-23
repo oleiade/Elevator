@@ -15,10 +15,10 @@ from threading import Thread, Event
 from leveldb import LevelDBError
 
 from .env import Environment
-from .constants import FAILURE_STATUS, SUCCESS_STATUS,\
-                       WARNING_STATUS, OS_ERROR, DATABASE_ERROR
+from .constants import OS_ERROR, DATABASE_ERROR
 from .utils.snippets import from_bytes_to_mo
 from .utils.patterns import enum
+from .helpers.internals import failure, success
 
 
 activity_logger = logging.getLogger("activity_logger")
@@ -170,16 +170,14 @@ class DatabasesHandler(dict):
             connector = self._get_db_connector(db_path)
 
             if connector is None:
-                return (FAILURE_STATUS,
-                        [DATABASE_ERROR, "Database %s could not be mounted" % db_path])
+                return failure(DATABASE_ERROR, "Database %s could not be mounted" % db_path)
 
             self[db_uid]['status'] = self.STATUSES.MOUNTED
             self[db_uid]['connector'] = leveldb.LevelDB(db_path)
         else:
-            return (FAILURE_STATUS,
-                    [DATABASE_ERROR, "Database %r already mounted" % db_name])
+            return failure(DATABASE_ERROR, "Database %r already mounted" % db_name)
 
-        return SUCCESS_STATUS, None
+        return success()
 
     def umount(self, db_name):
         db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
@@ -189,10 +187,9 @@ class DatabasesHandler(dict):
             del self[db_uid]['connector']
             self[db_uid]['connector'] = None
         else:
-            return (FAILURE_STATUS,
-                    [DATABASE_ERROR, "Database %r already unmounted" % db_name])
+            return failure(DATABASE_ERROR, "Database %r already unmounted" % db_name)
 
-        return SUCCESS_STATUS, None
+        return success()
 
     def add(self, db_name, db_options=None):
         """Adds a db to the DatabasesHandler object, and sync it
@@ -200,10 +197,9 @@ class DatabasesHandler(dict):
         db_options = db_options or DatabaseOptions()
         cache_status, ratio = self._disposable_cache(db_options["block_cache_size"])
         if not cache_status:
-            return (FAILURE_STATUS,
-                    [DATABASE_ERROR,
-                     "Not enough disposable cache memory "
-                     "%d Mo missing" % ratio])
+            return failure(DATABASE_ERROR,
+                           "Not enough disposable cache memory "
+                           "%d Mo missing" % ratio)
 
         db_name_is_path = db_name.startswith('.') or ('/' in db_name)
         is_abspath = lambda: not db_name.startswith('.') and ('/' in db_name)
@@ -211,15 +207,13 @@ class DatabasesHandler(dict):
         # Handle case when a db is a path
         if db_name_is_path:
             if not is_abspath():
-                return (FAILURE_STATUS,
-                        [DATABASE_ERROR, "Canno't create database from relative path"])
+                return failure(DATABASE_ERROR, "Canno't create database from relative path")
             try:
                 new_db_path = db_name
                 if not os.path.exists(new_db_path):
                     os.mkdir(new_db_path)
             except OSError as e:
-                return (FAILURE_STATUS,
-                        [OS_ERROR, e.strerror])
+                return failure(OS_ERROR, e.strerror)
         else:
             new_db_path = os.path.join(self.dest, db_name)
 
@@ -227,8 +221,7 @@ class DatabasesHandler(dict):
         connector = self._get_db_connector(path)
 
         if connector is None:
-            return (FAILURE_STATUS,
-                    [DATABASE_ERROR, "Database %s could not be created" % path])
+            return (DATABASE_ERROR, "Database %s could not be created" % path)
 
         # Adding db to store, and updating handler
         uid = str(uuid.uuid4())
@@ -250,7 +243,7 @@ class DatabasesHandler(dict):
             },
         })
 
-        return SUCCESS_STATUS, None
+        return success()
 
     def drop(self, db_name):
         """Drops a db from the DatabasesHandler, and sync it
@@ -264,11 +257,9 @@ class DatabasesHandler(dict):
         try:
             rmtree(db_path)
         except OSError:
-            return (FAILURE_STATUS,
-                    [DATABASE_ERROR,
-                    "Cannot drop db : %s, files not found"])
+            return failure(DATABASE_ERROR, "Cannot drop db : %s, files not found")
 
-        return SUCCESS_STATUS, None
+        return success()
 
     def exists(self, db_name):
         """Checks if a database exists on disk"""
