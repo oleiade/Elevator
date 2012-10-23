@@ -37,6 +37,7 @@ setup(
     packages=[
         'elevator',
         'elevator.utils',
+        'elevator.helpers',
     ],
     package_dir={'': '.'},
     zip_safe=False,
