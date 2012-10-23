@@ -54,7 +54,7 @@ class Handler(object):
         *args   =>      (key) to fetch
         """
         try:
-            return SUCCESS_STATUS, db.Get(key)
+            return success(db.Get(key))
         except KeyError:
             error_msg = "Key %r does not exist" % key
             errors_logger.exception(error_msg)
