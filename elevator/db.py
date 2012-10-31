@@ -173,7 +173,7 @@ class DatabasesHandler(dict):
                 return failure(DATABASE_ERROR, "Database %s could not be mounted" % db_path)
 
             self[db_uid]['status'] = self.STATUSES.MOUNTED
-            self[db_uid]['connector'] = leveldb.LevelDB(db_path)
+            self[db_uid]['connector'] = connector
         else:
             return failure(DATABASE_ERROR, "Database %r already mounted" % db_name)
 
