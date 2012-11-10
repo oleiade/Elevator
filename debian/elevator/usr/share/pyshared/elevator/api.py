@@ -145,11 +145,14 @@ class Handler(object):
                 signal, args = destructurate(command)
                 batch_actions[signal](*args)
         except KeyError:  # Unrecognized signal
-            return failure(SIGNAL_ERROR, "Unrecognized signal received : %r" % signal)
+            return (FAILURE_STATUS,
+                    [SIGNAL_ERROR, "Unrecognized signal received : %r" % signal])
         except ValueError:
-            return failure(VALUE_ERROR, "Batch only accepts sequences (list, tuples,...)")
+            return (FAILURE_STATUS,
+                    [VALUE_ERROR, "Batch only accepts sequences (list, tuples,...)"])
         except TypeError:
-            return failure(TYPE_ERROR, "Invalid type supplied")
+            return (FAILURE_STATUS,
+                    [TYPE_ERROR, "Invalid type supplied"])
         db.Write(batch)
 
         return success()
