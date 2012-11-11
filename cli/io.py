@@ -5,9 +5,16 @@
 # See the file LICENSE for copying permission.
 
 
-def parse_input(*args, **kwargs):
-    pass
+def prompt(*args, **kwargs):
+    pattern = kwargs.pop('pattern', '@elevator> ')
+    input_str = raw_input(pattern)
+
+    return input_str
 
 
-def output_result(*args, **kwargs):
+def parse_input(input_str, *args, **kwargs):
+    command, args = destructurate(input_str.split(' '))
+
+
+def output_result(result, *args, **kwargs):
     pass

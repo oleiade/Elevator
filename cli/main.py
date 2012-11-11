@@ -9,9 +9,14 @@ from __future__ import absolut_import
 import sys
 import zmq
 
-from .io import parse_input, output_result
+from .io import prompt, parse_input, output_result
 from .client import send_cmd
 from .args import init_parser
+
+
+in_stream = sys.stdin
+out_stream = sys.stdout
+err_stream = sys.stderr
 
 timeout = 10000
 context = zmq.Context()
@@ -29,7 +34,8 @@ def main():
     socket.connect(host)
 
     while True:
-        command = parse_input()
+        input_str = prompt()
+        command = parse_input(input_str)
         result = send_cmd(command)
         output_result(result)
 
