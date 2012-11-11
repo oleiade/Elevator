@@ -4,7 +4,7 @@
 #
 # See the file LICENSE for copying permission.
 
-from __future__ import absolut_import
+from __future__ import absolute_import
 
 import zmq
 

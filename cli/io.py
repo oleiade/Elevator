@@ -4,6 +4,8 @@
 #
 # See the file LICENSE for copying permission.
 
+from elevator.utils.patterns import destructurate
+
 
 def prompt(*args, **kwargs):
     pattern = kwargs.pop('pattern', '@elevator> ')
@@ -14,6 +16,7 @@ def prompt(*args, **kwargs):
 
 def parse_input(input_str, *args, **kwargs):
     command, args = destructurate(input_str.split(' '))
+    print command, args
 
 
 def output_result(result, *args, **kwargs):

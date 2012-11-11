@@ -4,7 +4,7 @@
 #
 # See the file LICENSE for copying permission.
 
-from __future__ import absolut_import
+from __future__ import absolute_import
 
 import sys
 import zmq
@@ -36,8 +36,8 @@ def main():
     while True:
         input_str = prompt()
         command = parse_input(input_str)
-        result = send_cmd(command)
-        output_result(result)
+        # result = send_cmd(command)
+        # output_result(result)
 
 
 if __name__ == "__main__":
