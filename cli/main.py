@@ -13,11 +13,6 @@ from .client import Client
 from .args import init_parser
 
 
-in_stream = sys.stdin
-out_stream = sys.stdout
-err_stream = sys.stderr
-
-
 def main():
     args = init_parser().parse_args(sys.argv[1:])
     client = Client(protocol=args.protocol,
