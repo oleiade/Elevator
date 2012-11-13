@@ -20,14 +20,14 @@ def main():
 
     try:
         while True:
-            input_str = prompt()
+            input_str = prompt(current_db=client.db_name)
 
             if input_str:
                 command, args = parse_input(input_str)
 
                 if not command == "DBCONNECT":
-                    result = client.send_cmd(client.db_uid, command, args)
-                    output_result(result)
+                    status, result = client.send_cmd(client.db_uid, command, args)
+                    output_result(status, result)
                 else:
                     client.connect(*args)
     except KeyboardInterrupt:

@@ -4,11 +4,17 @@
 #
 # See the file LICENSE for copying permission.
 
+from clint.textui import puts, indent
+from clint.textui import colored
+
 from elevator.utils.patterns import destructurate
+
+from .helpers import FAILURE_STATUS
 
 
 def prompt(*args, **kwargs):
-    pattern = kwargs.pop('pattern', '@elevator> ')
+    current_db = kwargs.pop('current_db', 'default')
+    pattern = 'elevator@{db} =# '.format(db=current_db)
     input_str = raw_input(pattern)
 
     return input_str
@@ -20,6 +26,9 @@ def parse_input(input_str, *args, **kwargs):
     return command, args
 
 
-def output_result(result, *args, **kwargs):
+def output_result(status, result, *args, **kwargs):
     if result:
-        print result
+        if status == FAILURE_STATUS:
+            puts(colored.red(result))
+        else:
+            puts(result)

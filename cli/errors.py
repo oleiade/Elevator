@@ -9,9 +9,6 @@ from __future__ import absolute_import
 from elevator.constants import *
 
 
-def fail_with(type, msg):
-    return "Error : " + ', '.join([type.upper(), msg])
-
 ELEVATOR_ERROR = {
     TYPE_ERROR: 'TypeError',
     KEY_ERROR: 'KeyError',

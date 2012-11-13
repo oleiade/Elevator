@@ -11,6 +11,7 @@ import zmq
 from elevator.constants import *
 
 from .errors import *
+from .helpers import success, fail
 from .message import Request, ResponseHeader, Response
 
 
@@ -28,6 +29,21 @@ class Client(object):
 
         self.connect()
 
+    def __del__(self):
+        self.socket.close()
+        self.context.term()
+
+    def connect(self, db_name=None, *args, **kwargs):
+        self.setup_socket()
+        db_name = 'default' if db_name is None else db_name
+        status, datas = self.send_cmd(None, 'DBCONNECT', [db_name], *args, **kwargs)
+
+        if status == FAILURE_STATUS:
+            return status, datas
+        else:
+            self.db_uid = datas
+            self.db_name = db_name
+
     def setup_socket(self):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.XREQ)
@@ -39,16 +55,8 @@ class Client(object):
         self.socket.close()
         self.context.term()
 
-    def connect(self, db_name=None, *args, **kwargs):
-        self.setup_socket()
-
-        db_name = 'default' if db_name is None else db_name
-        self.db_uid = self.send_cmd(None, 'DBCONNECT', [db_name], *args, **kwargs)[0]
-        self.db_name = db_name
-        return
-
     def _format_response(self, req_cmd, res_datas):
-        if req_cmd == "GET":
+        if req_cmd == "GET" or "DBCONNECT":
             return res_datas[0]
         return res_datas
 
@@ -64,9 +72,8 @@ class Client(object):
             response = Response(raw_response)
 
             if header.status == FAILURE_STATUS:
-                return fail_with(ELEVATOR_ERROR[header.err_code], header.err_msg)
+                return fail(ELEVATOR_ERROR[header.err_code], header.err_msg)
         except zmq.core.error.ZMQError:
-            # Restore original timeout and raise
-            return fail_with("TimeoutError", "Server did not respond in time")
+            return fail("TimeoutError", "Server did not respond in time")
 
-        return self._format_response(command, response.datas)
+        return success(self._format_response(command, response.datas))
