@@ -7,10 +7,9 @@
 from __future__ import absolute_import
 
 import sys
-import zmq
 
 from .io import prompt, parse_input, output_result
-from .client import send_cmd
+from .client import Client
 from .args import init_parser
 
 
@@ -18,27 +17,26 @@ in_stream = sys.stdin
 out_stream = sys.stdout
 err_stream = sys.stderr
 
-timeout = 10000
-context = zmq.Context()
-socket = context.socket(zmq.XREQ)
-
 
 def main():
-    global socket
-    global timeout
-
     args = init_parser().parse_args(sys.argv[1:])
+    client = Client(protocol=args.protocol,
+                    endpoint=args.endpoint)
 
-    host = "%s://%s" % (args.transport, args.endpoint)
-    socket.setsockopt(zmq.RCVTIMEO, timeout)
-    socket.connect(host)
+    try:
+        while True:
+            input_str = prompt()
 
-    while True:
-        input_str = prompt()
-        command = parse_input(input_str)
-        # result = send_cmd(command)
-        # output_result(result)
+            if input_str:
+                command, args = parse_input(input_str)
 
+                if not command == "DBCONNECT":
+                    result = client.send_cmd(client.db_uid, command, args)
+                    output_result(result)
+                else:
+                    client.connect(*args)
+    except KeyboardInterrupt:
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()

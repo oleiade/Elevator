@@ -14,7 +14,7 @@ def init_parser():
     parser.add_argument('-c', '--config', action='store', type=str,
                         default=DEFAULT_CONFIG_FILE)
     # tcp or ipc
-    parser.add_argument('-t', '--transport', action='store', type=str,
+    parser.add_argument('-t', '--protocol', action='store', type=str,
                         default='tcp')
     parser.add_argument('-b', '--endpoint', action='store', type=str,
                         default='127.0.0.1:4141')

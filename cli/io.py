@@ -16,8 +16,9 @@ def prompt(*args, **kwargs):
 
 def parse_input(input_str, *args, **kwargs):
     command, args = destructurate(input_str.split(' '))
-    print command, args
+    return command, args
 
 
 def output_result(result, *args, **kwargs):
-    pass
+    if result:
+        print result
