@@ -47,6 +47,11 @@ class Client(object):
         self.db_name = db_name
         return
 
+    def _format_response(self, req_cmd, res_datas):
+        if req_cmd == "GET":
+            return res_datas[0]
+        return res_datas
+
     def send_cmd(self, db_uid, command, arguments, *args, **kwargs):
         self.socket.send_multipart([Request(db_uid=db_uid,
                                             command=command,
@@ -64,4 +69,4 @@ class Client(object):
             # Restore original timeout and raise
             return fail_with("TimeoutError", "Server did not respond in time")
 
-        return response.datas
+        return self._format_response(command, response.datas)
