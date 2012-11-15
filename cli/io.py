@@ -4,8 +4,7 @@
 #
 # See the file LICENSE for copying permission.
 
-from clint.textui import puts, indent
-from clint.textui import colored
+from clint.textui import puts, colored
 
 from elevator.utils.patterns import destructurate
 
@@ -14,7 +13,7 @@ from .helpers import FAILURE_STATUS
 
 def prompt(*args, **kwargs):
     current_db = kwargs.pop('current_db', 'default')
-    pattern = 'elevator@{db} =# '.format(db=current_db)
+    pattern = '{db}@elevator =# '.format(db=current_db)
     input_str = raw_input(pattern)
 
     return input_str
