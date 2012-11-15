@@ -56,7 +56,7 @@ class Client(object):
         self.context.term()
 
     def _format_response(self, req_cmd, res_datas):
-        if req_cmd == "GET" or "DBCONNECT" and res_datas:
+        if req_cmd in ["GET", "DBCONNECT"] and res_datas:
             return res_datas[0]
         return res_datas
 

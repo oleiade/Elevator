@@ -29,6 +29,6 @@ def parse_input(input_str, *args, **kwargs):
 def output_result(status, result, *args, **kwargs):
     if result:
         if status == FAILURE_STATUS:
-            puts(colored.red(result))
+            puts(colored.red(str(result)))
         else:
-            puts(result)
+            puts(str(result))
