@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+
 from setuptools import setup
 
 root = os.path.abspath(os.path.dirname(__file__))
@@ -27,7 +28,7 @@ setup(
     url='http://github.com/oleiade/Elevator',
 
     classifiers=[
-        'Development Status :: 0.3d',
+        'Development Status :: 0.4',
         'Environment :: Unix-like Systems',
         'Programming Language :: Python',
         'Operating System :: Unix-like',
@@ -40,7 +41,7 @@ setup(
         'elevator.helpers',
     ],
     package_dir={'': '.'},
-    zip_safe=False,
+    include_package_data=False,
 
     # Setting up executable/main functions links
     entry_points={
