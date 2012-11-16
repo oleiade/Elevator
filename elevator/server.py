@@ -54,7 +54,7 @@ def setup_loggers(env):
 
     # Setup up activity logger
     errors_logger = logging.getLogger("errors_logger")
-    errors_logger.setLevel(logging.WARNING)
+    errors_logger.setLevel(logging.ERROR)
     errors_stream = logging.FileHandler(errors_log_file)
     errors_formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(funcName)s : %(message)s")
     errors_stream.setFormatter(errors_formatter)
