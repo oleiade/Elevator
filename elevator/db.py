@@ -56,10 +56,13 @@ class DatabaseOptions(dict):
         self['create_if_missing'] = True
         self['error_if_exists'] = False
         self['paranoid_checks'] = False
+        self['lru_cache_size'] = 8 * (2 << 20)
         self['block_cache_size'] = 8 * (2 << 20)
         self['write_buffer_size'] = 2 * (2 << 20)
         self['block_size'] = 4096
         self['max_open_files'] = 1000
+        self['bloom_filter_bits'] = 64
+        self['compression'] = True
 
         for key, value in kwargs.iteritems():
             if key in self:
@@ -88,7 +91,7 @@ class DatabasesHandler(dict):
     def global_cache_size(self):
         store_datas = self.extract_store_datas()
         max_caches = [int(db["options"]["block_cache_size"]) for db
-                      in store_datas.itervalues()]
+                               in store_datas.itervalues()]
 
         return sum([from_bytes_to_mo(x) for x in max_caches])
 

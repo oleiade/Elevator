@@ -53,23 +53,23 @@ class Handler(object):
         db      =>      LevelDB object
         *args   =>      (key) to fetch
         """
-        if not key in db:
+        value = db.get(key)
+
+        if not value:
             error_msg = "Key %r does not exist" % key
             errors_logger.exception(error_msg)
             return failure(KEY_ERROR, error_msg)
         else:
-            return success(db.get(key))
+            return success(value)
 
     def MGet(self, db, keys, *args, **kwargs):
         def get_or_none(key, context):
-            res = None
+            res = db.get(key)
 
-            if not key in db:
+            if not res:
                 warning_msg = "Key {0} does not exist".format(key)
                 context['status'] = WARNING_STATUS
                 errors_logger.warning(warning_msg)
-            else:
-                res = db.get(key)
 
             return res
 
