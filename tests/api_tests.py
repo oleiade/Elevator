@@ -2,7 +2,7 @@ import unittest2
 import shutil
 import msgpack
 import os
-import leveldb
+import plyvel
 
 from nose.tools import *
 
@@ -17,18 +17,25 @@ from .fakers import gen_test_env
 class ApiTests(unittest2.TestCase):
     def _bootstrap_db(self, db):
         for val in xrange(9):
-            db.Put(str(val), str(val))
+            db.put(str(val), str(val))
 
     def setUp(self):
+        self.store = '/tmp/store.json'
+        self.dest = '/tmp/dbs'
         self.env = gen_test_env()
-        self.databases = DatabasesHandler('/tmp/store.json', '/tmp')
+        if not os.path.exists(self.dest):
+            os.mkdir(self.dest)
+
+        self.databases = DatabasesHandler(self.store, self.dest)
         self.default_db_uid = self.databases.index['name_to_uid']['default']
         self._bootstrap_db(self.databases[self.default_db_uid]['connector'])
         self.handler = Handler(self.databases)
 
     def tearDown(self):
-        shutil.rmtree('/tmp/default')
-        os.remove('/tmp/store.json')
+        del self.databases
+        del self.handler
+        os.remove(self.store)
+        shutil.rmtree(self.dest)
 
     def request_message(self, command, args, db_uid=None):
         db_uid = db_uid or self.default_db_uid
@@ -286,7 +293,7 @@ class ApiTests(unittest2.TestCase):
 
         self.assertEqual(plain_header['status'], SUCCESS_STATUS)
         self.assertEqual(self.handler.databases[db_uid]['status'], self.handler.databases.STATUSES.MOUNTED)
-        self.assertIsInstance(self.handler.databases[db_uid]['connector'], leveldb.LevelDB)
+        self.assertIsInstance(self.handler.databases[db_uid]['connector'], plyvel.DB)
 
 
     def test_create_valid_db(self):

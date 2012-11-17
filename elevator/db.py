@@ -7,12 +7,12 @@
 import os
 import uuid
 import logging
-import leveldb
+import plyvel
 import ujson as json
 
 from shutil import rmtree
 from threading import Thread, Event
-from leveldb import LevelDBError
+from plyvel import CorruptionError
 
 from .env import Environment
 from .constants import OS_ERROR, DATABASE_ERROR
@@ -105,8 +105,8 @@ class DatabasesHandler(dict):
         connector = None
 
         try:
-            connector = leveldb.LevelDB(path, *args, **kwargs)
-        except LevelDBError as e:
+            connector = plyvel.DB(path, create_if_missing=True, *args, **kwargs)
+        except CorruptionError as e:
             errors_logger.exception(e.message)
 
         return connector

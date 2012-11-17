@@ -5,7 +5,7 @@ import os
 import json
 import shutil
 import tempfile
-import leveldb
+import plyvel
 
 from elevator.utils.snippets import from_mo_to_bytes
 from elevator.constants import SUCCESS_STATUS, FAILURE_STATUS,\
@@ -34,6 +34,7 @@ class DatabasesTest(unittest2.TestCase):
         self.handler = DatabasesHandler(self.store, self.dest)
 
     def tearDown(self):
+        del self.handler
         os.remove('/tmp/store.json')
         shutil.rmtree('/tmp/dbs')
 
@@ -228,7 +229,7 @@ class DatabasesTest(unittest2.TestCase):
 
         self.assertEqual(self.handler[db_uid]['status'], self.handler.STATUSES.MOUNTED)
         self.assertIsNotNone(self.handler[db_uid]['connector'])
-        self.assertIsInstance(self.handler[db_uid]['connector'], leveldb.LevelDB)
+        self.assertIsInstance(self.handler[db_uid]['connector'], plyvel.DB)
 
 
     def test_mount_unmounted_db(self):
@@ -246,7 +247,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(self.handler[db_uid]['status'], self.handler.STATUSES.MOUNTED)
         self.assertIsNotNone(self.handler[db_uid]['connector'])
-        self.assertIsInstance(self.handler[db_uid]['connector'], leveldb.LevelDB)
+        self.assertIsInstance(self.handler[db_uid]['connector'], plyvel.DB)
 
     def test_mount_already_mounted_db(self):
         db_name = 'testdb'  # Automatically created on startup
