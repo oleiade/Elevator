@@ -55,12 +55,18 @@ class Client(object):
         self.socket.close()
         self.context.term()
 
-    def _format_response(self, req_cmd, res_datas):
+    def _process_request(self, command, arguments):
+        if command in ["MGET"] and arguments:
+            return command, [arguments]
+        return command, arguments
+
+    def _process_response(self, req_cmd, res_datas):
         if req_cmd in ["GET", "DBCONNECT"] and res_datas:
             return res_datas[0]
         return res_datas
 
     def send_cmd(self, db_uid, command, arguments, *args, **kwargs):
+        command, arguments = self._process_request(command, arguments)
         self.socket.send_multipart([Request(db_uid=db_uid,
                                             command=command,
                                             args=arguments,
@@ -76,4 +82,4 @@ class Client(object):
         except zmq.core.error.ZMQError:
             return fail("TimeoutError", "Server did not respond in time")
 
-        return success(self._format_response(command, response.datas))
+        return success(self._process_response(command, response.datas))
