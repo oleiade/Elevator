@@ -40,7 +40,7 @@ setup(
         'elevator.utils',
         'elevator.helpers',
 
-        'cli',
+        'elevator_cli',
     ],
     package_dir={'': '.'},
     include_package_data=False,
