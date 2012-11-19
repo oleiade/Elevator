@@ -4,6 +4,8 @@
 #
 # See the file LICENSE for copying permission.
 
+import shlex
+
 from clint.textui import puts, colored
 
 from elevator.utils.patterns import destructurate
@@ -24,7 +26,7 @@ def prompt(*args, **kwargs):
 
 
 def parse_input(input_str, *args, **kwargs):
-    input_str = input_str.strip().split()
+    input_str = shlex.split(input_str.strip())
     command, args = destructurate(input_str)
     return command.upper(), args
 
