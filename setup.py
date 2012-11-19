@@ -49,7 +49,7 @@ setup(
     entry_points={
         'console_scripts': [
             'elevator = elevator.server:main',
-            'elevator-cli = cli.main:main',
+            'elevator-cli = elevator_cli.main:main',
         ]
     },
 )

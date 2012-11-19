@@ -16,7 +16,7 @@ from .args import init_parser
 def main():
     args = init_parser().parse_args(sys.argv[1:])
     client = Client(protocol=args.protocol,
-                    endpoint=args.endpoint)
+                         endpoint=args.endpoint)
 
     try:
         while True:

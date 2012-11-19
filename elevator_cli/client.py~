@@ -10,7 +10,6 @@ import zmq
 
 from elevator.constants import *
 
-from .io import output_result
 from .errors import *
 from .helpers import success, fail
 from .message import Request, ResponseHeader, Response
@@ -27,7 +26,6 @@ class Client(object):
         self.timeout = kwargs.pop('timeout', 10000)
 
         self.db_uid = None
-        self.db_name = None
 
         self.setup_socket()
 
@@ -47,18 +45,13 @@ class Client(object):
         orig_timeout = self.timeout
         self.socket.setsockopt(zmq.RCVTIMEO, timeout)
 
-        request = Request(db_uid=None, command="PING", args=[])
-        self.socket.send_multipart([request])
-
+        self.socket.send_multipart([Request(command="PING")])
         try:
             self.socket.recv_multipart()
         except zmq.core.error.ZMQError:
             pings = False
 
-        # Restore original timeout
         self.timeout = orig_timeout
-        self.socket.setsockopt(zmq.RCVTIMEO, self.timeout)
-
         return pings
 
     def connect(self, db_name=None, *args, **kwargs):
@@ -95,9 +88,9 @@ class Client(object):
     def send_cmd(self, db_uid, command, arguments, *args, **kwargs):
         command, arguments = self._process_request(command, arguments)
         self.socket.send_multipart([Request(db_uid=db_uid,
-                                                             command=command,
-                                                             args=arguments,
-                                                             meta={})],)
+                                                command=command,
+                                                args=arguments,
+                                                meta={})],)
 
         try:
             raw_header, raw_response = self.socket.recv_multipart()

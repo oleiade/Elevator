@@ -13,7 +13,11 @@ from .helpers import FAILURE_STATUS
 
 def prompt(*args, **kwargs):
     current_db = kwargs.pop('current_db', 'default')
-    pattern = '{db}@elevator =# '.format(db=current_db)
+
+    if current_db:
+        pattern = '@ Elevator.{db} => '.format(db=current_db)
+    else:
+        pattern = '! Offline => '
     input_str = raw_input(pattern)
 
     return input_str
