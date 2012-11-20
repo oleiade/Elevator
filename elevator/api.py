@@ -63,12 +63,14 @@ class Handler(object):
 
     def MGet(self, db, keys, *args, **kwargs):
         status = SUCCESS_STATUS
+        db_snapshot = db.CreateSnapshot()
+
         values = [None] * len(keys)
         min_key, max_key = min(keys), max(keys)
         keys_index = {k: index for index, k in enumerate(keys)}
-        keys_range = db.RangeIter(min_key, max_key)
+        bound_range = db_snapshot.RangeIter(min_key, max_key)
 
-        for key, value in keys_range:
+        for key, value in bound_range:
             if key in keys_index:
                 values[keys_index[key]] = value
 
