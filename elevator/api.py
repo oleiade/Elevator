@@ -61,21 +61,19 @@ class Handler(object):
             return failure(KEY_ERROR, error_msg)
 
     def MGet(self, db, keys, *args, **kwargs):
-        def get_or_none(key, context):
-            try:
-                res = db.Get(key)
-            except KeyError:
-                warning_msg = "Key {0} does not exist".format(key)
-                context['status'] = WARNING_STATUS
-                errors_logger.warning(warning_msg)
-                res = None
-            return res
+        status = SUCCESS_STATUS
+        values = [None] * len(keys)
+        min_key, max_key = min(keys), max(keys)
+        keys_index = {k: index for index, k in enumerate(keys)}
+        keys_range = db.RangeIter(min_key, max_key)
 
-        context = {'status': SUCCESS_STATUS}
-        value = [get_or_none(key, context) for key in keys]
-        status = context['status']
+        for key, value in keys_range:
+            if key in keys_index:
+                values[keys_index[key]] = value
 
-        return status, value
+        status = WARNING_STATUS if any(v is None for v in values) else status
+
+        return status, values
 
     def Put(self, db, key, value, *args, **kwargs):
         """
