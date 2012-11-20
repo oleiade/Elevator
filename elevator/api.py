@@ -35,6 +35,7 @@ class Handler(object):
             'SLICE': self.Slice,
             'BATCH': self.Batch,
             'MGET': self.MGet,
+            'PING': self.Ping,
             'DBCONNECT': self.DBConnect,
             'DBMOUNT': self.DBMount,
             'DBUMOUNT': self.DBUmount,
@@ -151,6 +152,9 @@ class Handler(object):
         db.Write(batch)
 
         return success()
+
+    def Ping(self, *args, **kwargs):
+        return success("PONG")
 
     def DBConnect(self, *args, **kwargs):
         db_name = args[0]
