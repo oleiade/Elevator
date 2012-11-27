@@ -32,7 +32,7 @@ class ApiTests(unittest2.TestCase):
         self.handler = Handler(self.databases)
 
     def tearDown(self):
-        del self.databases
+        self.databases.__del__()
         del self.handler
         os.remove(self.store)
         shutil.rmtree(self.dest)

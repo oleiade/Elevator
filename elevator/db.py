@@ -87,6 +87,14 @@ class DatabasesHandler(dict):
         self.load()
         self.mount('default')  # Always mount default
 
+    def __del__(self):
+        """
+        Explictly shutsdown the internal leveldb connectors
+        """
+        for uid in self.index['name_to_uid'].values():
+            if 'connector' in self[uid] and self[uid]['connector'] is not None:
+                del self[uid]['connector']
+
     @property
     def global_cache_size(self):
         store_datas = self.extract_store_datas()

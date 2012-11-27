@@ -112,7 +112,7 @@ class Handler(object):
         # Operate over a snapshot in order to return
         # a consistent state of the db
         db_snapshot = db.snapshot()
-        value = list(db_snapshot.iterator(start=key_from, stop=key_to))
+        value = list(db_snapshot.iterator(start=key_from, stop=key_to, include_stop=True))
         del db_snapshot
 
         return success(value)
@@ -123,7 +123,7 @@ class Handler(object):
         # Operates over a snapshot in order to return
         # a consistent state of the db
         db_snapshot = db.snapshot()
-        it = db_snapshot.iterator(start=key_from)
+        it = db_snapshot.iterator(start=key_from, include_stop=True)
         value = []
         pos = 0
 

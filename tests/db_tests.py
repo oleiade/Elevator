@@ -34,7 +34,7 @@ class DatabasesTest(unittest2.TestCase):
         self.handler = DatabasesHandler(self.store, self.dest)
 
     def tearDown(self):
-        del self.handler
+        self.handler.__del__()
         os.remove('/tmp/store.json')
         shutil.rmtree('/tmp/dbs')
 
