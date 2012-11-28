@@ -1,9 +1,10 @@
+pyzmq
+plyvel==0.1
+cython
 lz4
 msgpack-python
-pyzmq
 unittest2
 clint
-cython
 ujson==1.18
 nose==1.2.1
 procname==0.3
