@@ -4,8 +4,7 @@
 #
 # See the file LICENSE for copying permission.
 
-SUCCESS_STATUS = 0
-FAILURE_STATUS = 1
+from elevator.constants import SUCCESS_STATUS, FAILURE_STATUS
 
 
 def fail(type, msg):

@@ -35,6 +35,7 @@ class Handler(object):
             'SLICE': self.Slice,
             'BATCH': self.Batch,
             'MGET': self.MGet,
+            'PING': self.Ping,
             'DBCONNECT': self.DBConnect,
             'DBMOUNT': self.DBMount,
             'DBUMOUNT': self.DBUmount,
@@ -63,21 +64,21 @@ class Handler(object):
             return success(value)
 
     def MGet(self, db, keys, *args, **kwargs):
-        def get_or_none(key, context):
-            res = db.get(key)
+        status = SUCCESS_STATUS
+        db_snapshot = db.snapshot()
 
-            if not res:
-                warning_msg = "Key {0} does not exist".format(key)
-                context['status'] = WARNING_STATUS
-                errors_logger.warning(warning_msg)
+        values = [None] * len(keys)
+        min_key, max_key = min(keys), max(keys)
+        keys_index = {k: index for index, k in enumerate(keys)}
+        bound_range = db_snapshot.iterator(min_key, max_key)
 
-            return res
+        for key, value in bound_range:
+            if key in keys_index:
+                values[keys_index[key]] = value
 
-        context = {'status': SUCCESS_STATUS}
-        value = [get_or_none(key, context) for key in keys]
-        status = context['status']
+        status = WARNING_STATUS if any(v is None for v in values) else status
 
-        return status, value
+        return status, values
 
     def Put(self, db, key, value, *args, **kwargs):
         """
@@ -156,6 +157,9 @@ class Handler(object):
         batch.write()
 
         return success()
+
+    def Ping(self, *args, **kwargs):
+        return success("PONG")
 
     def DBConnect(self, *args, **kwargs):
         db_name = args[0]

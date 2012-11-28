@@ -40,7 +40,7 @@ setup(
         'elevator.utils',
         'elevator.helpers',
 
-        'cli',
+        'elevator_cli',
     ],
     package_dir={'': '.'},
     include_package_data=False,
@@ -49,7 +49,7 @@ setup(
     entry_points={
         'console_scripts': [
             'elevator = elevator.server:main',
-            'elevator-cli = cli.main:main',
+            'elevator-cli = elevator_cli.main:main',
         ]
     },
 )

@@ -10,6 +10,7 @@ import zmq
 
 from elevator.constants import *
 
+from .io import output_result
 from .errors import *
 from .helpers import success, fail
 from .message import Request, ResponseHeader, Response
@@ -26,15 +27,41 @@ class Client(object):
         self.timeout = kwargs.pop('timeout', 10000)
 
         self.db_uid = None
+        self.db_name = None
 
-        self.connect()
+        self.setup_socket()
+
+        if self.ping():
+            self.connect()
+        else:
+            failure_msg = 'No elevator server hanging on {0}://{1}'.format(self.protocol, self.endpoint)
+            output_result(FAILURE_STATUS, failure_msg)
 
     def __del__(self):
         self.socket.close()
         self.context.term()
 
+    def ping(self, *args, **kwargs):
+        pings = True
+        timeout = kwargs.pop('timeout', 1000)
+        orig_timeout = self.timeout
+        self.socket.setsockopt(zmq.RCVTIMEO, timeout)
+
+        request = Request(db_uid=None, command="PING", args=[])
+        self.socket.send_multipart([request])
+
+        try:
+            self.socket.recv_multipart()
+        except zmq.core.error.ZMQError:
+            pings = False
+
+        # Restore original timeout
+        self.timeout = orig_timeout
+        self.socket.setsockopt(zmq.RCVTIMEO, self.timeout)
+
+        return pings
+
     def connect(self, db_name=None, *args, **kwargs):
-        self.setup_socket()
         db_name = 'default' if db_name is None else db_name
         status, datas = self.send_cmd(None, 'DBCONNECT', [db_name], *args, **kwargs)
 
@@ -55,16 +82,22 @@ class Client(object):
         self.socket.close()
         self.context.term()
 
-    def _format_response(self, req_cmd, res_datas):
-        if req_cmd in ["GET", "DBCONNECT"] and res_datas:
+    def _process_request(self, command, arguments):
+        if command in ["MGET"] and arguments:
+            return command, [arguments]
+        return command, arguments
+
+    def _process_response(self, req_cmd, res_datas):
+        if req_cmd in ["GET", "DBCONNECT", "PING"] and res_datas:
             return res_datas[0]
         return res_datas
 
     def send_cmd(self, db_uid, command, arguments, *args, **kwargs):
+        command, arguments = self._process_request(command, arguments)
         self.socket.send_multipart([Request(db_uid=db_uid,
-                                            command=command,
-                                            args=arguments,
-                                            meta={})],)
+                                                             command=command,
+                                                             args=arguments,
+                                                             meta={})],)
 
         try:
             raw_header, raw_response = self.socket.recv_multipart()
@@ -76,4 +109,4 @@ class Client(object):
         except zmq.core.error.ZMQError:
             return fail("TimeoutError", "Server did not respond in time")
 
-        return success(self._format_response(command, response.datas))
+        return success(self._process_response(command, response.datas))
