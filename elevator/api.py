@@ -70,7 +70,7 @@ class Handler(object):
         values = [None] * len(keys)
         min_key, max_key = min(keys), max(keys)
         keys_index = {k: index for index, k in enumerate(keys)}
-        bound_range = db_snapshot.iterator(min_key, max_key)
+        bound_range = db_snapshot.iterator(start=min_key, stop=max_key, include_stop=True)
 
         for key, value in bound_range:
             if key in keys_index:

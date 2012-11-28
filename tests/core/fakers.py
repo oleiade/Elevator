@@ -4,8 +4,6 @@
 #
 # See the file LICENSE for copying permission.
 
-from __future__ import absolute_import
-
 import os
 import shutil
 import subprocess
