@@ -53,6 +53,7 @@ setup(
         'unittest2',
         'ujson',
         'procname',
+        'clint',
         'plyvel',
     ],
 
