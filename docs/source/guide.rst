@@ -1,4 +1,5 @@
 .. _guide:
+
 =============
 Kickstarting
 =============
@@ -34,6 +35,7 @@ Elevator depends on:
     if it's not yet ported to yours, just checkout the leveldb source code, `make` and cp the
     libray files ('.so') to /usr/local/lib, and don't forget to add /usr/local/lib to your libpath.
     * `leveldb` is disposable on *Homebrew* for **Osx** and I guess it might be too on *ports*
+
 * Python packages listed in `requirements.txt`
 
 Python
@@ -47,6 +49,21 @@ Setuptools
 Setuptools comes with some Python installations by default; if yours doesn’t, you’ll need to grab it. In such situations it’s typically packaged as python-setuptools, py27-setuptools or similar.
 
 
+Zmq and Leveldb
+--------------------
+
+Elevator requires `zmq <http://zeromq.org>`_ and `leveldb <http://code.google.com/p/leveldb/>`_ libraries are installed on the system. Most unix systems provides
+these libraries through their package managers. For example, debian provides both a libleveldb1 and libleveldb-dev packages and libzmq-dev. On osx, you would be able to install them using brew.
+
+Anyway, Elevator is shipped with a fabfile included and rules to automatically download, compile, and install
+both leveldb and zmq libraries. To use it, you'll need `fabric <http://docs.fabfile.org/>_` installed.
+
+Just run:
+
+.. code-block::bash
+    $ fab build.all
+
+
 .. _installation:
 
 Installation
@@ -55,7 +72,7 @@ Installation
 We consider here that you've succesfully installed leveldb >= 1.6 and libzmq in order
 for python packages to build against compatible versions of the libs.
 
-.. code-block:: bash
+.. code-block::bash
     $ python setup.py install
 
 .. _usage:
@@ -63,7 +80,7 @@ for python packages to build against compatible versions of the libs.
 Usage
 =====
 
-.. code-block:: bash
+.. code-block::bash
 
     $ elevator --help
     usage: elevator [-h] [-dctbpwPv]
@@ -104,7 +121,7 @@ Server configuration relies on a INI file you can pass it as --config argument. 
 
 **example config** (*config/elevator.conf*)
 
-.. code-block:: ini
+.. code-block::ini
 
     [global]
     # By default Elevator does not run as a daemon.
@@ -173,6 +190,6 @@ to implement your own client in your language.
 .. _deployment:
 
 Deployment
-=======
+============
 
 (coming soon)

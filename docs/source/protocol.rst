@@ -35,7 +35,7 @@ Request
 
 Request messages format goes like this:
 
-.. code-block:: json
+.. code-block::json
 
     {
         "meta": { ... },
@@ -75,7 +75,7 @@ and the second one is the content.
 Header
 ~~~~~~~~~~~
 
-.. code-block:: json
+.. code-block::json
 
     {
         "meta": { ... },
@@ -113,7 +113,7 @@ Content
 Second response part is the content,
 and the second one is the content.
 
-.. code-block:: json
+.. code-block::json
 
     {
         "datas": [ string... ],
@@ -155,32 +155,38 @@ Basics
 Server responds to some constants whenever it comes to give it commands. In the following listing, dbuid represents the database unique uid to operate the command over, it can be retrieved from a database name via 'CONNECT'. And batch_uid represents a valid server-side created batch (using BCREATE) to run commands over.
 
 ``GET`` : Retrieves a value from a database
-    * params :
-        * ``key`` : key to fetch
+
+* params :
+    * ``key`` : key to fetch
 
 ``MGET`` : Transactional bulk Get. Retrieves a list of keys values
 on a frozen database state.
-    * params :
-        * [ ``key1``, ``key2``, ..., ``keyn + 1``] : keys to fetch value from
+
+* params :
+    * [ ``key1``, ``key2``, ..., ``keyn + 1``] : keys to fetch value from
 
 ``PUT`` :  Inserts a value into a database
-    * params :
-        * ``key`` : key to insert
-        * ``value`` : value to insert
+
+* params :
+    * ``key`` : key to insert
+    * ``value`` : value to insert
 
 ``DELETE`` : Deletes a key from a database
-    * params :
-        * ``key`` : key to delete
+
+* params :
+    * ``key`` : key to delete
 
 ``RANGE`` : Retrieves a range of key/value pairs from a database
-    * params :
-        * ``key_from`` : key to start from
-        * ``key_to`` : key where to stop
+
+* params :
+    * ``key_from`` : key to start from
+    * ``key_to`` : key where to stop
 
 ``SLICE`` : Extracts a slice (key/value pairs) from a database
-    * params :
-        * ``key_from`` : key to start from
-        * ``offset`` : slice size
+
+* params :
+    * ``key_from`` : key to start from
+    * ``offset`` : slice size
 
 .. _databases management:
 
@@ -189,27 +195,31 @@ Databases management
 
 ``DBCONNECT`` : Retrieves a database uid from it's name. You can
 then use that uid to run commands over it.
-    * params :
-        * ``db_name`` : database name to retrieve uid from
+
+* params :
+    * ``db_name`` : database name to retrieve uid from
 
 ``DBMOUNT`` : Tells Elevator to mount a database. As a default, Elevator
 only mounts the 'default' database. You can only run commands over
 mounted database. Mounted database fills the Elevator cache, and increases
 Ram memory consomation.
-    * params :
-        * ``db_name`` : database name to mount
+
+* params :
+    * ``db_name`` : database name to mount
 
 ``DBUMOUNT`` : Tells Elevator to unmount a database, it is then
 unaccessible until you re-mount it. As a default, every databases except
 'default' are unmounted. Once a database is unmounted
 Elevator tries to free as much cache it used as possible.
-    * params :
-        * ``db_name`` : database name to unmount
+
+* params :
+    * ``db_name`` : database name to unmount
 
 ``DBCREATE`` : Creates a  new database
-    * params :
-        * ``db_name`` : name of the created database
-        * ``db_options`` : options to create database with
+
+* params :
+    * ``db_name`` : name of the created database
+    * ``db_options`` : options to create database with
 
 ``DBLIST`` : Lists server's databases
 
@@ -233,7 +243,7 @@ and cache management. You can find more details about configuration in `leveldb 
 
 Here is a description offered by `py-leveldb <http://http://code.google.com/p/py-leveldb/>`_ of the available options.
 
-.. code-block:: ini
+.. code-block::ini
 
     create_if_missing  #(default: True)  if True, creates a new database if none exists
     error_if_exists      #(default: False)  if True, raises and error if the database already exists
@@ -260,13 +270,13 @@ Batches
         execute server-side. Pairs of Batch operation signal and arguments.
         example:
 
-        .. code-block:: python
+        .. code-block::python
 
             [BATCH_OPERATION_SIGNAL, 'key', 'value if needed (Put)]
 
 **Nota** : operations are treated server-side as signal. Batches exposes two signals:
 
-.. code-block:: python
+.. code-block::python
 
     BATCH_SIGNAL_PUT = 1
     BATCH_SIGNAL_DELETE = 0
