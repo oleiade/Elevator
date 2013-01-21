@@ -45,6 +45,16 @@ setup(
     package_dir={'': '.'},
     include_package_data=False,
 
+    zip_safe=True,
+    install_requires=[
+        'lz4',
+        'msgpack-python',
+        'pyzmq',
+        'unittest2',
+        'ujson',
+        'procname',
+    ],
+
     # Setting up executable/main functions links
     entry_points={
         'console_scripts': [
