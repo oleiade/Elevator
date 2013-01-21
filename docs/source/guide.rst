@@ -29,7 +29,11 @@ Elevator depends on:
 * `Python <www.python.org>`_ language
 * the `setuptools` packaging/installation library
 * `zmq <http://zeromq.org>`_ (>= 2.2, zmq3.x is supported too)
-* `leveldb <http://code.google.com/p/leveldb/>`_
+* `leveldb <http://code.google.com/p/leveldb/>`_ (>= 1.6)
+    * `libleveldb1` and `libleveldb-dev` should be disposable on most **linux** distributions,
+    if it's not yet ported to yours, just checkout the leveldb source code, `make` and cp the
+    libray files ('.so') to /usr/local/lib, and don't forget to add /usr/local/lib to your libpath.
+    * `leveldb` is disposable on *Homebrew* for **Osx** and I guess it might be too on *ports*
 * Python packages listed in `requirements.txt`
 
 Python
@@ -42,35 +46,17 @@ Setuptools
 
 Setuptools comes with some Python installations by default; if yours doesn’t, you’ll need to grab it. In such situations it’s typically packaged as python-setuptools, py27-setuptools or similar.
 
-Requirements
--------------------
-
-Requirements.txt packages should be installed via the package manager `Pip <http://pypi.python.org/pypi/pip>`_:
-
-.. code-block:: bash
-
-    $ pip install -r requirements.txt
-
 
 .. _installation:
 
 Installation
 ==================
 
-Both `pip <http://www.pip-installer.org>`_ and `fabric <http://docs.fabfile.org/en/1.4.3>`_ are not mandatory dependencies
-in order to succesfuly install Elevator, but, hey, believe me, they'll make your life easier. But if you're still one
-of these 'by hand' thing junkie, of course, you can go through the process of installing zmq, leveldb and all the python
-packages 'by hand'. Up to you.
+We consider here that you've succesfully installed leveldb >= 1.6 and libzmq in order
+for python packages to build against compatible versions of the libs.
 
 .. code-block:: bash
-
-    $ pip install fabric
-    $ fab build
-    $ pip install -r requirements.txt
     $ python setup.py install
-
-**Nota** :
-
 
 .. _usage:
 

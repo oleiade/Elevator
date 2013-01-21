@@ -4,7 +4,7 @@
 #
 # See the file LICENSE for copying permission.
 
-import leveldb
+import plyvel
 import logging
 
 from .db import DatabaseOptions
@@ -49,26 +49,28 @@ class Handler(object):
     def Get(self, db, key, *args, **kwargs):
         """
         Handles GET message command.
-        Executes a Get operation over the leveldb backend.
+        Executes a Get operation over the plyvel backend.
 
         db      =>      LevelDB object
         *args   =>      (key) to fetch
         """
-        try:
-            return success(db.Get(key))
-        except KeyError:
+        value = db.get(key)
+
+        if not value:
             error_msg = "Key %r does not exist" % key
             errors_logger.exception(error_msg)
             return failure(KEY_ERROR, error_msg)
+        else:
+            return success(value)
 
     def MGet(self, db, keys, *args, **kwargs):
         status = SUCCESS_STATUS
-        db_snapshot = db.CreateSnapshot()
+        db_snapshot = db.snapshot()
 
         values = [None] * len(keys)
         min_key, max_key = min(keys), max(keys)
         keys_index = {k: index for index, k in enumerate(keys)}
-        bound_range = db_snapshot.RangeIter(min_key, max_key)
+        bound_range = db_snapshot.iterator(start=min_key, stop=max_key, include_stop=True)
 
         for key, value in bound_range:
             if key in keys_index:
@@ -81,14 +83,14 @@ class Handler(object):
     def Put(self, db, key, value, *args, **kwargs):
         """
         Handles Put message command.
-        Executes a Put operation over the leveldb backend.
+        Executes a Put operation over the plyvel backend.
 
         db      =>      LevelDB object
         *args   =>      (key, value) to update
 
         """
         try:
-            return success(db.Put(key, value))
+            return success(db.put(key, value))
         except TypeError:
             error_msg = "Unsupported value type : %s" % type(value)
             errors_logger.exception(error_msg)
@@ -97,21 +99,22 @@ class Handler(object):
     def Delete(self, db, key, *args, **kwargs):
         """
         Handles Delete message command
-        Executes a Delete operation over the leveldb backend.
+        Executes a Delete operation over the plyvel backend.
 
         db      =>      LevelDB object
         *args   =>      (key) to delete from backend
 
         """
-        return success(db.Delete(key))
+        return success(db.delete(key))
 
     def Range(self, db, key_from, key_to, *args, **kwargs):
         """Returns the Range of key/value between
         `key_from and `key_to`"""
         # Operate over a snapshot in order to return
         # a consistent state of the db
-        db_snapshot = db.CreateSnapshot()
-        value = list(db_snapshot.RangeIter(key_from, key_to))
+        db_snapshot = db.snapshot()
+        value = list(db_snapshot.iterator(start=key_from, stop=key_to, include_stop=True))
+        del db_snapshot
 
         return success(value)
 
@@ -120,8 +123,8 @@ class Handler(object):
         starting a `key_from`"""
         # Operates over a snapshot in order to return
         # a consistent state of the db
-        db_snapshot = db.CreateSnapshot()
-        it = db_snapshot.RangeIter(key_from)
+        db_snapshot = db.snapshot()
+        it = db_snapshot.iterator(start=key_from, include_stop=True)
         value = []
         pos = 0
 
@@ -135,10 +138,10 @@ class Handler(object):
         return success(value)
 
     def Batch(self, db, collection, *args, **kwargs):
-        batch = leveldb.WriteBatch()
+        batch = db.write_batch()
         batch_actions = {
-            SIGNAL_BATCH_PUT: batch.Put,
-            SIGNAL_BATCH_DELETE: batch.Delete,
+            SIGNAL_BATCH_PUT: batch.put,
+            SIGNAL_BATCH_DELETE: batch.delete,
         }
 
         try:
@@ -151,7 +154,7 @@ class Handler(object):
             return failure(VALUE_ERROR, "Batch only accepts sequences (list, tuples,...)")
         except TypeError:
             return failure(TYPE_ERROR, "Invalid type supplied")
-        db.Write(batch)
+        batch.write()
 
         return success()
 
@@ -204,7 +207,7 @@ class Handler(object):
     def DBRepair(self, db, db_uid, *args, **kwargs):
         db_path = self.databases['paths_index'][db_uid]
 
-        leveldb.RepairDB(db_path)
+        plyvel.RepairDB(db_path)
 
         return success()
 

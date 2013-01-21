@@ -53,6 +53,7 @@ setup(
         'unittest2',
         'ujson',
         'procname',
+        'plyvel',
     ],
 
     # Setting up executable/main functions links
