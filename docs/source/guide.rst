@@ -46,15 +46,6 @@ Setuptools
 
 Setuptools comes with some Python installations by default; if yours doesn’t, you’ll need to grab it. In such situations it’s typically packaged as python-setuptools, py27-setuptools or similar.
 
-Requirements
--------------------
-
-Requirements.txt packages should be installed via the package manager `Pip <http://pypi.python.org/pypi/pip>`_:
-
-.. code-block:: bash
-
-    $ pip install -r requirements.txt
-
 
 .. _installation:
 
@@ -65,7 +56,6 @@ We consider here that you've succesfully installed leveldb >= 1.6 and libzmq in 
 for python packages to build against compatible versions of the libs.
 
 .. code-block:: bash
-    $ pip install -r requirements.txt
     $ python setup.py install
 
 .. _usage:
