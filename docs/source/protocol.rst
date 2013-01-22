@@ -86,12 +86,9 @@ Header
 
 * ``status`` is the response status emitted by the server.
 
-* ``err_code`` and ``err_msg`` if server encountered an error dealing with the request,
-then an error code and error message will be present in response header.
+* ``err_code`` and ``err_msg`` if server encountered an error dealing with the request, then an error code and error message will be present in response header.
 
-* ``meta``  are the options the server to took in account when dealing with your request.
-example : if compression was requested, the response header will come back with compression
-meta too.
+* ``meta``  are the options the server to took in account when dealing with your request. example : if compression was requested, the response header will come back with compression meta too.
 
 
 *example*::
@@ -226,9 +223,7 @@ Elevator tries to free as much cache it used as possible.
 ``DBREPAIR`` : Repairs a broken (or too slow) database you already owns uid
 
 **Notes** :
-    * ``errors`` : In order not to expose too much information about Elevator internal errors to the client,
-    only simple but explicit enough errors will be thrown by the database management commands. But, more
-    (useful) informations will be logged in errors logs.
+    * ``errors`` : In order not to expose too much information about Elevator internal errors to the client, only simple but explicit enough errors will be thrown by the database management commands. But, more (useful) informations will be logged in errors logs.
 
 .. _database options:
 
@@ -246,11 +241,11 @@ Here is a description offered by `py-leveldb <http://http://code.google.com/p/py
 .. code-block::ini
 
     create_if_missing  #(default: True)  if True, creates a new database if none exists
-    error_if_exists      #(default: False)  if True, raises and error if the database already exists
-    paranoid_checks   #(default: False)  if True, raises an error as soon as an internal corruption is detected
-    block_cache_size  #(default: 8 * (2 << 20))  maximum allowed size for the block cache in bytes
+    error_if_exists    #(default: False)  if True, raises and error if the database already exists
+    paranoid_checks    #(default: False)  if True, raises an error as soon as an internal corruption is detected
+    block_cache_size   #(default: 8 * (2 << 20))  maximum allowed size for the block cache in bytes
     write_buffer_size  #(default  2 * (2 << 20))
-    block_size            #(default: 4096)  unit of transfer for the block cache in bytes
+    block_size         #(default: 4096)  unit of transfer for the block cache in bytes
     max_open_files:    #(default: 1000)
 
 
@@ -271,7 +266,6 @@ Batches
         example:
 
         .. code-block::python
-
             [BATCH_OPERATION_SIGNAL, 'key', 'value if needed (Put)]
 
 **Nota** : operations are treated server-side as signal. Batches exposes two signals:
