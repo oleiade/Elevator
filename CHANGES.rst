@@ -1,3 +1,20 @@
+0.4a / 2013-01-22
+==================
+
+  * Add : Implement PING command
+  * Add : Cli module
+  * Add : Debian packaging files
+  * Update: Use plyvel leveldb backend
+  * Update: Use plyvel bloom filter in read operations
+  * Update: Add experimental command line doc
+  * Update: Set fabfile as a module
+  * Update: Documentation to fit with plyvel
+  * Update #114: Run MGet against db snapshot
+  * Update : working cmdline
+  * Fix #114: Enhance MGET perfs by acting on a min/max keys range slice
+  * Fix #113: handle MGET arguments in command line
+  * Many other little updates and fixes, see logs
+
 
 0.4 / 2012-10-22
 ==================
