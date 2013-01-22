@@ -55,6 +55,7 @@ setup(
         'procname',
         'clint',
         'plyvel',
+        'fabric',
     ],
 
     # Setting up executable/main functions links
