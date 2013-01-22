@@ -16,7 +16,6 @@ from plyvel import CorruptionError
 
 from .env import Environment
 from .constants import OS_ERROR, DATABASE_ERROR
-from .utils.snippets import from_bytes_to_mo
 from .utils.patterns import enum
 from .helpers.internals import failure, success
 
@@ -55,14 +54,13 @@ class DatabaseOptions(dict):
     def __init__(self, *args, **kwargs):
         self['create_if_missing'] = True
         self['error_if_exists'] = False
+        self['bloom_filter_bits'] = 10  # Value recommended by leveldb doc
         self['paranoid_checks'] = False
-        self['lru_cache_size'] = 8 * (2 << 20)
-        self['block_cache_size'] = 8 * (2 << 20)
-        self['write_buffer_size'] = 2 * (2 << 20)
+        self['compression'] = True
+        self['lru_cache_size'] = 512 * (1 << 20)  # 512 Mo
+        self['write_buffer_size'] = 4 * (1 << 20)  # 4 Mo
         self['block_size'] = 4096
         self['max_open_files'] = 1000
-        self['bloom_filter_bits'] = 64
-        self['compression'] = True
 
         for key, value in kwargs.iteritems():
             if key in self:
@@ -94,23 +92,6 @@ class DatabasesHandler(dict):
         for uid in self.index['name_to_uid'].values():
             if 'connector' in self[uid] and self[uid]['connector'] is not None:
                 del self[uid]['connector']
-
-    @property
-    def global_cache_size(self):
-        store_datas = self.extract_store_datas()
-        max_caches = [int(db["options"]["block_cache_size"]) for db
-                               in store_datas.itervalues()]
-
-        return sum([from_bytes_to_mo(x) for x in max_caches])
-
-    def _disposable_cache(self, new_cache_size):
-        next_cache_size = self.global_cache_size + from_bytes_to_mo(new_cache_size)
-        ratio = int(self.env["global"]["max_cache_size"]) - next_cache_size
-
-        # Both values are in
-        if ratio < 0:
-            return (False, ratio)
-        return (True, ratio)
 
     def _get_db_connector(self, path, *args, **kwargs):
         connector = None
@@ -206,12 +187,6 @@ class DatabasesHandler(dict):
         """Adds a db to the DatabasesHandler object, and sync it
         to the store file"""
         db_options = db_options or DatabaseOptions()
-        cache_status, ratio = self._disposable_cache(db_options["block_cache_size"])
-        if not cache_status:
-            return failure(DATABASE_ERROR,
-                           "Not enough disposable cache memory "
-                           "%d Mo missing" % ratio)
-
         db_name_is_path = db_name.startswith('.') or ('/' in db_name)
         is_abspath = lambda: not db_name.startswith('.') and ('/' in db_name)
 

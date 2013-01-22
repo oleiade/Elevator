@@ -45,11 +45,6 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(self.handler[default_db_uid]['name'], 'default')
         self.assertEqual(self.handler[default_db_uid]['path'], '/tmp/dbs/default')
 
-    def test_global_max_cache_size(self):
-        self.assertEqual(self.handler.global_cache_size, 16)
-        self.handler.add('test_cache', db_options={'block_cache_size': (8 * (2 << 20))})
-        self.assertEqual(self.handler.global_cache_size, 32)
-
     def test_load(self):
         db_name = 'testdb'
         self.handler.add(db_name)
@@ -196,32 +191,6 @@ class DatabasesTest(unittest2.TestCase):
         store_datas = json.load(open(self.handler.store, 'r'))
         self.assertNotIn(db_path, store_datas)
 
-    def test_add_db_and_overflow_max_cache_size(self):
-        orig_value = self.env["global"]["max_cache_size"]
-        db_name = 'testdb'
-        db_options = DatabaseOptions(block_cache_size=from_mo_to_bytes(1000))
-        self.env["global"]["max_cache_size"] = 32
-
-        # max_cache_size = default cache_size + 16
-        status, content = self.handler.add(db_name, db_options)
-        self.assertEqual(status, FAILURE_STATUS)
-        self.assertIsNotNone(content)
-        self.assertIsInstance(content, list)
-        self.assertEqual(len(content), 2)
-        self.assertEqual(content[0], DATABASE_ERROR)
-
-        self.env["global"]["max_cache_size"] = orig_value
-
-    def test_add_db_with_enough_max_cache_size(self):
-        # Default max_cache_size value is 1024, and default db already
-        # occupies 16 Mo
-        db_name = 'testdb'
-        db_options = DatabaseOptions(block_cache_size=from_mo_to_bytes(32))
-
-        # max_cache_size = default cache_size + 16
-        status, content = self.handler.add(db_name, db_options)
-        self.assertEqual(status, SUCCESS_STATUS)
-
     def test_add_db_mounts_it_automatically(self):
         db_name = 'testdb'  # Automatically created on startup
         status, content = self.handler.add(db_name)
@@ -230,7 +199,6 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(self.handler[db_uid]['status'], self.handler.STATUSES.MOUNTED)
         self.assertIsNotNone(self.handler[db_uid]['connector'])
         self.assertIsInstance(self.handler[db_uid]['connector'], plyvel.DB)
-
 
     def test_mount_unmounted_db(self):
         db_name = 'testdb'  # Automatically created on startup
