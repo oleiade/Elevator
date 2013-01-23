@@ -178,12 +178,16 @@ on a frozen database state.
 * params :
     * ``key_from`` : key to start from
     * ``key_to`` : key where to stop
+    * ``include_key`` : whether should keys be include in return values or not, default is ``True``
+    * ``include_value``: whether should values be included in return values or not, default is ``True``
 
 ``SLICE`` : Extracts a slice (key/value pairs) from a database
 
 * params :
     * ``key_from`` : key to start from
     * ``offset`` : slice size
+    * ``include_key`` : whether should keys be include in return values or not, default is ``True``
+    * ``include_value``: whether should values be included in return values or not, default is ``True``
 
 .. _databases management:
 

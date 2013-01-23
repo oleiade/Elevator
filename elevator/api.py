@@ -107,24 +107,33 @@ class Handler(object):
         """
         return success(db.delete(key))
 
-    def Range(self, db, key_from, key_to, *args, **kwargs):
+    def Range(self, db, key_from, key_to,
+              include_key=True, include_value=True):
         """Returns the Range of key/value between
         `key_from and `key_to`"""
         # Operate over a snapshot in order to return
         # a consistent state of the db
         db_snapshot = db.snapshot()
-        value = list(db_snapshot.iterator(start=key_from, stop=key_to, include_stop=True))
+        it = db_snapshot.iterator(start=key_from, stop=key_to,
+                                  include_key=include_key,
+                                  include_value=include_value,
+                                  include_stop=True)
+        value = list(it)
         del db_snapshot
 
         return success(value)
 
-    def Slice(self, db, key_from, offset, *args, **kwargs):
+    def Slice(self, db, key_from, offset,
+              include_key=True, include_value=True):
         """Returns a slice of the db. `offset` keys,
         starting a `key_from`"""
         # Operates over a snapshot in order to return
         # a consistent state of the db
         db_snapshot = db.snapshot()
-        it = db_snapshot.iterator(start=key_from, include_stop=True)
+        it = db_snapshot.iterator(start=key_from,
+                                  include_key=include_key,
+                                  include_value=include_value,
+                                  include_stop=True)
         value = []
         pos = 0
 

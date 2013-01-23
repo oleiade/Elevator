@@ -163,6 +163,22 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(plain_content['datas'][0], ('1', '1'))
         self.assertEqual(plain_content['datas'][1], ('2', '2'))
 
+    def test_range_with_keys_only(self):
+        message = self.request_message('RANGE', ['1', '2', True, False])
+        header, content = self.handler.command(message)
+
+        plain_header = msgpack.unpackb(header)
+        plain_content = msgpack.unpackb(content)
+
+        self.assertEqual(plain_header['status'], SUCCESS_STATUS)
+        self.assertIsInstance(plain_content['datas'], tuple)
+
+        self.assertEqual(len(plain_content['datas'][0]), 1)
+        self.assertEqual(len(plain_content['datas'][1]), 1)
+
+        self.assertEqual(plain_content['datas'][0], ('1'))
+        self.assertEqual(plain_content['datas'][1], ('2'))
+
     def test_range_of_len_one(self):
         """Should still return a tuple of tuple"""
         message = self.request_message('RANGE', ['1', '1'])
