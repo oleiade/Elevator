@@ -9,7 +9,7 @@ from nose.tools import *
 from elevator.api import Handler
 from elevator.db import DatabasesHandler
 from elevator.constants import *
-from elevator.message import Request, ResponseContent, ResponseHeader
+from elevator.message import Request
 
 from .fakers import gen_test_env
 
@@ -17,7 +17,7 @@ from .fakers import gen_test_env
 class ApiTests(unittest2.TestCase):
     def _bootstrap_db(self, db):
         for val in xrange(9):
-            db.put(str(val), str(val))
+            db.put(str(val), str(val + 10))
 
     def setUp(self):
         self.store = '/tmp/store.json'
@@ -60,8 +60,6 @@ class ApiTests(unittest2.TestCase):
         header, content = self.handler.command(message)
 
         plain_header = msgpack.unpackb(header)
-        plain_content = msgpack.unpackb(content)
-
         self.assertEqual(plain_header['status'], FAILURE_STATUS)
         self.assertEqual(plain_header['err_code'], KEY_ERROR)
 
@@ -70,11 +68,8 @@ class ApiTests(unittest2.TestCase):
         header, content = self.handler.command(message)
 
         plain_header = msgpack.unpackb(header)
-        plain_content = msgpack.unpackb(content)
-
         self.assertEqual(plain_header['status'], FAILURE_STATUS)
         self.assertEqual(plain_header['err_code'], RUNTIME_ERROR)
-
 
     def test_get_of_existing_key(self):
         message = self.request_message('GET', ['1'])
@@ -84,18 +79,15 @@ class ApiTests(unittest2.TestCase):
         plain_content = msgpack.unpackb(content)
 
         self.assertEqual(plain_header['status'], SUCCESS_STATUS)
-        self.assertEqual(plain_content['datas'], ('1',))
+        self.assertEqual(plain_content['datas'], ('11',))
 
     def test_get_of_non_existing_key(self):
         message = self.request_message('GET', ['abc123'])
         header, content = self.handler.command(message)
 
         plain_header = msgpack.unpackb(header)
-        plain_content = msgpack.unpackb(content)
-
         self.assertEqual(plain_header['status'], FAILURE_STATUS)
         self.assertEqual(plain_header['err_code'], KEY_ERROR)
-
 
     def test_mget_of_existing_keys(self):
         message = self.request_message('MGET', [['1', '2', '3']])
@@ -105,7 +97,7 @@ class ApiTests(unittest2.TestCase):
         plain_content = msgpack.unpackb(content)
 
         self.assertEqual(plain_header['status'], SUCCESS_STATUS)
-        self.assertEqual(plain_content['datas'], ('1', '2', '3'))
+        self.assertEqual(plain_content['datas'], ('11', '12', '13'))
 
     def test_mget_of_not_fully_existing_keys(self):
         message = self.request_message('MGET', [['1', '2', 'touptoupidou']])
@@ -116,8 +108,7 @@ class ApiTests(unittest2.TestCase):
 
         self.assertEqual(plain_header['status'], WARNING_STATUS)
         self.assertEqual(len(plain_content['datas']), 3)
-        self.assertEqual(plain_content['datas'], ('1', '2', None))
-
+        self.assertEqual(plain_content['datas'], ('11', '12', None))
 
     def test_put_of_valid_key(self):
         message = self.request_message('PUT', ['a', '1'])
@@ -129,16 +120,13 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(plain_header['status'], SUCCESS_STATUS)
         self.assertEqual(plain_content['datas'], None)
 
-    def test_put_of_existing_key(self):
+    def test_put_of_invalid_value(self):
         message = self.request_message('PUT', ['a', 1])
         header, content = self.handler.command(message)
 
         plain_header = msgpack.unpackb(header)
-        plain_content = msgpack.unpackb(content)
-
         self.assertEqual(plain_header['status'], FAILURE_STATUS)
         self.assertEqual(plain_header['err_code'], TYPE_ERROR)
-
 
     def test_delete(self):
         message = self.request_message('DELETE', ['9'])
@@ -150,7 +138,6 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(plain_header['status'], SUCCESS_STATUS)
         self.assertEqual(plain_content['datas'], None)
 
-
     def test_range(self):
         message = self.request_message('RANGE', ['1', '2'])
         header, content = self.handler.command(message)
@@ -160,8 +147,8 @@ class ApiTests(unittest2.TestCase):
 
         self.assertEqual(plain_header['status'], SUCCESS_STATUS)
         self.assertIsInstance(plain_content['datas'], tuple)
-        self.assertEqual(plain_content['datas'][0], ('1', '1'))
-        self.assertEqual(plain_content['datas'][1], ('2', '2'))
+        self.assertEqual(plain_content['datas'][0], ('1', '11'))
+        self.assertEqual(plain_content['datas'][1], ('2', '12'))
 
     def test_range_with_keys_only(self):
         message = self.request_message('RANGE', ['1', '2', True, False])
@@ -190,8 +177,7 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(plain_header['status'], SUCCESS_STATUS)
         self.assertIsInstance(plain_content['datas'], tuple)
         self.assertEqual(len(plain_content), 1)
-        self.assertEqual(plain_content['datas'], (('1', '1'),))
-
+        self.assertEqual(plain_content['datas'], (('1', '11'),))
 
     def test_slice_with_limit(self):
         message = self.request_message('SLICE', ['1', 3])
@@ -203,9 +189,9 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(plain_header['status'], SUCCESS_STATUS)
         self.assertIsInstance(plain_content['datas'], tuple)
         self.assertEqual(len(plain_content['datas']), 3)
-        self.assertEqual(plain_content['datas'][0], ('1', '1'))
-        self.assertEqual(plain_content['datas'][1], ('2', '2'))
-        self.assertEqual(plain_content['datas'][2], ('3', '3'))
+        self.assertEqual(plain_content['datas'][0], ('1', '11'))
+        self.assertEqual(plain_content['datas'][1], ('2', '12'))
+        self.assertEqual(plain_content['datas'][2], ('3', '13'))
 
     def test_slice_with_limit_value_of_one(self):
         message = self.request_message('SLICE', ['1', 1])
@@ -217,8 +203,7 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(plain_header['status'], SUCCESS_STATUS)
         self.assertIsInstance(plain_content['datas'], tuple)
         self.assertEqual(len(plain_content), 1)
-        self.assertEqual(plain_content['datas'], (('1', '1'),))
-
+        self.assertEqual(plain_content['datas'], (('1', '11'),))
 
     def test_batch_with_valid_collection(self):
         message = self.request_message('BATCH', args=[
@@ -243,8 +228,6 @@ class ApiTests(unittest2.TestCase):
         header, content = self.handler.command(message)
 
         plain_header = msgpack.unpackb(header)
-        plain_content = msgpack.unpackb(content)
-
         self.assertEqual(plain_header['status'], FAILURE_STATUS)
         self.assertEqual(plain_header['err_code'], SIGNAL_ERROR)
 
@@ -257,11 +240,8 @@ class ApiTests(unittest2.TestCase):
         header, content = self.handler.command(message)
 
         plain_header = msgpack.unpackb(header)
-        plain_content = msgpack.unpackb(content)
-
         self.assertEqual(plain_header['status'], FAILURE_STATUS)
         self.assertEqual(plain_header['err_code'], TYPE_ERROR)
-
 
     def test_connect_to_valid_database(self):
         message = Request(msgpack.packb({
@@ -286,8 +266,6 @@ class ApiTests(unittest2.TestCase):
         header, content = self.handler.command(message)
 
         plain_header = msgpack.unpackb(header)
-        plain_content = msgpack.unpackb(content)
-
         self.assertEqual(plain_header['status'], FAILURE_STATUS)
         self.assertEqual(plain_header['err_code'], DATABASE_ERROR)
 
@@ -305,12 +283,9 @@ class ApiTests(unittest2.TestCase):
         header, content = self.handler.command(message)
 
         plain_header = msgpack.unpackb(header)
-        plain_content = msgpack.unpackb(content)
-
         self.assertEqual(plain_header['status'], SUCCESS_STATUS)
         self.assertEqual(self.handler.databases[db_uid]['status'], self.handler.databases.STATUSES.MOUNTED)
         self.assertIsInstance(self.handler.databases[db_uid]['connector'], plyvel.DB)
-
 
     def test_create_valid_db(self):
         message = self.request_message('DBCREATE', ['testdb'])
@@ -327,11 +302,8 @@ class ApiTests(unittest2.TestCase):
         header, content = self.handler.command(message)
 
         plain_header = msgpack.unpackb(header)
-        plain_content = msgpack.unpackb(content)
-
         self.assertEqual(plain_header['status'], FAILURE_STATUS)
         self.assertEqual(plain_header['err_code'], DATABASE_ERROR)
-
 
     def test_drop_valid_db(self):
         message = self.request_message('DBDROP', ['default'])
@@ -352,11 +324,8 @@ class ApiTests(unittest2.TestCase):
         header, content = self.handler.command(message)
 
         plain_header = msgpack.unpackb(header)
-        plain_content = msgpack.unpackb(content)
-
         self.assertEqual(plain_header['status'], FAILURE_STATUS)
         self.assertEqual(plain_header['err_code'], DATABASE_ERROR)
-
 
     def test_list_db(self):
         message = self.request_message('DBLIST', [])
