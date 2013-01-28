@@ -86,15 +86,15 @@ def runserver(env):
     backend = Backend(args['workers'])
     frontend = Frontend(args['transport'], ':'.join([args['bind'], args['port']]))
 
-    poll = zmq.Poller()
-    poll.register(backend.socket, zmq.POLLIN)
-    poll.register(frontend.socket, zmq.POLLIN)
+    poller = zmq.Poller()
+    poller.register(backend.socket, zmq.POLLIN)
+    poller.register(frontend.socket, zmq.POLLIN)
 
     activity_logger.info('Elevator server started on %s' % frontend.host)
 
     while True:
         try:
-            sockets = dict(poll.poll())
+            sockets = dict(poller.poll())
             if frontend.socket in sockets:
                 if sockets[frontend.socket] == zmq.POLLIN:
                     msg = frontend.socket.recv_multipart(copy=False)
