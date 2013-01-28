@@ -1,3 +1,11 @@
+
+0.4b / 2013-01-28
+==================
+
+  * Fix: Refactor api tests
+  * Fix #119: Range and Slice now support include_key, and include_value params
+  * Remove: max cache management + Add: Lru cache and bloom filters
+
 0.4a / 2013-01-22
 ==================
 
