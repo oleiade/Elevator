@@ -12,11 +12,11 @@ from .env import Environment
 errors_logger = logging.getLogger("errors_logger")
 
 
-class Proxy():
+class Frontend():
     def __init__(self, transport, endpoint):
         self.env = Environment()
         self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.XREP)
+        self.socket = self.context.socket(zmq.ROUTER)
         self.host = self._gen_bind_adress(transport, endpoint)
         self.socket.bind(self.host)
 

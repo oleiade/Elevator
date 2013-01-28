@@ -31,7 +31,7 @@ class Worker(threading.Thread):
         self.state = self.STATES.RUNNING
         self.databases = databases
         self.env = Environment()
-        self.socket = self.zmq_context.socket(zmq.XREQ)
+        self.socket = self.zmq_context.socket(zmq.DEALER)
         self.handler = Handler(databases)
         self.processing = False
 
@@ -82,7 +82,7 @@ class Worker(threading.Thread):
             self.socket.close()
 
 
-class WorkersPool():
+class Backend():
     def __init__(self, workers_count=4, **kwargs):
         env = Environment()
         database_store = env['global']['database_store']
@@ -91,7 +91,7 @@ class WorkersPool():
         self.pool = []
 
         self.zmq_context = zmq.Context()
-        self.socket = self.zmq_context.socket(zmq.XREQ)
+        self.socket = self.zmq_context.socket(zmq.DEALER)
         self.socket.bind('inproc://elevator')
         self.init_workers(workers_count)
 

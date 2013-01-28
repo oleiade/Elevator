@@ -12,8 +12,8 @@ import procname
 
 from elevator import args
 from elevator.env import Environment
-from elevator.backend import WorkersPool
-from elevator.frontend import Proxy
+from elevator.backend import Backend
+from elevator.frontend import Frontend
 from elevator.utils.daemon import Daemon
 
 
@@ -83,32 +83,32 @@ def runserver(env):
     setup_loggers(env)
     activity_logger = logging.getLogger("activity_logger")
 
-    workers_pool = WorkersPool(args['workers'])
-    proxy = Proxy(args['transport'], ':'.join([args['bind'], args['port']]))
+    backend = Backend(args['workers'])
+    frontend = Frontend(args['transport'], ':'.join([args['bind'], args['port']]))
 
     poll = zmq.Poller()
-    poll.register(workers_pool.socket, zmq.POLLIN)
-    poll.register(proxy.socket, zmq.POLLIN)
+    poll.register(backend.socket, zmq.POLLIN)
+    poll.register(frontend.socket, zmq.POLLIN)
 
-    activity_logger.info('Elevator server started on %s' % proxy.host)
+    activity_logger.info('Elevator server started on %s' % frontend.host)
 
     while True:
         try:
             sockets = dict(poll.poll())
-            if proxy.socket in sockets:
-                if sockets[proxy.socket] == zmq.POLLIN:
-                    msg = proxy.socket.recv_multipart(copy=False)
-                    workers_pool.socket.send_multipart(msg, copy=False)
+            if frontend.socket in sockets:
+                if sockets[frontend.socket] == zmq.POLLIN:
+                    msg = frontend.socket.recv_multipart(copy=False)
+                    backend.socket.send_multipart(msg, copy=False)
 
-            if workers_pool.socket in sockets:
-                if sockets[workers_pool.socket] == zmq.POLLIN:
-                    msg = workers_pool.socket.recv_multipart(copy=False)
-                    proxy.socket.send_multipart(msg, copy=False)
+            if backend.socket in sockets:
+                if sockets[backend.socket] == zmq.POLLIN:
+                    msg = backend.socket.recv_multipart(copy=False)
+                    frontend.socket.send_multipart(msg, copy=False)
         except KeyboardInterrupt:
             activity_logger.info('Gracefully shuthing down workers')
-            del workers_pool
-            activity_logger.info('Stopping proxy')
-            del proxy
+            del backend
+            activity_logger.info('Stopping frontend')
+            del frontend
             activity_logger.info('Done')
             sys.exit(0)
         except Exception as e:
