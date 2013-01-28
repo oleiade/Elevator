@@ -10,14 +10,14 @@ import zmq
 import logging
 import procname
 
-from elevator import conf
+from elevator import args
 from elevator.env import Environment
 from elevator.backend import WorkersPool
 from elevator.frontend import Proxy
 from elevator.utils.daemon import Daemon
 
 
-ARGS = conf.init_parser().parse_args(sys.argv[1:])
+ARGS = args.init_parser().parse_args(sys.argv[1:])
 
 
 def setup_process_name(env):
