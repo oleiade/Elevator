@@ -40,8 +40,8 @@ class Worker(threading.Thread):
         self.env = Environment()
         self.zmq_context = zmq_context
 
-        self.STATES = enum('RUNNING', 'IDLE', 'STOPPED')
-        self.state = self.STATES.RUNNING
+        self.STATES = enum('PROCESSING', 'IDLE', 'STOPPED')
+        self.state = self.STATES.IDLE
 
         # Wire backend and remote control sockets
         self.backend_socket = self.zmq_context.socket(zmq.DEALER)
@@ -69,6 +69,8 @@ class Worker(threading.Thread):
             response = self.instructions[instruction]()
             self.remote_control_socket.send_multipart([response], flags=zmq.NOBLOCK)
 
+            # If halt instruction succedded, raise HaltException
+            # so the worker event loop knows it has to stop
             if instruction == WORKER_HALT and int(response) == SUCCESS_STATUS:
                 raise HaltException()
             return
@@ -81,7 +83,7 @@ class Worker(threading.Thread):
         self.wire_remote_control()
         msg = None
 
-        while (self.state == self.STATES.RUNNING):
+        while (self.state != self.STATES.STOPPED):
             try:
                 self.handle_instruction()
             except HaltException:
@@ -92,7 +94,7 @@ class Worker(threading.Thread):
             except zmq.ZMQError as e:
                 if e.errno == zmq.EAGAIN:
                     continue
-            self.running = True
+            self.state = self.STATES.PROCESSING
 
             try:
                 message = Request(msg)
@@ -110,7 +112,7 @@ class Worker(threading.Thread):
             header, response = self.handler.command(message)
 
             self.backend_socket.send_multipart([sender_id, header, response], flags=zmq.NOBLOCK, copy=False)
-            self.running = False
+            self.state = self.STATES.IDLE
 
     def stop(self):
         self.state = self.STATES.STOPPED
