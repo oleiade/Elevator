@@ -12,7 +12,9 @@ import threading
 from .db import DatabasesHandler
 from .env import Environment
 from .api import Handler
-from .constants import FAILURE_STATUS, REQUEST_ERROR, WORKER_HALT
+from .constants import FAILURE_STATUS, REQUEST_ERROR, WORKER_HALT,\
+                       WORKER_STATUS, WORKER_ALIVE, WORKER_START,\
+                       WORKER_LAST_ACTION
 from .message import Request, MessageFormatError, ResponseContent, ResponseHeader
 from .utils.snippets import sec_to_ms
 from .utils.patterns import enum
@@ -29,7 +31,7 @@ class Worker(threading.Thread):
     def __init__(self, zmq_context, databases, *args, **kwargs):
         threading.Thread.__init__(self)
         self.instructions = {
-            'STATE': self.state_inst,
+            WORKER_STATUS: self.status_inst,
         }
         self.uid = uuid.uuid4().hex
         self.env = Environment()
@@ -49,11 +51,10 @@ class Worker(threading.Thread):
     def wire_remote_control(self):
         """Connects the worker to it's remote control"""
         self.remote_control_socket = self.zmq_context.socket(zmq.DEALER)
-        # self.remote_control_socket.setsockopt(zmq.IDENTITY, self.uid)
         self.remote_control_socket.connect('inproc://remote')
         self.remote_control_socket.send_multipart([self.uid])
 
-    def state_inst(self):
+    def status_inst(self):
         return str(self.state)
 
     def handle_instruction(self):
@@ -177,7 +178,7 @@ class Supervisor(object):
         return responses
 
     def statuses(self):
-        return self.command("STATE")
+        return self.command(WORKER_STATUS)
 
     def init_workers(self, count):
         pos = 0
@@ -206,5 +207,5 @@ class Backend():
         self.supervisor.init_workers(workers_count)
 
     def __del__(self):
-        del self.workers_pool
+        del self.supervisor
         self.socket.close()
