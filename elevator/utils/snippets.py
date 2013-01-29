@@ -37,3 +37,6 @@ from_bytes_to_mo = lambda bytes: bytes / 1048576
 
 #Convert Mo to bytes
 from_mo_to_bytes = lambda mo: mo * 1048576
+
+# Convert seconds to milliseconds
+sec_to_ms = lambda s: s * 1000
