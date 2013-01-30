@@ -72,6 +72,7 @@ class Worker(threading.Thread):
         return self.last_operation
 
     def handle_service_message(self):
+        """Handles incoming service messages from supervisor socket"""
         try:
             serialized_request = self.remote_control_socket.recv_multipart(flags=zmq.NOBLOCK)[0]
             instruction = ServiceMessage.loads(serialized_request)[0]
@@ -89,6 +90,12 @@ class Worker(threading.Thread):
                 return
 
     def handle_command(self):
+        """Handles incoming command messages from backend socket
+
+        Receives incoming messages in a non blocking way,
+        sets it's set accordingly to IDLE or PROCESSING,
+        and sends the responses in a non-blocking way.
+        """
         msg = None
         try:
             sender_id, msg = self.backend_socket.recv_multipart(copy=False, flags=zmq.NOBLOCK)
@@ -119,6 +126,8 @@ class Worker(threading.Thread):
         return
 
     def run(self):
+        """Non blocking event loop which polls for supervisor
+        or backend events"""
         poller = zmq.Poller()
         poller.register(self.backend_socket, zmq.POLLIN)
         poller.register(self.remote_control_socket, zmq.POLLIN)
@@ -140,6 +149,12 @@ class Worker(threading.Thread):
                     self.handle_command()  # Might change state
 
     def stop(self):
+        """Stops the worker
+
+        Changes it's state to STOPPED.
+        Closes it's backend socket.
+        Returns SUCCESS_STATUS.
+        """
         self.state = self.STATES.STOPPED
 
         if not self.backend_socket.closed:
