@@ -9,9 +9,7 @@ import msgpack
 
 ## Internal workers supervisor signals
 WORKER_STATUS = "STATUS"
-WORKER_ALIVE = "ALIVE"
-WORKER_START = "START"
-WORKER_HALT = "-1"
+WORKER_HALT = "STOP"
 WORKER_LAST_ACTION = "LAST_ACTION"
 
 

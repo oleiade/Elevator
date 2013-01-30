@@ -13,7 +13,8 @@ from elevator.utils.snippets import sec_to_ms
 
 from elevator.backend.worker import Worker
 from elevator.backend.protocol import ServiceMessage
-from elevator.backend.protocol import WORKER_HALT, WORKER_STATUS
+from elevator.backend.protocol import WORKER_HALT, WORKER_STATUS,\
+                                      WORKER_LAST_ACTION
 
 
 activity_logger = logging.getLogger("activity_logger")
@@ -89,6 +90,24 @@ class Supervisor(object):
     def stop_all(self):
         """Stop every supervised workers"""
         return self.command(WORKER_HALT)
+
+    def last_activity(self, worker_id):
+        """Asks a specific worker information about it's
+        last activity
+
+        Returns a tuple containing it's latest activity timestamp
+        first, and the database affected by it in second
+        """
+        return self.command(WORKER_LAST_ACTION, [worker_id])
+
+    def last_activity_all(self):
+        """Asks every supervised workers informations about it's
+        last activity
+
+        Returns a list of tuples containing it's latest activity timestamp
+        first, and the database affected by it in second
+        """
+        return self.command(WORKER_LAST_ACTION)
 
     def init_workers(self, count):
         """Starts `count` workers.
