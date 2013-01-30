@@ -12,7 +12,7 @@ from elevator.env import Environment
 from .supervisor import Supervisor
 
 
-class Backend():
+class Backend(object):
     def __init__(self, workers_count=4, **kwargs):
         env = Environment()
         database_store = env['global']['database_store']

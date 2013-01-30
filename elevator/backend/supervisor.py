@@ -12,6 +12,7 @@ from elevator.utils.snippets import sec_to_ms
 from elevator.constants import WORKER_HALT, WORKER_STATUS
 
 from elevator.backend.worker import Worker
+from elevator.backend.protocol import ServiceMessage
 
 
 class Supervisor(object):
@@ -51,16 +52,18 @@ class Supervisor(object):
 
         for worker_id in workers_ids:
             if worker_id in self.workers:
-                self.socket.send_multipart([self.workers[worker_id]['socket'], instruction], flags=zmq.NOBLOCK)
+                worker_socket = self.workers[worker_id]['socket']
+                request = ServiceMessage.dumps(instruction)
+                self.socket.send_multipart([worker_socket, request], flags=zmq.NOBLOCK)
 
                 retried = 0
                 while retried <= max_retries:
                     sockets = dict(self.poller.poll(self.timeout))
 
-                    if sockets:
-                        if sockets.get(self.socket) == zmq.POLLIN:
-                            responses.append(self.socket.recv_multipart(flags=zmq.NOBLOCK)[1])
-                            break
+                    if sockets and sockets.get(self.socket) == zmq.POLLIN:
+                        serialized_response = self.socket.recv_multipart(flags=zmq.NOBLOCK)[1]
+                        responses.append(ServiceMessage.loads(serialized_response))
+                        break
                     else:
                         retried += 1
 
@@ -86,7 +89,10 @@ class Supervisor(object):
             # Start a worker
             worker = Worker(self.zmq_context, self.databases_store)
             worker.start()
-            socket_id, worker_id = self.socket.recv_multipart()
+
+            socket_id, response = self.socket.recv_multipart()
+            worker_id = ServiceMessage.loads(response)[0]
+
             self.workers[worker_id]['socket'] = socket_id
             self.workers[worker_id]['thread'] = worker
             pos += 1

@@ -16,8 +16,11 @@ from elevator.message import Request, ResponseHeader,\
                              ResponseContent, MessageFormatError
 from elevator.utils.patterns import enum
 from elevator.constants import WORKER_STATUS, WORKER_HALT,\
+                               WORKER_LAST_ACTION,\
                                SUCCESS_STATUS, FAILURE_STATUS,\
                                REQUEST_ERROR
+
+from elevator.backend.protocol import ServiceMessage
 
 
 activity_logger = logging.getLogger("activity_logger")
@@ -34,6 +37,7 @@ class Worker(threading.Thread):
         self.instructions = {
             WORKER_STATUS: self._status_inst,
             WORKER_HALT: self._stop_inst,
+            WORKER_LAST_ACTION: self._last_activity_inst,
         }
         self.uid = uuid.uuid4().hex
         self.env = Environment()
@@ -49,12 +53,13 @@ class Worker(threading.Thread):
         self.handler = Handler(databases)
 
         self.running = False
+        self.last_operation = (None, None)
 
     def wire_remote_control(self):
         """Connects the worker to it's remote control"""
         self.remote_control_socket = self.zmq_context.socket(zmq.DEALER)
         self.remote_control_socket.connect('inproc://remote')
-        self.remote_control_socket.send_multipart([self.uid])
+        self.remote_control_socket.send_multipart([ServiceMessage.dumps(self.uid)])
 
     def _status_inst(self):
         return str(self.state)
@@ -62,11 +67,16 @@ class Worker(threading.Thread):
     def _stop_inst(self):
         return self.stop()
 
+    def _last_activity_inst(self):
+        return self.last_operation
+
     def handle_instruction(self):
         try:
-            instruction = self.remote_control_socket.recv_multipart(flags=zmq.NOBLOCK)[0]
+            serialized_request = self.remote_control_socket.recv_multipart(flags=zmq.NOBLOCK)[0]
+            instruction = ServiceMessage.loads(serialized_request)[0]
             response = self.instructions[instruction]()
-            self.remote_control_socket.send_multipart([response], flags=zmq.NOBLOCK)
+            self.remote_control_socket.send_multipart([ServiceMessage.dumps(response)],
+                                                      flags=zmq.NOBLOCK)
 
             # If halt instruction succedded, raise HaltException
             # so the worker event loop knows it has to stop
