@@ -37,6 +37,7 @@ setup(
 
     packages=[
         'elevator',
+        'elevator.backend',
         'elevator.utils',
         'elevator.helpers',
 
