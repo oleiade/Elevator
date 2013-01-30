@@ -4,13 +4,6 @@
 #
 # See the file LICENSE for copying permission.
 
-## Internal workers supervisor signals
-WORKER_STATUS = "STATUS"
-WORKER_ALIVE = "ALIVE"
-WORKER_START = "START"
-WORKER_HALT = "-1"
-WORKER_LAST_ACTION = "LAST_ACTION"
-
 ## Protocol
 
 # Status codes

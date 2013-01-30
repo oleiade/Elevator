@@ -5,14 +5,19 @@
 # See the file LICENSE for copying permission.
 
 import zmq
+import logging
 
 from collections import defaultdict
 
 from elevator.utils.snippets import sec_to_ms
-from elevator.constants import WORKER_HALT, WORKER_STATUS
 
 from elevator.backend.worker import Worker
 from elevator.backend.protocol import ServiceMessage
+from elevator.backend.protocol import WORKER_HALT, WORKER_STATUS
+
+
+activity_logger = logging.getLogger("activity_logger")
+errors_logger = logging.getLogger("errors_logger")
 
 
 class Supervisor(object):
@@ -29,7 +34,7 @@ class Supervisor(object):
         self.zmq_context = zmq_context
         self.socket = zmq_context.socket(zmq.ROUTER)
         self.socket.setsockopt(zmq.RCVTIMEO, self.timeout)
-        self.socket.bind('inproc://remote')
+        self.socket.bind('inproc://supervisor')
 
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
@@ -74,15 +79,23 @@ class Supervisor(object):
         return responses
 
     def statuses(self):
+        """Fetch workers statuses"""
         return self.command(WORKER_STATUS)
 
     def stop(self, worker_id):
+        """Stop a specific worker"""
         return self.command(WORKER_HALT, [worker_id])
 
     def stop_all(self):
+        """Stop every supervised workers"""
         return self.command(WORKER_HALT)
 
     def init_workers(self, count):
+        """Starts `count` workers.
+
+        Awaits for their id to be received (blocking), and
+        registers their socket id and thread reference
+        """
         pos = 0
 
         while pos < count:

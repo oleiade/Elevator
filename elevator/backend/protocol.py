@@ -7,6 +7,14 @@
 import msgpack
 
 
+## Internal workers supervisor signals
+WORKER_STATUS = "STATUS"
+WORKER_ALIVE = "ALIVE"
+WORKER_START = "START"
+WORKER_HALT = "-1"
+WORKER_LAST_ACTION = "LAST_ACTION"
+
+
 class ServiceMessage(object):
     @staticmethod
     def dumps(data):

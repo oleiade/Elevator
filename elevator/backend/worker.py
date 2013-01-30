@@ -15,13 +15,12 @@ from elevator.env import Environment
 from elevator.message import Request, ResponseHeader,\
                              ResponseContent, MessageFormatError
 from elevator.utils.patterns import enum
-from elevator.constants import WORKER_STATUS, WORKER_HALT,\
-                               WORKER_LAST_ACTION,\
-                               SUCCESS_STATUS, FAILURE_STATUS,\
+from elevator.constants import SUCCESS_STATUS, FAILURE_STATUS,\
                                REQUEST_ERROR
 
 from elevator.backend.protocol import ServiceMessage
-
+from elevator.backend.protocol import WORKER_STATUS, WORKER_HALT,\
+                                      WORKER_LAST_ACTION
 
 activity_logger = logging.getLogger("activity_logger")
 errors_logger = logging.getLogger("errors_logger")
@@ -48,6 +47,7 @@ class Worker(threading.Thread):
 
         # Wire backend and remote control sockets
         self.backend_socket = self.zmq_context.socket(zmq.DEALER)
+        self.remote_control_socket = self.zmq_context.socket(zmq.DEALER)
 
         self.databases = databases
         self.handler = Handler(databases)
@@ -55,10 +55,11 @@ class Worker(threading.Thread):
         self.running = False
         self.last_operation = (None, None)
 
-    def wire_remote_control(self):
-        """Connects the worker to it's remote control"""
-        self.remote_control_socket = self.zmq_context.socket(zmq.DEALER)
-        self.remote_control_socket.connect('inproc://remote')
+    def wire_sockets(self):
+        """Connects the worker sockets to their endpoints, and sends
+        alive signal to the supervisor"""
+        self.backend_socket.connect('inproc://backend')
+        self.remote_control_socket.connect('inproc://supervisor')
         self.remote_control_socket.send_multipart([ServiceMessage.dumps(self.uid)])
 
     def _status_inst(self):
@@ -70,7 +71,7 @@ class Worker(threading.Thread):
     def _last_activity_inst(self):
         return self.last_operation
 
-    def handle_instruction(self):
+    def handle_service_message(self):
         try:
             serialized_request = self.remote_control_socket.recv_multipart(flags=zmq.NOBLOCK)[0]
             instruction = ServiceMessage.loads(serialized_request)[0]
@@ -87,42 +88,56 @@ class Worker(threading.Thread):
             if e.errno == zmq.EAGAIN:
                 return
 
-    def run(self):
-        self.backend_socket.connect('inproc://backend')
-        self.wire_remote_control()
+    def handle_command(self):
         msg = None
+        try:
+            sender_id, msg = self.backend_socket.recv_multipart(copy=False, flags=zmq.NOBLOCK)
+        except zmq.ZMQError as e:
+            if e.errno == zmq.EAGAIN:
+                return
+        self.state = self.STATES.PROCESSING
+
+        try:
+            message = Request(msg)
+        except MessageFormatError as e:
+            errors_logger.exception(e.value)
+            header = ResponseHeader(status=FAILURE_STATUS,
+                                    err_code=REQUEST_ERROR,
+                                    err_msg=e.value)
+            content = ResponseContent(datas={})
+            self.backend_socket.send_multipart([sender_id, header, content], copy=False)
+            return
+
+        # Handle message, and execute the requested
+        # command in leveldb
+        header, response = self.handler.command(message)
+        self.last_operation = (time.time(), message.db_uid)
+
+        self.backend_socket.send_multipart([sender_id, header, response], flags=zmq.NOBLOCK, copy=False)
+        self.state = self.STATES.IDLE
+
+        return
+
+    def run(self):
+        poller = zmq.Poller()
+        poller.register(self.backend_socket, zmq.POLLIN)
+        poller.register(self.remote_control_socket, zmq.POLLIN)
+
+        # Connect sockets, and send the supervisor
+        # alive signals
+        self.wire_sockets()
 
         while (self.state != self.STATES.STOPPED):
-            try:
-                self.handle_instruction()
-            except HaltException:
-                break
+            sockets = dict(poller.poll())
+            if sockets:
+                if sockets.get(self.remote_control_socket) == zmq.POLLIN:
+                    try:
+                        self.handle_service_message()
+                    except HaltException:
+                        break
 
-            try:
-                sender_id, msg = self.backend_socket.recv_multipart(copy=False, flags=zmq.NOBLOCK)
-            except zmq.ZMQError as e:
-                if e.errno == zmq.EAGAIN:
-                    continue
-            self.state = self.STATES.PROCESSING
-
-            try:
-                message = Request(msg)
-            except MessageFormatError as e:
-                errors_logger.exception(e.value)
-                header = ResponseHeader(status=FAILURE_STATUS,
-                                        err_code=REQUEST_ERROR,
-                                        err_msg=e.value)
-                content = ResponseContent(datas={})
-                self.backend_socket.send_multipart([sender_id, header, content], copy=False)
-                continue
-
-            # Handle message, and execute the requested
-            # command in leveldb
-            header, response = self.handler.command(message)
-            self.last_operation = (time.time(), message.db_uid)
-
-            self.backend_socket.send_multipart([sender_id, header, response], flags=zmq.NOBLOCK, copy=False)
-            self.state = self.STATES.IDLE
+                if sockets.get(self.backend_socket) == zmq.POLLIN:
+                    self.handle_command()  # Might change state
 
     def stop(self):
         self.state = self.STATES.STOPPED
