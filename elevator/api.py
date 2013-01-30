@@ -6,6 +6,7 @@
 
 import plyvel
 import logging
+import time
 
 from .db import DatabaseOptions
 from .message import ResponseContent, ResponseHeader
@@ -255,6 +256,7 @@ class Handler(object):
                 status, value = self.handlers[message.command](*message.data, **kwargs)
             else:
                 database = self.databases[message.db_uid]['connector']
+                self.databases[message.db_uid]['last_access'] = time.time()
                 status, value = self.handlers[message.command](database, *message.data, **kwargs)
 
         # Will output a valid ResponseHeader and ResponseContent objects

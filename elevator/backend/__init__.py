@@ -10,6 +10,7 @@ from elevator.db import DatabasesHandler
 from elevator.env import Environment
 
 from .supervisor import Supervisor
+from .atm import Ocd
 
 
 class Backend(object):
@@ -22,10 +23,14 @@ class Backend(object):
         self.zmq_context = zmq.Context()
         self.socket = self.zmq_context.socket(zmq.DEALER)
         self.socket.bind('inproc://backend')
-        self.supervisor = Supervisor(self.zmq_context, self.databases)
 
+        self.supervisor = Supervisor(self.zmq_context, self.databases)
         self.supervisor.init_workers(workers_count)
+        self.ocd = Ocd(self.supervisor, self.databases, 5)
+        self.ocd.start()
 
     def __del__(self):
         del self.supervisor
+        self.ocd.cancel()
+        del self.ocd
         self.socket.close()

@@ -11,7 +11,6 @@ import plyvel
 import ujson as json
 
 from shutil import rmtree
-from threading import Thread, Event
 from plyvel import CorruptionError
 
 from .env import Environment
@@ -77,6 +76,16 @@ class DatabasesHandler(dict):
 
         return connector
 
+    @property
+    def last_accesses(self):
+        result = {}
+
+        for uid, data in self.iteritems():
+            if 'last_access' in data:
+                result[uid] = data['last_access']
+
+        return result
+
     def extract_store_datas(self):
         """Retrieves database store from file
 
@@ -106,7 +115,7 @@ class DatabasesHandler(dict):
                     'name': db_name,
                     'path': db_desc['path'],
                     'status': self.STATUSES.UNMOUNTED,
-                    'ref_count': 0,
+                    'last_access': 0.0,
                 }
             })
 
