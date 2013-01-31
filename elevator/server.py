@@ -110,7 +110,7 @@ def runserver(env):
             activity_logger.info('Stopping frontend')
             del frontend
             activity_logger.info('Done')
-            sys.exit(0)
+            return
         except Exception as e:
             log_uncaught_exceptions(e, paranoid=args['paranoid'])
 

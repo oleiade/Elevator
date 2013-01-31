@@ -77,7 +77,7 @@ class DatabasesHandler(dict):
         return connector
 
     @property
-    def last_accesses(self):
+    def last_access(self):
         result = {}
 
         for uid, data in self.iteritems():

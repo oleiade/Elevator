@@ -175,6 +175,13 @@ Server configuration relies on a INI file you can pass it as --config argument. 
     # incoming connections when Elevator is set to use an ipc socket.
     # unixsocket = /tmp/elevator.sock
 
+    # Specify the majordome actions interval. The majordom watches for
+    # unused databases every n minutes, and automatically unmounts them if they
+    # match the condition.
+    # Value is in minutes and should be positive.
+    # Majordom can be deactivated with the 0 value.
+    majordome_interval = 15
+
 
 .. _clients:
 

@@ -10,7 +10,7 @@ from elevator.db import DatabasesHandler
 from elevator.env import Environment
 
 from .supervisor import Supervisor
-from .atm import Ocd
+from .atm import Majordome
 
 
 class Backend(object):
@@ -26,11 +26,20 @@ class Backend(object):
 
         self.supervisor = Supervisor(self.zmq_context, self.databases)
         self.supervisor.init_workers(workers_count)
-        self.ocd = Ocd(self.supervisor, self.databases, 5)
-        self.ocd.start()
+
+        if int(env['global']['majordome_interval']) > 0:
+            self.majordome = Majordome(self.supervisor,
+                                       self.databases,
+                                       int(env['global']['majordome_interval']))
+            self.majordome.start()
 
     def __del__(self):
+        self.supervisor.stop_all()
         del self.supervisor
-        self.ocd.cancel()
-        del self.ocd
+
+        if hasattr(self, 'majordome'):
+            self.majordome.cancel()
+            self.majordome.join()
+            del self.majordome
+
         self.socket.close()
