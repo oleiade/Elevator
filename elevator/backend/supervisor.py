@@ -40,11 +40,6 @@ class Supervisor(object):
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
 
-    def __del__(self):
-        for worker_id, worker in self.workers.iteritems():
-            self.stop(worker_id)
-            worker['thread'].join()
-
     def command(self, instruction, workers_ids=None):
         """Command an action to workers.
 
@@ -85,11 +80,15 @@ class Supervisor(object):
 
     def stop(self, worker_id):
         """Stop a specific worker"""
-        return self.command(WORKER_HALT, [worker_id])
+        self.command(WORKER_HALT, [worker_id])
+        self.workers[worker_id]['thread'].join()
 
     def stop_all(self):
         """Stop every supervised workers"""
-        return self.command(WORKER_HALT)
+        self.command(WORKER_HALT)
+
+        for worker in self.workers.itervalues():
+            worker['thread'].join()
 
     def last_activity(self, worker_id):
         """Asks a specific worker information about it's

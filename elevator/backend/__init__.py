@@ -35,7 +35,6 @@ class Backend(object):
 
     def __del__(self):
         self.supervisor.stop_all()
-        del self.supervisor
 
         if hasattr(self, 'majordome'):
             self.majordome.cancel()
