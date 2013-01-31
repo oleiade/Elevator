@@ -18,6 +18,7 @@ from .utils.patterns import destructurate
 from .helpers.internals import failure, success
 
 
+activity_logger = logging.getLogger('activity_logger')
 errors_logger = logging.getLogger('errors_logger')
 
 
@@ -255,9 +256,14 @@ class Handler(object):
             if not message.db_uid:
                 status, value = self.handlers[message.command](*message.data, **kwargs)
             else:
-                database = self.databases[message.db_uid]['connector']
+                database = self.databases[message.db_uid]
+                if self.databases.status(database['name']) == self.databases.STATUSES.UNMOUNTED:
+                    activity_logger.debug("Re-mount %s")
+                    self.databases.mount(database['name'])
+
+                # Tick last access time
                 self.databases[message.db_uid]['last_access'] = time.time()
-                status, value = self.handlers[message.command](database, *message.data, **kwargs)
+                status, value = self.handlers[message.command](database['connector'], *message.data, **kwargs)
 
         # Will output a valid ResponseHeader and ResponseContent objects
         return self._gen_response(message, status, value)

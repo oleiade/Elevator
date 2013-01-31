@@ -137,6 +137,11 @@ class DatabasesHandler(dict):
         store_datas.pop(db_name)
         json.dump(store_datas, open(self.store, 'w'))
 
+    def status(self, db_name):
+        """Returns the mounted/unmounted database status"""
+        db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
+        return self[db_uid]['status']
+
     def mount(self, db_name):
         db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
 
