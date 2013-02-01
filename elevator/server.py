@@ -11,6 +11,7 @@ import logging
 import procname
 
 from elevator import args
+from elevator.db import DatabasesHandler
 from elevator.env import Environment
 from elevator.backend import Backend
 from elevator.frontend import Frontend
@@ -79,11 +80,14 @@ def log_uncaught_exceptions(e, paranoid=False):
 
 def runserver(env):
     args = env['args']
-
     setup_loggers(env)
     activity_logger = logging.getLogger("activity_logger")
 
-    backend = Backend(args['workers'])
+    database_store = env['global']['database_store']
+    databases_storage = env['global']['databases_storage_path']
+    databases = DatabasesHandler(database_store, databases_storage)
+
+    backend = Backend(databases, args['workers'])
     frontend = Frontend(args['transport'], ':'.join([args['bind'], args['port']]))
 
     poller = zmq.Poller()
