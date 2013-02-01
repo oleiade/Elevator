@@ -5,7 +5,7 @@ import shutil
 import threading
 import unittest2
 
-from elevator.db import DatabasesHandler
+from elevator.db import DatabaseStore
 from elevator.backend.supervisor import Supervisor
 from elevator.backend.worker import Worker
 from elevator.backend.protocol import WORKER_STATUS
@@ -22,7 +22,7 @@ class SupervisorTest(unittest2.TestCase):
         self.databases_storage_path = env['global']['databases_storage_path']
         if not os.path.exists(self.databases_storage_path):
             os.mkdir(self.databases_storage_path)
-        self.db_handler = DatabasesHandler(self.database_store,
+        self.db_handler = DatabaseStore(self.database_store,
                                            self.databases_storage_path)
 
         # Let's fake a backend for workers to talk to

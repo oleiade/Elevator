@@ -7,7 +7,7 @@ import plyvel
 from nose.tools import *
 
 from elevator.api import Handler
-from elevator.db import DatabasesHandler
+from elevator.db import DatabaseStore
 from elevator.constants import *
 from elevator.message import Request
 
@@ -26,7 +26,7 @@ class ApiTests(unittest2.TestCase):
         if not os.path.exists(self.dest):
             os.mkdir(self.dest)
 
-        self.databases = DatabasesHandler(self.store, self.dest)
+        self.databases = DatabaseStore(self.store, self.dest)
         self.default_db_uid = self.databases.index['name_to_uid']['default']
         self._bootstrap_db(self.databases[self.default_db_uid]['connector'])
         self.handler = Handler(self.databases)

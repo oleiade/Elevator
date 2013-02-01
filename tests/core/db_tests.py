@@ -10,7 +10,7 @@ import plyvel
 from elevator.utils.snippets import from_mo_to_bytes
 from elevator.constants import SUCCESS_STATUS, FAILURE_STATUS,\
                                KEY_ERROR, RUNTIME_ERROR, DATABASE_ERROR
-from elevator.db import DatabasesHandler, DatabaseOptions
+from elevator.db import DatabaseStore, DatabaseOptions
 
 from .fakers import gen_test_env
 from .utils import rm_from_pattern
@@ -31,7 +31,7 @@ class DatabasesTest(unittest2.TestCase):
         self.env = gen_test_env()
         if not os.path.exists(self.dest):
             os.mkdir(self.dest)
-        self.handler = DatabasesHandler(self.store, self.dest)
+        self.handler = DatabaseStore(self.store, self.dest)
 
     def tearDown(self):
         self.handler.__del__()

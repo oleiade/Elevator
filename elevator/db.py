@@ -40,7 +40,7 @@ class DatabaseOptions(dict):
                 self[key] = value
 
 
-class DatabasesHandler(dict):
+class DatabaseStore(dict):
     STATUSES = enum('MOUNTED', 'UNMOUNTED')
 
     def __init__(self, store_file, storage_path, *args, **kwargs):
@@ -172,7 +172,7 @@ class DatabasesHandler(dict):
         return success()
 
     def add(self, db_name, db_options=None):
-        """Adds a db to the DatabasesHandler object, and sync it
+        """Adds a db to the DatabasesStore object, and sync it
         to the store file"""
         db_options = db_options or DatabaseOptions()
         db_name_is_path = db_name.startswith('.') or ('/' in db_name)
