@@ -10,14 +10,16 @@ import zmq
 import logging
 import procname
 
-from elevator import conf
+from elevator import args
+from elevator.db import DatabaseStore
 from elevator.env import Environment
-from elevator.backend import WorkersPool
-from elevator.frontend import Proxy
+from elevator.log import setup_loggers
+from elevator.backend import Backend
+from elevator.frontend import Frontend
 from elevator.utils.daemon import Daemon
 
 
-ARGS = conf.init_parser().parse_args(sys.argv[1:])
+ARGS = args.init_parser().parse_args(sys.argv[1:])
 
 
 def setup_process_name(env):
@@ -29,36 +31,6 @@ def setup_process_name(env):
     process_name = 'elevator' + endpoint + config
 
     procname.setprocname(process_name)
-
-
-def setup_loggers(env):
-    activity_log_file = env['global']['activity_log']
-    errors_log_file = env['global']['errors_log']
-
-    # Setup up activity logger
-    numeric_level = getattr(logging, env['args']['log_level'].upper(), None)
-    if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % env['args']['log_level'].upper())
-
-    # Set up activity logger on file and stderr
-    activity_formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(funcName)s : %(message)s")
-    file_stream = logging.FileHandler(activity_log_file)
-    stderr_stream = logging.StreamHandler(sys.stdout)
-    file_stream.setFormatter(activity_formatter)
-    stderr_stream.setFormatter(activity_formatter)
-
-    activity_logger = logging.getLogger("activity_logger")
-    activity_logger.setLevel(numeric_level)
-    activity_logger.addHandler(file_stream)
-    activity_logger.addHandler(stderr_stream)
-
-    # Setup up activity logger
-    errors_logger = logging.getLogger("errors_logger")
-    errors_logger.setLevel(logging.ERROR)
-    errors_stream = logging.FileHandler(errors_log_file)
-    errors_formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(funcName)s : %(message)s")
-    errors_stream.setFormatter(errors_formatter)
-    errors_logger.addHandler(errors_stream)
 
 
 def log_uncaught_exceptions(e, paranoid=False):
@@ -79,38 +51,41 @@ def log_uncaught_exceptions(e, paranoid=False):
 
 def runserver(env):
     args = env['args']
-
     setup_loggers(env)
     activity_logger = logging.getLogger("activity_logger")
 
-    workers_pool = WorkersPool(args['workers'])
-    proxy = Proxy(args['transport'], ':'.join([args['bind'], args['port']]))
+    database_store = env['global']['database_store']
+    databases_storage = env['global']['databases_storage_path']
+    databases = DatabaseStore(database_store, databases_storage)
 
-    poll = zmq.Poller()
-    poll.register(workers_pool.socket, zmq.POLLIN)
-    poll.register(proxy.socket, zmq.POLLIN)
+    backend = Backend(databases, args['workers'])
+    frontend = Frontend(args['transport'], ':'.join([args['bind'], args['port']]))
 
-    activity_logger.info('Elevator server started on %s' % proxy.host)
+    poller = zmq.Poller()
+    poller.register(backend.socket, zmq.POLLIN)
+    poller.register(frontend.socket, zmq.POLLIN)
+
+    activity_logger.info('Elevator server started on %s' % frontend.host)
 
     while True:
         try:
-            sockets = dict(poll.poll())
-            if proxy.socket in sockets:
-                if sockets[proxy.socket] == zmq.POLLIN:
-                    msg = proxy.socket.recv_multipart(copy=False)
-                    workers_pool.socket.send_multipart(msg, copy=False)
+            sockets = dict(poller.poll())
+            if frontend.socket in sockets:
+                if sockets[frontend.socket] == zmq.POLLIN:
+                    msg = frontend.socket.recv_multipart(copy=False)
+                    backend.socket.send_multipart(msg, copy=False)
 
-            if workers_pool.socket in sockets:
-                if sockets[workers_pool.socket] == zmq.POLLIN:
-                    msg = workers_pool.socket.recv_multipart(copy=False)
-                    proxy.socket.send_multipart(msg, copy=False)
+            if backend.socket in sockets:
+                if sockets[backend.socket] == zmq.POLLIN:
+                    msg = backend.socket.recv_multipart(copy=False)
+                    frontend.socket.send_multipart(msg, copy=False)
         except KeyboardInterrupt:
             activity_logger.info('Gracefully shuthing down workers')
-            del workers_pool
-            activity_logger.info('Stopping proxy')
-            del proxy
+            del backend
+            activity_logger.info('Stopping frontend')
+            del frontend
             activity_logger.info('Done')
-            sys.exit(0)
+            return
         except Exception as e:
             log_uncaught_exceptions(e, paranoid=args['paranoid'])
 

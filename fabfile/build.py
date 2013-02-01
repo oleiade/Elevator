@@ -8,16 +8,18 @@ from fabric.api import *
 #
 # DEPENDENCIES BUILD
 #
-def _build_pyleveldb():
+@task
+def leveldb():
     with lcd('/tmp'):
         local('svn checkout http://py-leveldb.googlecode.com/svn/trunk/ py-leveldb-read-only')
-        with lcd('py-leveldb-read-only'):
-            local('chmod -R 777 .')
-            local('sh compile_leveldb.sh')
-            local('python setup.py install')
+    with lcd('py-leveldb-read-only'):
+        local('chmod -R 777 .')
+        local('sh compile_leveldb.sh')
+        local('python setup.py install')
 
 
-def _build_zmq3x():
+@task
+def zmq():
     with lcd('/tmp'):
         local('wget http://download.zeromq.org/zeromq-3.2.0-rc1.tar.gz;'
               'tar xf zeromq-3.2.0-rc1.tar.gz')
@@ -28,7 +30,6 @@ def _build_zmq3x():
 
 
 @task
-def build():
-    _build_pyleveldb()
-    _build_zmq3x()
-
+def all():
+    build_zmq()
+    build_leveldb()

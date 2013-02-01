@@ -4,9 +4,6 @@
 #
 # See the file LICENSE for copying permission.
 
-## Internals
-WORKER_HALT = "-1"
-
 ## Protocol
 
 # Status codes

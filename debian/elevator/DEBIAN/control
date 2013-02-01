@@ -1,0 +1,10 @@
+Package: elevator
+Version: 0.0.4-1
+Architecture: all
+Maintainer: Theo crevon <tcrevon@gmail.com>
+Installed-Size: 272
+Pre-Depends: libzmq-dev
+Depends: python2.7 | python2.6, python (>= 2.7.1-0ubuntu2), python (<< 2.8)
+Section: python
+Priority: optional
+Description: On disk key/value store based on levelDB backend

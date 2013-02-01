@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+
 from setuptools import setup
 
 root = os.path.abspath(os.path.dirname(__file__))
@@ -27,7 +28,7 @@ setup(
     url='http://github.com/oleiade/Elevator',
 
     classifiers=[
-        'Development Status :: 0.3d',
+        'Development Status :: 0.4',
         'Environment :: Unix-like Systems',
         'Programming Language :: Python',
         'Operating System :: Unix-like',
@@ -36,16 +37,33 @@ setup(
 
     packages=[
         'elevator',
+        'elevator.backend',
         'elevator.utils',
         'elevator.helpers',
+
+        'elevator_cli',
     ],
     package_dir={'': '.'},
-    zip_safe=False,
+    include_package_data=False,
+
+    zip_safe=True,
+    install_requires=[
+        'lz4',
+        'msgpack-python',
+        'pyzmq',
+        'unittest2',
+        'ujson',
+        'procname',
+        'clint',
+        'plyvel',
+        'fabric',
+    ],
 
     # Setting up executable/main functions links
     entry_points={
         'console_scripts': [
             'elevator = elevator.server:main',
+            'elevator-cli = elevator_cli.main:main',
         ]
     },
 )

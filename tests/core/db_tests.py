@@ -5,12 +5,12 @@ import os
 import json
 import shutil
 import tempfile
-import leveldb
+import plyvel
 
 from elevator.utils.snippets import from_mo_to_bytes
 from elevator.constants import SUCCESS_STATUS, FAILURE_STATUS,\
                                KEY_ERROR, RUNTIME_ERROR, DATABASE_ERROR
-from elevator.db import DatabasesHandler, DatabaseOptions
+from elevator.db import Database, DatabaseStore, DatabaseOptions
 
 from .fakers import gen_test_env
 from .utils import rm_from_pattern
@@ -31,9 +31,10 @@ class DatabasesTest(unittest2.TestCase):
         self.env = gen_test_env()
         if not os.path.exists(self.dest):
             os.mkdir(self.dest)
-        self.handler = DatabasesHandler(self.store, self.dest)
+        self.handler = DatabaseStore(self.store, self.dest)
 
     def tearDown(self):
+        self.handler.__del__()
         os.remove('/tmp/store.json')
         shutil.rmtree('/tmp/dbs')
 
@@ -41,13 +42,8 @@ class DatabasesTest(unittest2.TestCase):
         self.assertIn('default', self.handler.index['name_to_uid'])
         default_db_uid = self.handler.index['name_to_uid']['default']
 
-        self.assertEqual(self.handler[default_db_uid]['name'], 'default')
-        self.assertEqual(self.handler[default_db_uid]['path'], '/tmp/dbs/default')
-
-    def test_global_max_cache_size(self):
-        self.assertEqual(self.handler.global_cache_size, 16)
-        self.handler.add('test_cache', db_options={'block_cache_size': (8 * (2 << 20))})
-        self.assertEqual(self.handler.global_cache_size, 32)
+        self.assertEqual(self.handler[default_db_uid].name, 'default')
+        self.assertEqual(self.handler[default_db_uid].path, '/tmp/dbs/default')
 
     def test_load(self):
         db_name = 'testdb'
@@ -57,7 +53,7 @@ class DatabasesTest(unittest2.TestCase):
         db_uid = self.handler.index['name_to_uid'][db_name]
 
         self.assertIn(db_uid, self.handler)
-        self.assertEqual(self.handler[db_uid]['name'], db_name)
+        self.assertEqual(self.handler[db_uid].name, db_name)
         self.assertIn('default', self.handler.index['name_to_uid'])
 
     def test_store_update(self):
@@ -69,7 +65,7 @@ class DatabasesTest(unittest2.TestCase):
         }
         self.handler.store_update(db_name, db_desc)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertIn(db_name, store_datas)
         self.assertEqual(store_datas[db_name], db_desc)
 
@@ -82,7 +78,7 @@ class DatabasesTest(unittest2.TestCase):
         }
         self.handler.store_update(db_name, db_desc)
         self.handler.store_remove(db_name)
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
 
         self.assertNotIn(db_name, store_datas)
 
@@ -93,7 +89,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertNotIn(db_name, store_datas)
 
     def test_remove_existing_db_which_files_were_erased(self):
@@ -108,7 +104,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(len(content), 2)
         self.assertEqual(content[0], DATABASE_ERROR)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertNotIn(db_name, store_datas)
 
     def test_add_from_db_name_without_options_passed(self):
@@ -119,7 +115,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertIn(db_name, store_datas)
         self.assertEqual(store_datas[db_name]["path"],
                          os.path.join(self.dest, db_name))
@@ -142,7 +138,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertIn(db_name, store_datas)
         self.assertEqual(store_datas[db_name]["path"],
                          os.path.join(self.dest, db_name))
@@ -168,7 +164,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertIn(db_path, store_datas)
         self.assertEqual(store_datas[db_path]["path"],
                          os.path.join(self.dest, db_path))
@@ -192,61 +188,33 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(len(content), 2)
         self.assertEqual(content[0], DATABASE_ERROR)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertNotIn(db_path, store_datas)
-
-    def test_add_db_and_overflow_max_cache_size(self):
-        orig_value = self.env["global"]["max_cache_size"]
-        db_name = 'testdb'
-        db_options = DatabaseOptions(block_cache_size=from_mo_to_bytes(1000))
-        self.env["global"]["max_cache_size"] = 32
-
-        # max_cache_size = default cache_size + 16
-        status, content = self.handler.add(db_name, db_options)
-        self.assertEqual(status, FAILURE_STATUS)
-        self.assertIsNotNone(content)
-        self.assertIsInstance(content, list)
-        self.assertEqual(len(content), 2)
-        self.assertEqual(content[0], DATABASE_ERROR)
-
-        self.env["global"]["max_cache_size"] = orig_value
-
-    def test_add_db_with_enough_max_cache_size(self):
-        # Default max_cache_size value is 1024, and default db already
-        # occupies 16 Mo
-        db_name = 'testdb'
-        db_options = DatabaseOptions(block_cache_size=from_mo_to_bytes(32))
-
-        # max_cache_size = default cache_size + 16
-        status, content = self.handler.add(db_name, db_options)
-        self.assertEqual(status, SUCCESS_STATUS)
 
     def test_add_db_mounts_it_automatically(self):
         db_name = 'testdb'  # Automatically created on startup
         status, content = self.handler.add(db_name)
         db_uid = self.handler.index['name_to_uid'][db_name]
 
-        self.assertEqual(self.handler[db_uid]['status'], self.handler.STATUSES.MOUNTED)
-        self.assertIsNotNone(self.handler[db_uid]['connector'])
-        self.assertIsInstance(self.handler[db_uid]['connector'], leveldb.LevelDB)
-
+        self.assertEqual(self.handler[db_uid].status, Database.STATUS.MOUNTED)
+        self.assertIsNotNone(self.handler[db_uid].connector)
+        self.assertIsInstance(self.handler[db_uid].connector, plyvel.DB)
 
     def test_mount_unmounted_db(self):
         db_name = 'testdb'  # Automatically created on startup
         status, content = self.handler.add(db_name)
         db_uid = self.handler.index['name_to_uid'][db_name]
-
         # Unmount the db by hand
-        self.handler[db_uid]['status'] = self.handler.STATUSES.UNMOUNTED
-        self.handler[db_uid]['connector'] = None
+        self.handler[db_uid].status = self.handler.STATUSES.UNMOUNTED
+        self.handler[db_uid].connector = None
 
         # Re-mount it and assert everything went fine
         status, content = self.handler.mount(db_name)
 
         self.assertEqual(status, SUCCESS_STATUS)
-        self.assertEqual(self.handler[db_uid]['status'], self.handler.STATUSES.MOUNTED)
-        self.assertIsNotNone(self.handler[db_uid]['connector'])
-        self.assertIsInstance(self.handler[db_uid]['connector'], leveldb.LevelDB)
+        self.assertEqual(self.handler[db_uid].status, self.handler.STATUSES.MOUNTED)
+        self.assertIsNotNone(self.handler[db_uid].connector)
+        self.assertIsInstance(self.handler[db_uid].connector, plyvel.DB)
 
     def test_mount_already_mounted_db(self):
         db_name = 'testdb'  # Automatically created on startup
@@ -264,7 +232,7 @@ class DatabasesTest(unittest2.TestCase):
 
         # Intetionaly rm db MANIFEST in order for a corruption
         # to appear.
-        rm_from_pattern(self.handler[db_uid]['path'], 'MANIFEST*')
+        rm_from_pattern(self.handler[db_uid].path, 'MANIFEST*')
 
         status, content = self.handler.mount(db_name)
         self.assertEqual(status, FAILURE_STATUS)
@@ -280,8 +248,8 @@ class DatabasesTest(unittest2.TestCase):
         status, content = self.handler.umount(db_name)
 
         self.assertEqual(status, SUCCESS_STATUS)
-        self.assertEqual(self.handler[db_uid]['status'], self.handler.STATUSES.UNMOUNTED)
-        self.assertIsNone(self.handler[db_uid]['connector'])
+        self.assertEqual(self.handler[db_uid].status, self.handler.STATUSES.UNMOUNTED)
+        self.assertIsNone(self.handler[db_uid].connector)
 
     def test_umount_already_unmounted_db(self):
         db_name = 'testdb'  # Automatically created on startup
@@ -289,8 +257,8 @@ class DatabasesTest(unittest2.TestCase):
         db_uid = self.handler.index['name_to_uid'][db_name]
 
         # Unmount the db by hand
-        self.handler[db_uid]['status'] = self.handler.STATUSES.UNMOUNTED
-        self.handler[db_uid]['connector'] = None
+        self.handler[db_uid].status = self.handler.STATUSES.UNMOUNTED
+        self.handler[db_uid].connector = None
 
         status, content = self.handler.umount(db_name)
         self.assertEqual(status, FAILURE_STATUS)

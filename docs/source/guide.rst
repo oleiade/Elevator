@@ -1,4 +1,5 @@
 .. _guide:
+
 =============
 Kickstarting
 =============
@@ -15,7 +16,7 @@ Get the source code
 
 The Elevator developers manage the project’s source code with the Git. To get the latest major version source code, clone the canonical repository straight from the Elevator repository on Github:
 
-.. code-block::bash
+.. code-block:: bash
 
     $ git://github.com/oleiade/Elevator.git
 
@@ -29,7 +30,12 @@ Elevator depends on:
 * `Python <www.python.org>`_ language
 * the `setuptools` packaging/installation library
 * `zmq <http://zeromq.org>`_ (>= 2.2, zmq3.x is supported too)
-* `leveldb <http://code.google.com/p/leveldb/>`_
+* `leveldb <http://code.google.com/p/leveldb/>`_ (>= 1.6)
+
+    * `libleveldb1` and `libleveldb-dev` should be disposable on most **linux** distributions, if it's not yet ported to yours, just checkout the leveldb source code, `make` and cp the libray files ('.so') to /usr/local/lib, and don't forget to add /usr/local/lib to your libpath.
+
+    * `leveldb` is disposable on *Homebrew* for **Osx** and I guess it might be too on *ports*
+
 * Python packages listed in `requirements.txt`
 
 Python
@@ -42,14 +48,21 @@ Setuptools
 
 Setuptools comes with some Python installations by default; if yours doesn’t, you’ll need to grab it. In such situations it’s typically packaged as python-setuptools, py27-setuptools or similar.
 
-Requirements
--------------------
 
-Requirements.txt packages should be installed via the package manager `Pip <http://pypi.python.org/pypi/pip>`_:
+Zmq and Leveldb
+--------------------
+
+Elevator requires `zmq <http://zeromq.org>`_ and `leveldb <http://code.google.com/p/leveldb/>`_ libraries are installed on the system. Most unix systems provides
+these libraries through their package managers. For example, debian provides both a libleveldb1 and libleveldb-dev packages and libzmq-dev. On osx, you would be able to install them using brew.
+
+Anyway, Elevator is shipped with a fabfile included and rules to automatically download, compile, and install
+both leveldb and zmq libraries. To use it, you'll need `fabric <http://docs.fabfile.org/>`_ installed.
+
+Just run:
 
 .. code-block:: bash
 
-    $ pip install -r requirements.txt
+    $ fab build.all
 
 
 .. _installation:
@@ -57,20 +70,12 @@ Requirements.txt packages should be installed via the package manager `Pip <http
 Installation
 ==================
 
-Both `pip <http://www.pip-installer.org>`_ and `fabric <http://docs.fabfile.org/en/1.4.3>`_ are not mandatory dependencies
-in order to succesfuly install Elevator, but, hey, believe me, they'll make your life easier. But if you're still one
-of these 'by hand' thing junkie, of course, you can go through the process of installing zmq, leveldb and all the python
-packages 'by hand'. Up to you.
+We consider here that you've succesfully installed leveldb >= 1.6 and libzmq in order
+for python packages to build against compatible versions of the libs.
 
 .. code-block:: bash
 
-    $ pip install fabric
-    $ fab build
-    $ pip install -r requirements.txt
     $ python setup.py install
-
-**Nota** :
-
 
 .. _usage:
 
@@ -112,11 +117,12 @@ Usage
 .. _configuration:
 
 Configuration
-=========
+================
 
 Server configuration relies on a INI file you can pass it as --config argument. All the configuration options key/value are then loaded in a server specific singleton Environment object, which any part of the server can eventually access.
 
 **example config** (*config/elevator.conf*)
+
 
 .. code-block:: ini
 
@@ -169,12 +175,38 @@ Server configuration relies on a INI file you can pass it as --config argument. 
     # incoming connections when Elevator is set to use an ipc socket.
     # unixsocket = /tmp/elevator.sock
 
+    # Specify the majordome actions interval. The majordom watches for
+    # unused databases every n minutes, and automatically unmounts them if they
+    # match the condition.
+    # Value is in minutes and should be positive.
+    # Majordom can be deactivated with the 0 value.
+    majordome_interval = 15
+
+
 .. _clients:
 
 Clients
 =======
 
-A few clients for Elevator exists already:
+Command line (Experimental)
+--------------------------------
+
+Elevator is shipped with a built-in command line interface, so you can jump in without
+setting up an external client.
+
+Ensure that you've got an elevator server running, and you're done:
+
+.. code-block:: bash
+
+    $ elevator-cli
+
+You'll probably want to consult the :ref:`Command line usage <cmdline>` section in order to learn more about
+it's usage.
+
+Languages clients
+-----------------------
+
+A few languages clients for Elevator exists already:
 
 * `py-elevator <http://github.com/oleiade/py-elevator>`_ : Python client, stable
 * `go-elevator <http://github.com/oleiade/go-elevator>`_ : Go client module, under heavy development
@@ -187,6 +219,6 @@ to implement your own client in your language.
 .. _deployment:
 
 Deployment
-=======
+============
 
 (coming soon)
