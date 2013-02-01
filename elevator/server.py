@@ -13,6 +13,7 @@ import procname
 from elevator import args
 from elevator.db import DatabaseStore
 from elevator.env import Environment
+from elevator.log import setup_loggers
 from elevator.backend import Backend
 from elevator.frontend import Frontend
 from elevator.utils.daemon import Daemon
@@ -30,36 +31,6 @@ def setup_process_name(env):
     process_name = 'elevator' + endpoint + config
 
     procname.setprocname(process_name)
-
-
-def setup_loggers(env):
-    activity_log_file = env['global']['activity_log']
-    errors_log_file = env['global']['errors_log']
-
-    # Setup up activity logger
-    numeric_level = getattr(logging, env['args']['log_level'].upper(), None)
-    if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % env['args']['log_level'].upper())
-
-    # Set up activity logger on file and stderr
-    activity_formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(funcName)s : %(message)s")
-    file_stream = logging.FileHandler(activity_log_file)
-    stderr_stream = logging.StreamHandler(sys.stdout)
-    file_stream.setFormatter(activity_formatter)
-    stderr_stream.setFormatter(activity_formatter)
-
-    activity_logger = logging.getLogger("activity_logger")
-    activity_logger.setLevel(numeric_level)
-    activity_logger.addHandler(file_stream)
-    activity_logger.addHandler(stderr_stream)
-
-    # Setup up activity logger
-    errors_logger = logging.getLogger("errors_logger")
-    errors_logger.setLevel(logging.WARNING)
-    errors_stream = logging.FileHandler(errors_log_file)
-    errors_formatter = logging.Formatter("[%(asctime)s] %(levelname)s %(funcName)s : %(message)s")
-    errors_stream.setFormatter(errors_formatter)
-    errors_logger.addHandler(errors_stream)
 
 
 def log_uncaught_exceptions(e, paranoid=False):
