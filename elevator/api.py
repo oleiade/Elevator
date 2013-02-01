@@ -182,7 +182,7 @@ class Handler(object):
             return failure(DATABASE_ERROR, error_msg)
 
         db_uid = self.databases.index['name_to_uid'][db_name]
-        if self.databases[db_uid]['status'] == self.databases.STATUSES.UNMOUNTED:
+        if self.databases[db_uid].status == self.databases.STATUSES.UNMOUNTED:
             self.databases.mount(db_name)
 
         return success(db_uid)
@@ -257,13 +257,13 @@ class Handler(object):
                 status, value = self.handlers[message.command](*message.data, **kwargs)
             else:
                 database = self.databases[message.db_uid]
-                if self.databases.status(database['name']) == self.databases.STATUSES.UNMOUNTED:
+                if self.databases.status(database.name) == self.databases.STATUSES.UNMOUNTED:
                     activity_logger.debug("Re-mount %s")
-                    self.databases.mount(database['name'])
+                    self.databases.mount(database.name)
 
                 # Tick last access time
-                self.databases[message.db_uid]['last_access'] = time.time()
-                status, value = self.handlers[message.command](database['connector'], *message.data, **kwargs)
+                self.databases[message.db_uid].last_access = time.time()
+                status, value = self.handlers[message.command](database.connector, *message.data, **kwargs)
 
         # Will output a valid ResponseHeader and ResponseContent objects
         return self._gen_response(message, status, value)

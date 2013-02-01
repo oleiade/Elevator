@@ -28,7 +28,7 @@ class ApiTests(unittest2.TestCase):
 
         self.databases = DatabaseStore(self.store, self.dest)
         self.default_db_uid = self.databases.index['name_to_uid']['default']
-        self._bootstrap_db(self.databases[self.default_db_uid]['connector'])
+        self._bootstrap_db(self.databases[self.default_db_uid].connector)
         self.handler = Handler(self.databases)
 
     def tearDown(self):
@@ -272,8 +272,8 @@ class ApiTests(unittest2.TestCase):
     def test_connect_automatically_mounts_and_unmounted_db(self):
         # Unmount by hand the database
         db_uid = self.handler.databases.index['name_to_uid']['default']
-        self.handler.databases[db_uid]['status'] = self.handler.databases.STATUSES.UNMOUNTED
-        self.handler.databases[db_uid]['connector'] = None
+        self.handler.databases[db_uid].status = self.handler.databases.STATUSES.UNMOUNTED
+        self.handler.databases[db_uid].connector = None
 
         message = Request(msgpack.packb({
                 'db_uid': None,
@@ -284,8 +284,8 @@ class ApiTests(unittest2.TestCase):
 
         plain_header = msgpack.unpackb(header)
         self.assertEqual(plain_header['status'], SUCCESS_STATUS)
-        self.assertEqual(self.handler.databases[db_uid]['status'], self.handler.databases.STATUSES.MOUNTED)
-        self.assertIsInstance(self.handler.databases[db_uid]['connector'], plyvel.DB)
+        self.assertEqual(self.handler.databases[db_uid].status, self.handler.databases.STATUSES.MOUNTED)
+        self.assertIsInstance(self.handler.databases[db_uid].connector, plyvel.DB)
 
     def test_create_valid_db(self):
         message = self.request_message('DBCREATE', ['testdb'])

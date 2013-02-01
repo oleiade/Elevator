@@ -42,24 +42,24 @@ class MajordomeTest(unittest2.TestCase):
     def test_unmount_existing_mounted_database(self):
         default_db_uid = self.db_handler.index['name_to_uid']['default']
         db_to_watch = self.db_handler[default_db_uid]
-        self.assertEqual(db_to_watch['status'], DatabaseStore.STATUSES.MOUNTED)
+        self.assertEqual(db_to_watch.status, DatabaseStore.STATUSES.MOUNTED)
 
         # Use 1/60 interval in order to set it as 1sec
         self.majordome = Majordome(self.supervisor,
                                    self.db_handler,
                                    1 / 60)
-        self.assertEqual(db_to_watch['status'], DatabaseStore.STATUSES.MOUNTED)
+        self.assertEqual(db_to_watch.status, DatabaseStore.STATUSES.MOUNTED)
 
     def test_unmount_existing_unmounted_database(self):
         default_db_uid = self.db_handler.index['name_to_uid']['default']
         db_to_watch = self.db_handler[default_db_uid]
 
-        self.assertEqual(db_to_watch['status'], DatabaseStore.STATUSES.MOUNTED)
+        self.assertEqual(db_to_watch.status, DatabaseStore.STATUSES.MOUNTED)
         self.db_handler.umount('default')
-        self.assertEqual(db_to_watch['status'], DatabaseStore.STATUSES.UNMOUNTED)
+        self.assertEqual(db_to_watch.status, DatabaseStore.STATUSES.UNMOUNTED)
 
         # Use 1/60 interval in order to set it as 1sec
         self.majordome = Majordome(self.supervisor,
                                    self.db_handler,
                                    1 / 60)
-        self.assertEqual(db_to_watch['status'], DatabaseStore.STATUSES.UNMOUNTED)
+        self.assertEqual(db_to_watch.status, DatabaseStore.STATUSES.UNMOUNTED)

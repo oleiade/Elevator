@@ -29,7 +29,6 @@ class DatabaseOptions(dict):
         self['error_if_exists'] = False
         self['bloom_filter_bits'] = 10  # Value recommended by leveldb doc
         self['paranoid_checks'] = False
-        self['compression'] = True
         self['lru_cache_size'] = 512 * (1 << 20)  # 512 Mo
         self['write_buffer_size'] = 4 * (1 << 20)  # 4 Mo
         self['block_size'] = 4096
@@ -38,6 +37,72 @@ class DatabaseOptions(dict):
         for key, value in kwargs.iteritems():
             if key in self:
                 self[key] = value
+
+
+class Database(object):
+    STATUS = enum('MOUNTED', 'UNMOUNTED')
+
+    def __init__(self, name, path, options,
+                 status=STATUS.UNMOUNTED, init_connector=False):
+        self.name = name
+        self.path = path
+        self.status = status
+        self.last_access = 0.0
+        self._connector = None
+        self.options = options
+
+        if init_connector:
+            self.set_connector(self.path, **self.options)
+
+    def __del__(self):
+        del self._connector
+
+    @property
+    def connector(self):
+        return self._connector
+
+    @connector.setter
+    def connector(self, value):
+        if isinstance(value, plyvel.DB) or value is None:
+            self._connector = value
+        else:
+            raise TypeError("Connector whether should be"
+                            "a plyvel object or None")
+
+    @connector.deleter
+    def connector(self):
+        del self._connector
+
+    def set_connector(self, path, *args, **kwargs):
+        kwargs.update({'create_if_missing': True})
+
+        try:
+            self._connector = plyvel.DB(path, *args, **kwargs)
+        except CorruptionError as e:
+            errors_logger.exception(e.message)
+
+    def mount(self):
+        if self.status is self.STATUS.UNMOUNTED:
+            self.set_connector(self.path)
+
+            if self.connector is None:
+                return failure(DATABASE_ERROR, "Database %s could not be mounted" % self.path)
+
+            self.status = self.STATUS.MOUNTED
+        else:
+            return failure(DATABASE_ERROR, "Database %r already mounted" % self.path)
+
+        return success()
+
+    def umount(self):
+        if self.status is self.STATUS.MOUNTED:
+            self.status = self.STATUS.UNMOUNTED
+            del self._connector
+            self._connector = None
+        else:
+            return failure(DATABASE_ERROR, "Database %r already unmounted" % self.name)
+
+        return success()
 
 
 class DatabaseStore(dict):
@@ -62,19 +127,8 @@ class DatabaseStore(dict):
         """
         Explictly shutsdown the internal leveldb connectors
         """
-        for uid in self.index['name_to_uid'].values():
-            if 'connector' in self[uid] and self[uid]['connector'] is not None:
-                del self[uid]['connector']
-
-    def _get_db_connector(self, path, *args, **kwargs):
-        connector = None
-
-        try:
-            connector = plyvel.DB(path, create_if_missing=True, *args, **kwargs)
-        except CorruptionError as e:
-            errors_logger.exception(e.message)
-
-        return connector
+        for uid in self.keys():
+            del self[uid]
 
     @property
     def last_access(self):
@@ -110,13 +164,7 @@ class DatabaseStore(dict):
         for db_name, db_desc in store_datas.iteritems():
             self.index['name_to_uid'].update({db_name: db_desc['uid']})
             self.update({
-                db_desc['uid']: {
-                    'connector': None,
-                    'name': db_name,
-                    'path': db_desc['path'],
-                    'status': self.STATUSES.UNMOUNTED,
-                    'last_access': 0.0,
-                }
+                db_desc['uid']: Database(db_name, db_desc['path'], db_desc['options'])
             })
 
         # Always bootstrap 'default'
@@ -139,37 +187,17 @@ class DatabaseStore(dict):
 
     def status(self, db_name):
         """Returns the mounted/unmounted database status"""
+
         db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
-        return self[db_uid]['status']
+        return self[db_uid].status
 
     def mount(self, db_name):
         db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
-
-        if self[db_uid]['status'] == self.STATUSES.UNMOUNTED:
-            db_path = self[db_uid]['path']
-            connector = self._get_db_connector(db_path)
-
-            if connector is None:
-                return failure(DATABASE_ERROR, "Database %s could not be mounted" % db_path)
-
-            self[db_uid]['status'] = self.STATUSES.MOUNTED
-            self[db_uid]['connector'] = connector
-        else:
-            return failure(DATABASE_ERROR, "Database %r already mounted" % db_name)
-
-        return success()
+        return self[db_uid].mount()
 
     def umount(self, db_name):
         db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
-
-        if self[db_uid]['status'] == self.STATUSES.MOUNTED:
-            self[db_uid]['status'] = self.STATUSES.UNMOUNTED
-            del self[db_uid]['connector']
-            self[db_uid]['connector'] = None
-        else:
-            return failure(DATABASE_ERROR, "Database %r already unmounted" % db_name)
-
-        return success()
+        return self[db_uid].umount()
 
     def add(self, db_name, db_options=None):
         """Adds a db to the DatabasesStore object, and sync it
@@ -192,30 +220,21 @@ class DatabaseStore(dict):
             new_db_path = os.path.join(self.storage_path, db_name)
 
         path = new_db_path
-        connector = self._get_db_connector(path)
-
-        if connector is None:
-            return (DATABASE_ERROR, "Database %s could not be created" % path)
+        database = Database(db_name,
+                            path,
+                            db_options,
+                            status=Database.STATUS.MOUNTED,
+                            init_connector=True)
 
         # Adding db to store, and updating handler
         uid = str(uuid.uuid4())
-        options = db_options
+        self.index['name_to_uid'].update({db_name: uid})
         self.store_update(db_name, {
             'path': path,
             'uid': uid,
-            'options': options,
+            'options': db_options,
         })
-
-        self.index['name_to_uid'].update({db_name: uid})
-        self.update({
-            uid: {
-                'connector': connector,
-                'name': db_name,
-                'path': path,
-                'status': self.STATUSES.MOUNTED,
-                'ref_count': 0,
-            },
-        })
+        self.update({uid: database})
 
         return success()
 
@@ -223,7 +242,7 @@ class DatabaseStore(dict):
         """Drops a db from the DatabasesHandler, and sync it
         to store file"""
         db_uid = self.index['name_to_uid'].pop(db_name)
-        db_path = self[db_uid]['path']
+        db_path = self[db_uid].path
 
         self.pop(db_uid)
         self.store_remove(db_name)
@@ -240,7 +259,7 @@ class DatabaseStore(dict):
         db_uid = self.index['name_to_uid'][db_name] if db_name in self.index['name_to_uid'] else None
 
         if db_uid:
-            if os.path.exists(self[db_uid]['path']):
+            if os.path.exists(self[db_uid].path):
                 return True
             else:
                 self.drop(db_name)

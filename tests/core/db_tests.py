@@ -10,7 +10,7 @@ import plyvel
 from elevator.utils.snippets import from_mo_to_bytes
 from elevator.constants import SUCCESS_STATUS, FAILURE_STATUS,\
                                KEY_ERROR, RUNTIME_ERROR, DATABASE_ERROR
-from elevator.db import DatabaseStore, DatabaseOptions
+from elevator.db import Database, DatabaseStore, DatabaseOptions
 
 from .fakers import gen_test_env
 from .utils import rm_from_pattern
@@ -42,8 +42,8 @@ class DatabasesTest(unittest2.TestCase):
         self.assertIn('default', self.handler.index['name_to_uid'])
         default_db_uid = self.handler.index['name_to_uid']['default']
 
-        self.assertEqual(self.handler[default_db_uid]['name'], 'default')
-        self.assertEqual(self.handler[default_db_uid]['path'], '/tmp/dbs/default')
+        self.assertEqual(self.handler[default_db_uid].name, 'default')
+        self.assertEqual(self.handler[default_db_uid].path, '/tmp/dbs/default')
 
     def test_load(self):
         db_name = 'testdb'
@@ -53,7 +53,7 @@ class DatabasesTest(unittest2.TestCase):
         db_uid = self.handler.index['name_to_uid'][db_name]
 
         self.assertIn(db_uid, self.handler)
-        self.assertEqual(self.handler[db_uid]['name'], db_name)
+        self.assertEqual(self.handler[db_uid].name, db_name)
         self.assertIn('default', self.handler.index['name_to_uid'])
 
     def test_store_update(self):
@@ -196,26 +196,25 @@ class DatabasesTest(unittest2.TestCase):
         status, content = self.handler.add(db_name)
         db_uid = self.handler.index['name_to_uid'][db_name]
 
-        self.assertEqual(self.handler[db_uid]['status'], self.handler.STATUSES.MOUNTED)
-        self.assertIsNotNone(self.handler[db_uid]['connector'])
-        self.assertIsInstance(self.handler[db_uid]['connector'], plyvel.DB)
+        self.assertEqual(self.handler[db_uid].status, Database.STATUS.MOUNTED)
+        self.assertIsNotNone(self.handler[db_uid].connector)
+        self.assertIsInstance(self.handler[db_uid].connector, plyvel.DB)
 
     def test_mount_unmounted_db(self):
         db_name = 'testdb'  # Automatically created on startup
         status, content = self.handler.add(db_name)
         db_uid = self.handler.index['name_to_uid'][db_name]
-
         # Unmount the db by hand
-        self.handler[db_uid]['status'] = self.handler.STATUSES.UNMOUNTED
-        self.handler[db_uid]['connector'] = None
+        self.handler[db_uid].status = self.handler.STATUSES.UNMOUNTED
+        self.handler[db_uid].connector = None
 
         # Re-mount it and assert everything went fine
         status, content = self.handler.mount(db_name)
 
         self.assertEqual(status, SUCCESS_STATUS)
-        self.assertEqual(self.handler[db_uid]['status'], self.handler.STATUSES.MOUNTED)
-        self.assertIsNotNone(self.handler[db_uid]['connector'])
-        self.assertIsInstance(self.handler[db_uid]['connector'], plyvel.DB)
+        self.assertEqual(self.handler[db_uid].status, self.handler.STATUSES.MOUNTED)
+        self.assertIsNotNone(self.handler[db_uid].connector)
+        self.assertIsInstance(self.handler[db_uid].connector, plyvel.DB)
 
     def test_mount_already_mounted_db(self):
         db_name = 'testdb'  # Automatically created on startup
@@ -233,7 +232,7 @@ class DatabasesTest(unittest2.TestCase):
 
         # Intetionaly rm db MANIFEST in order for a corruption
         # to appear.
-        rm_from_pattern(self.handler[db_uid]['path'], 'MANIFEST*')
+        rm_from_pattern(self.handler[db_uid].path, 'MANIFEST*')
 
         status, content = self.handler.mount(db_name)
         self.assertEqual(status, FAILURE_STATUS)
@@ -249,8 +248,8 @@ class DatabasesTest(unittest2.TestCase):
         status, content = self.handler.umount(db_name)
 
         self.assertEqual(status, SUCCESS_STATUS)
-        self.assertEqual(self.handler[db_uid]['status'], self.handler.STATUSES.UNMOUNTED)
-        self.assertIsNone(self.handler[db_uid]['connector'])
+        self.assertEqual(self.handler[db_uid].status, self.handler.STATUSES.UNMOUNTED)
+        self.assertIsNone(self.handler[db_uid].connector)
 
     def test_umount_already_unmounted_db(self):
         db_name = 'testdb'  # Automatically created on startup
@@ -258,8 +257,8 @@ class DatabasesTest(unittest2.TestCase):
         db_uid = self.handler.index['name_to_uid'][db_name]
 
         # Unmount the db by hand
-        self.handler[db_uid]['status'] = self.handler.STATUSES.UNMOUNTED
-        self.handler[db_uid]['connector'] = None
+        self.handler[db_uid].status = self.handler.STATUSES.UNMOUNTED
+        self.handler[db_uid].connector = None
 
         status, content = self.handler.umount(db_name)
         self.assertEqual(status, FAILURE_STATUS)
