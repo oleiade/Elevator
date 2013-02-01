@@ -1,16 +1,23 @@
+import uuid
 import hurdles
 
 from hurdles.tools import extra_setup
 
-from pyelevator import Elevator
+from pyelevator import Elevator, WriteBatch
 
 
 class BenchElevator(hurdles.BenchCase):
     def setUp(self):
         self.client = Elevator(timeout=10)
+        self._bootstrap_db()
 
     def tearDown(self):
         pass
+
+    def _bootstrap_db(self):
+        with WriteBatch(timeout=10000) as batch:
+            for x in xrange(100000):
+                batch.Put(str(x), uuid.uuid4().hex)
 
     @extra_setup("import uuid\n"
                  "from pyelevator import WriteBatch\n"
