@@ -13,9 +13,16 @@ import random
 
 from elevator.env import Environment
 
+mkdtemp = lambda _dir: tempfile.mkdtemp(suffix='-test',
+                                        prefix='elevator-',
+                                        dir=_dir)
+mkstemp = lambda suffix, _dir: tempfile.mkstemp(suffix="-test" + suffix,
+                                                prefix='elevator-',
+                                                dir=_dir)[1]
+
 
 def gen_test_env():
-    tmp = tempfile.mkdtemp(dir='/tmp')
+    tmp = mkdtemp('/tmp')
     return Environment(**{
         'global': {
             'daemonize': 'no',
@@ -35,12 +42,12 @@ def gen_test_env():
 def gen_test_conf():
     """Generates a ConfigParser object built with test options values"""
     global_config_options = {
-            "pidfile": tempfile.mkstemp(suffix=".pid", dir='/tmp')[1],
-            "databases_storage_path": tempfile.mkdtemp(dir='/tmp'),  # Will be randomly set later
-            "database_store": tempfile.mkstemp(suffix=".json", dir="/tmp")[1],
+            "pidfile": mkstemp('.pid', '/tmp'),
+            "databases_storage_path": mkdtemp('/tmp'),  # Will be randomly set later
+            "database_store": mkstemp('.json', '/tmp'),
             "port": str(random.randint(4142, 60000)),
-            "activity_log": tempfile.mkstemp(suffix=".log", dir="/tmp")[1],
-            "errors_log": tempfile.mkstemp(suffix="_errors.log", dir="/tmp")[1],
+            "activity_log": mkstemp('.log', '/tmp'),
+            "errors_log": mkstemp('_errors.log', '/tmp'),
     }
     config = ConfigParser.ConfigParser()
     config.add_section('global')
@@ -69,7 +76,7 @@ class TestDaemon(object):
         os.remove(self.conf_file_path)
 
     def bootstrap_conf(self):
-        self.conf_file_path = tempfile.mkstemp(suffix=".conf", dir="/tmp")
+        self.conf_file_path = mkstemp('.conf', '/tmp')
         self.config = gen_test_conf()
 
         with open(self.conf_file_path) as f:
