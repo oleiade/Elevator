@@ -65,7 +65,7 @@ class DatabasesTest(unittest2.TestCase):
         }
         self.handler.store_update(db_name, db_desc)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertIn(db_name, store_datas)
         self.assertEqual(store_datas[db_name], db_desc)
 
@@ -78,7 +78,7 @@ class DatabasesTest(unittest2.TestCase):
         }
         self.handler.store_update(db_name, db_desc)
         self.handler.store_remove(db_name)
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
 
         self.assertNotIn(db_name, store_datas)
 
@@ -89,7 +89,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertNotIn(db_name, store_datas)
 
     def test_remove_existing_db_which_files_were_erased(self):
@@ -104,7 +104,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(len(content), 2)
         self.assertEqual(content[0], DATABASE_ERROR)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertNotIn(db_name, store_datas)
 
     def test_add_from_db_name_without_options_passed(self):
@@ -115,7 +115,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertIn(db_name, store_datas)
         self.assertEqual(store_datas[db_name]["path"],
                          os.path.join(self.dest, db_name))
@@ -138,7 +138,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertIn(db_name, store_datas)
         self.assertEqual(store_datas[db_name]["path"],
                          os.path.join(self.dest, db_name))
@@ -164,7 +164,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(status, SUCCESS_STATUS)
         self.assertEqual(content, None)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertIn(db_path, store_datas)
         self.assertEqual(store_datas[db_path]["path"],
                          os.path.join(self.dest, db_path))
@@ -188,7 +188,7 @@ class DatabasesTest(unittest2.TestCase):
         self.assertEqual(len(content), 2)
         self.assertEqual(content[0], DATABASE_ERROR)
 
-        store_datas = json.load(open(self.handler.store, 'r'))
+        store_datas = json.load(open(self.handler.store_file, 'r'))
         self.assertNotIn(db_path, store_datas)
 
     def test_add_db_mounts_it_automatically(self):

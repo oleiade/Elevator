@@ -43,15 +43,15 @@ class DatabaseOptions(dict):
 class DatabasesHandler(dict):
     STATUSES = enum('MOUNTED', 'UNMOUNTED')
 
-    def __init__(self, store, dest, *args, **kwargs):
+    def __init__(self, store_file, storage_path, *args, **kwargs):
         self.env = Environment()
         self.index = dict().fromkeys('name_to_uid')
 
         self.index['name_to_uid'] = {}
         self['reverse_name_index'] = {}
         self['paths_index'] = {}
-        self.dest = dest
-        self.store = store
+        self.storage_path = storage_path
+        self.store_file = store_file
 
         self._global_cache_size = None
 
@@ -97,7 +97,7 @@ class DatabasesHandler(dict):
         store_datas, dict
         """
         try:
-            store_datas = json.load(open(self.store, 'r'))
+            store_datas = json.load(open(self.store_file, 'r'))
         except (IOError, ValueError):
             store_datas = {}
 
@@ -129,13 +129,13 @@ class DatabasesHandler(dict):
         store_datas = self.extract_store_datas()
 
         store_datas.update({db_name: db_desc})
-        json.dump(store_datas, open(self.store, 'w'))
+        json.dump(store_datas, open(self.store_file, 'w'))
 
     def store_remove(self, db_name):
         """Removes a database from store file"""
         store_datas = self.extract_store_datas()
         store_datas.pop(db_name)
-        json.dump(store_datas, open(self.store, 'w'))
+        json.dump(store_datas, open(self.store_file, 'w'))
 
     def status(self, db_name):
         """Returns the mounted/unmounted database status"""
@@ -189,7 +189,7 @@ class DatabasesHandler(dict):
             except OSError as e:
                 return failure(OS_ERROR, e.strerror)
         else:
-            new_db_path = os.path.join(self.dest, db_name)
+            new_db_path = os.path.join(self.storage_path, db_name)
 
         path = new_db_path
         connector = self._get_db_connector(path)
