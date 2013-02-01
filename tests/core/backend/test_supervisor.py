@@ -1,6 +1,7 @@
 import os
 import zmq
 import time
+import shutil
 import threading
 import unittest2
 
@@ -17,12 +18,12 @@ class SupervisorTest(unittest2.TestCase):
         zmq_context = zmq.Context()
         env = gen_test_env()
 
-        database_store = env['global']['database_store']
-        databases_storage_path = env['global']['databases_storage_path']
-        if not os.path.exists(databases_storage_path):
-            os.mkdir(databases_storage_path)
-        self.db_handler = DatabasesHandler(database_store,
-                                           databases_storage_path)
+        self.database_store = env['global']['database_store']
+        self.databases_storage_path = env['global']['databases_storage_path']
+        if not os.path.exists(self.databases_storage_path):
+            os.mkdir(self.databases_storage_path)
+        self.db_handler = DatabasesHandler(self.database_store,
+                                           self.databases_storage_path)
 
         # Let's fake a backend for workers to talk to
         self.socket = zmq_context.socket(zmq.DEALER)
@@ -32,6 +33,8 @@ class SupervisorTest(unittest2.TestCase):
 
     def tearDown(self):
         self.supervisor.stop_all()
+        os.remove(self.database_store)
+        shutil.rmtree(self.databases_storage_path)
 
     def test_init_workers_with_positive_count(self):
         start_thread_count = len(threading.enumerate())
