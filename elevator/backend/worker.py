@@ -31,6 +31,8 @@ class HaltException(Exception):
 
 
 class Worker(threading.Thread):
+    STATES = enum('PROCESSING', 'IDLE', 'STOPPED')
+
     def __init__(self, zmq_context, databases, *args, **kwargs):
         threading.Thread.__init__(self)
         self.instructions = {
@@ -42,7 +44,6 @@ class Worker(threading.Thread):
         self.env = Environment()
         self.zmq_context = zmq_context
 
-        self.STATES = enum('PROCESSING', 'IDLE', 'STOPPED')
         self.state = self.STATES.IDLE
 
         # Wire backend and remote control sockets
@@ -75,19 +76,26 @@ class Worker(threading.Thread):
         """Handles incoming service messages from supervisor socket"""
         try:
             serialized_request = self.remote_control_socket.recv_multipart(flags=zmq.NOBLOCK)[0]
-            instruction = ServiceMessage.loads(serialized_request)[0]
-            response = self.instructions[instruction]()
-            self.remote_control_socket.send_multipart([ServiceMessage.dumps(response)],
-                                                      flags=zmq.NOBLOCK)
-
-            # If halt instruction succedded, raise HaltException
-            # so the worker event loop knows it has to stop
-            if instruction == WORKER_HALT and int(response) == SUCCESS_STATUS:
-                raise HaltException()
-            return
         except zmq.ZMQError as e:
             if e.errno == zmq.EAGAIN:
                 return
+
+        instruction = ServiceMessage.loads(serialized_request)[0]
+
+        try:
+            response = self.instructions[instruction]()
+        except KeyError:
+            errors_logger.exception("%s instruction not recognized by worker" % instruction)
+            return
+
+        self.remote_control_socket.send_multipart([ServiceMessage.dumps(response)],
+                                                  flags=zmq.NOBLOCK)
+
+        # If halt instruction succedded, raise HaltException
+        # so the worker event loop knows it has to stop
+        if instruction == WORKER_HALT and int(response) == SUCCESS_STATUS:
+            raise HaltException()
+        return
 
     def handle_command(self):
         """Handles incoming command messages from backend socket

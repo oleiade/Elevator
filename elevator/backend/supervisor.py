@@ -40,7 +40,9 @@ class Supervisor(object):
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
 
-    def command(self, instruction, workers_ids=None):
+    def command(self, instruction,
+                workers_ids=None, max_retries=3,
+                timeout=None):
         """Command an action to workers.
 
         An optional list of workers ids can be provided
@@ -48,7 +50,7 @@ class Supervisor(object):
         to specific workers.
         """
         workers_ids = workers_ids or self.workers.iterkeys()
-        max_retries = 3
+        timeout = timeout or self.timeout
         responses = []
 
         for worker_id in workers_ids:
@@ -74,6 +76,10 @@ class Supervisor(object):
 
         return responses
 
+    def status(self, worker_id):
+        """Fetches a worker status"""
+        return self.command(WORKER_STATUS, [worker_id])
+
     def statuses(self):
         """Fetch workers statuses"""
         return self.command(WORKER_STATUS)
@@ -82,6 +88,7 @@ class Supervisor(object):
         """Stop a specific worker"""
         self.command(WORKER_HALT, [worker_id])
         self.workers[worker_id]['thread'].join()
+        self.workers.pop(worker_id)
 
     def stop_all(self):
         """Stop every supervised workers"""
@@ -89,6 +96,9 @@ class Supervisor(object):
 
         for worker in self.workers.itervalues():
             worker['thread'].join()
+
+        for _id in self.workers.keys():
+            self.workers.pop(_id)
 
     def last_activity(self, worker_id):
         """Asks a specific worker information about it's
