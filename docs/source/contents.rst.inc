@@ -4,4 +4,5 @@
    guide
    cmdline
    protocol
+   writing_a_client
    development

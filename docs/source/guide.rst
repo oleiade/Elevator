@@ -212,8 +212,7 @@ A few languages clients for Elevator exists already:
 * `go-elevator <http://github.com/oleiade/go-elevator>`_ : Go client module, under heavy development
 * `clj-elevator <http://github.com/oleiade/clj-elevator>`_ : Clojure client, under heavy development
 
-Feel free to add your own and to ask for adding it here. See :ref:`protocol` for more details on how
-to implement your own client in your language.
+**Psssst** yours not listed?, why don't you write it: :ref:`writing_a_client` and submit it, we'll be glad to add it here? 
 
 
 .. _deployment:
