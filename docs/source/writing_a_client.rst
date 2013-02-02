@@ -17,7 +17,7 @@ Zeromq
 
 `zeromq <http://zeromq.org>`_ is an overlay on top of sockets, it implements many commons communication patterns, and takes all the sockets handling pain away. It will be used to transport requests messages and receives responses to and from Elevator.
 
-**Nota**: Before you ask, yes, it is **mandatory** to use zeromq, to communicate with Elevator, as it relies on the ROUTER/DEALER pattern. 
+**Nota**: Before you ask, yes, it is **mandatory** to use zeromq, to communicate with Elevator, as it relies on the `Router-Dealer <http://www.zeromq.org/sandbox:dealer>`_  pattern. 
 
 Msgpack
 -------
@@ -27,6 +27,33 @@ Msgpack
 
 Establishing a connexion
 ========================
+
+Global process
+--------------
+
+Establishing a connexion to an Elevator server goes like this:
+
+1. Client uses a :ref:`Dealer socket <dealer-socket>` to send a :ref:`connexion request <connexion-protocol>` to the server
+2. Client awaits for the server reponse
+3. Server responds with the requested database connexion uid
+4. Client can now use this database uid in all it's requests against it  
+
+.. _dealer-socket:
+Dealer socket
+-------------
+
+As told upper, Elevator server exposes a zeromq `Router <http://www.zeromq.org/sandbox:dealer>`_ socket which awaits for `Dealer <http://www.zeromq.org/sandbox:dealer>`_ sockets to connect to it. 
+
+**Nota**: The specificity of Router-Dealer zeromq sockets is their queuing feature. Bascially, in order to enhance asycnhronous behaviors and load balancing a ROUTER socket queues incoming connexions and requests until it's able to forward it.
+
+.. _connexion-protocol:
+Connexion Protocol
+------------------
+
+(coming soon)
+
+Request messages
+----------------
 
 (coming soon)
 
