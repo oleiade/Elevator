@@ -107,7 +107,7 @@ def main():
     setup_process_name(env)
 
     if env['args']['daemon'] is True:
-        server_daemon = ServerDaemon('/tmp/elevator.pid')
+        server_daemon = ServerDaemon('/var/run/elevator.pid')
         server_daemon.start()
     else:
         runserver(env)

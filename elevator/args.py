@@ -7,7 +7,7 @@
 import argparse
 
 
-DEFAULT_CONFIG_FILE = '/etc/elevatord.conf'
+DEFAULT_CONFIG_FILE = '/etc/elevator/elevator.conf'
 
 
 def init_parser():
