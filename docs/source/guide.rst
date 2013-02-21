@@ -73,9 +73,15 @@ Installation
 We consider here that you've succesfully installed leveldb >= 1.6 and libzmq in order
 for python packages to build against compatible versions of the libs.
 
-.. code-block:: bash
+If you already have installed ``pip`` and are comfortable with it's usage,
+you can go straight away with::
 
-    $ python setup.py install
+    pip install elevator
+
+
+But if you don't::
+
+    python setup.py install
 
 .. _usage:
 

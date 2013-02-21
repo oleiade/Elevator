@@ -27,7 +27,11 @@ Depends on
 Installation
 ============
 
-::
+The easy way::
+
+    pip install elevator
+
+The hacker way::
 
     $ pip install fabric
     $ fab build
