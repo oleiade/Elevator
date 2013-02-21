@@ -21,7 +21,7 @@ Depends on
 - zmq-3.X
 - pyzmq (built with zmq-3.X)
 - leveldb
-- py-leveldb
+- plyvel
 
 
 Installation
