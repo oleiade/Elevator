@@ -9,11 +9,11 @@ root = os.path.abspath(os.path.dirname(__file__))
 
 version = __import__('elevator').__version__
 
-with open(os.path.join(root, 'README.md')) as f:
+with open(os.path.join(root, 'README.rst')) as f:
     README = f.read()
 
-with open(os.path.join(root, 'CHANGES.rst')) as f:
-    CHANGES = f.read()
+#with open(os.path.join(root, 'CHANGES.rst')) as f:
+#    CHANGES = f.read()
 
 setup(
     name='Elevator',
@@ -21,17 +21,18 @@ setup(
     license='MIT',
 
     description='On disk key/value store based on levelDB backend',
-    long_description=README + '\n\n' + CHANGES,
+#    long_description=README + '\n\n',
 
     author='Oleiade',
     author_email='tcrevon@gmail.com',
     url='http://github.com/oleiade/Elevator',
 
     classifiers=[
-        'Development Status :: 0.4',
-        'Environment :: Unix-like Systems',
-        'Programming Language :: Python',
-        'Operating System :: Unix-like',
+        'Topic :: Database :: Database Engines/Servers',
+        'Development Status :: 5 - Production/Stable',
+        'Programming Language :: Python :: 2.7',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: Unix',
     ],
     keywords='elevator leveldb database key-value',
 
