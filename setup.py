@@ -12,8 +12,8 @@ version = __import__('elevator').__version__
 with open(os.path.join(root, 'README.rst')) as f:
     README = f.read()
 
-#with open(os.path.join(root, 'CHANGES.rst')) as f:
-#    CHANGES = f.read()
+with open(os.path.join(root, 'CHANGES.rst')) as f:
+    CHANGES = f.read()
 
 setup(
     name='Elevator',
@@ -21,7 +21,7 @@ setup(
     license='MIT',
 
     description='On disk key/value store based on levelDB backend',
-#    long_description=README + '\n\n',
+   long_description=README + '\n\n' + CHANGES,
 
     author='Oleiade',
     author_email='tcrevon@gmail.com',
