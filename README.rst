@@ -14,6 +14,9 @@ platforms.
 
 See `Documentation <http://oleiade.github.com/Elevator>`_ for more details
 
+.. image:: http://api.flattr.com/button/flattr-badge-large.png
+    :target: https://flattr.com/submit/auto?user_id=oleiade&url=http://github.com/oleiade/Elevator&title=Elevator&language=&tags=github&category=software
+
 
 Depends on
 ----------
