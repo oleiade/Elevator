@@ -1,4 +1,4 @@
-package main
+package elevator
 
 import (
 	"fmt"
@@ -26,9 +26,4 @@ func runserver() {
 			fmt.Println(parts)
 		}
 	}
-}
-
-func main() {
-	db := Db{"testdb", "/dev/null", 0, nil}
-	// runserver()
 }

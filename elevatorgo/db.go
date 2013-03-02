@@ -1,9 +1,7 @@
-package main
+package elevator
 
 import (
-	"log"
 	"errors"
-	"fmt"
 	leveldb "github.com/jmhodges/levigo"
 )
 
@@ -46,28 +44,4 @@ func (db *Db) Unmount() (err error) {
 	}
 
 	return nil
-}
-
-
-func main() {
-	db := Db {
-		Name: "default",
-		Path: "/var/lib/elevator/default",
-		Status: DB_STATUS_UNMOUNTED,
-	}
-	db.Mount()
-
-	ro := leveldb.NewReadOptions()
-	wo := leveldb.NewWriteOptions()
-
-	db.Connector.Put(wo, []byte("1"), []byte("a"))
-	data, err := db.Connector.Get(ro, []byte("1"))
-	if err != nil { log.Fatal(err) }
-
-	fmt.Println(string(data))
-	fmt.Println(db.Status)
-
-	db.Unmount()
-
-
 }
