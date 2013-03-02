@@ -1,12 +1,13 @@
 package main
 
 import (
-	// "log"
+	"log"
+	"errors"
 	"fmt"
 	"io/ioutil"
 
 	json 	"encoding/json"
-	leveldb "code.google.com/p/leveldb-go/leveldb/db"
+	leveldb "github.com/jmhodges/levigo"
 )
 
 type DbOptions struct {
@@ -25,7 +26,7 @@ type Db struct {
 	Uid 				string 		`json:"uid"`
 	Path				string 		`json:"path"`
 	Status				int  		`json:"-"`
-	Connector 			leveldb 	`json:"-"`
+	Connector 			*leveldb.DB	`json:"-"`
 	// options				DbOptions
 }
 
@@ -45,19 +46,35 @@ func NewDbStore(filepath string) (*DbStore) {
 }
 
 
-func (db *Db) mount() (error) {
+func (db *Db) Mount() (err error) {
 	if db.Status == DB_STATUS_UNMOUNTED {
-		options = leveldb.Options
-		db.Connector, err = leveldb.Open(db.Name, options)
+		opts := leveldb.NewOptions()
+		opts.SetCache(leveldb.NewLRUCache(512))
+		opts.SetCreateIfMissing(true)
+		
+		db.Connector, err = leveldb.Open(db.Name, opts)
 		if err != nil { return err }
 
 		db.Status = DB_STATUS_MOUNTED
 	} else {
-		return error.New("Database already mounted")
+		return errors.New("Database already mounted")
 	}
 
 	return nil
 }
+
+
+func (db *Db) Unmount() (err error) {
+	if db.Status == DB_STATUS_MOUNTED {
+		db.Status = DB_STATUS_UNMOUNTED
+		db.Connector = nil
+	} else {
+		return errors.New("Database already unmounted")
+	}
+
+	return nil
+}
+
 
 func (store *DbStore) ReadFromFile() (err error) {
 	data, err := ioutil.ReadFile(store.FilePath)
@@ -83,7 +100,7 @@ func (store *DbStore) WriteToFile() (err error) {
 }
 
 
-func (store *DbStore) load() (err error) {
+func (store *DbStore) Load() (err error) {
 	err = store.ReadFromFile()
 	if err != nil { return err }
 
@@ -94,18 +111,18 @@ func (store *DbStore) load() (err error) {
 	return nil
 }
 
-func (store *DbStore) mount() {}
+func (store *DbStore) Mount() {}
 
-func (store *DbStore) unmount() {}
+func (store *DbStore) Unmount() {}
 
-func (store *DbStore) add() {}
+func (store *DbStore) Add() {}
 
-func (store *DbStore) drop() {}
+func (store *DbStore) Drop() {}
 
-func (store *DbStore) status() {}
+func (store *DbStore) Status() {}
 
 
-func (store *DbStore) exists(db_name string) (bool, error) {
+func (store *DbStore) Exists(db_name string) (bool, error) {
 	if _,ok := store.Container[db_name]; ok {
 		exists, err := DirExists(store.Container[db_name].Path)
 		if err != nil { return false, err}
@@ -122,7 +139,7 @@ func (store *DbStore) exists(db_name string) (bool, error) {
 }
 
 
-func (store *DbStore) list() ([]string) {
+func (store *DbStore) List() ([]string) {
 	db_names := make([]string, len(store.NameToUid))
 
 	i := 0
@@ -140,6 +157,19 @@ func main() {
 		Path: "/var/lib/elevator/default",
 		Status: DB_STATUS_UNMOUNTED,
 	}
+	db.Mount()
+
+	ro := leveldb.NewReadOptions()
+	wo := leveldb.NewWriteOptions()
+
+	db.Connector.Put(wo, []byte("1"), []byte("a"))
+	data, err := db.Connector.Get(ro, []byte("1"))
+	if err != nil { log.Fatal(err) }
+
+	fmt.Println(string(data))
+	fmt.Println(db.Status)
+
+	db.Unmount()
 	// store := NewDbStore("/tmp/test.json")
 	// store.load()
 	
