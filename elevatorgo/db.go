@@ -11,6 +11,7 @@ type Db struct {
 	Path				string 		`json:"path"`
 	Status				int  		`json:"-"`
 	Connector 			*leveldb.DB	`json:"-"`
+	Channel 			chan string `json:"-"`
 }
 
 
@@ -22,7 +23,7 @@ func (db *Db) Mount() (err error) {
 		opts.SetCache(leveldb.NewLRUCache(512))
 		opts.SetCreateIfMissing(true)
 		
-		db.Connector, err = leveldb.Open(db.Name, opts)
+		db.Connector, err = leveldb.Open(db.Path, opts)
 		if err != nil { return err }
 
 		db.Status = DB_STATUS_MOUNTED

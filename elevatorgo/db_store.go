@@ -106,6 +106,7 @@ func (store *DbStore) Add(db_name string) error {
 			Status: DB_STATUS_UNMOUNTED,
 		}
 		store.Container[db_name] = db
+		store.WriteToFile()
 	}
 
 	return nil
