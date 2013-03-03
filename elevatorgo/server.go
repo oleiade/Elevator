@@ -3,6 +3,7 @@ package elevator
 import (
 	"fmt"
 	"log"
+	"bytes"
 	zmq "github.com/alecthomas/gozmq"
 )
 
@@ -20,11 +21,17 @@ func server_socket(endpoint string) (zmq.Socket, error) {
 
 func request_handler(requests chan [][]byte, db_store *DbStore) {
 	for request := range requests {
-		address := request[0]
-		msg := request[1]
+		req := new(Request)
+		msg := bytes.NewBuffer(request[1])
+		req.UnpackFrom(msg)
+		req.Source = request[0]
 
-		fmt.Println(string(address))
-		fmt.Println(string(msg))
+		if db, ok := db_store.Container[req.Db]; ok {
+			if db.Status == DB_STATUS_UNMOUNTED {
+				db.Mount()
+			}
+			go db.Forward(req)
+		}
 	}
 }
 

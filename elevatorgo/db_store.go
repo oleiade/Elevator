@@ -7,13 +7,12 @@ import (
 	"path/filepath"
 	"io/ioutil"
 	"encoding/json"
-	"code.google.com/p/go-uuid/uuid"
 )
 
 type DbStore struct {
 	FilePath			string
 	StoragePath			string
-	Container			map[string]Db
+	Container			map[string]*Db
 }
 
 
@@ -22,7 +21,7 @@ func NewDbStore(filepath string, storage_path string) (*DbStore) {
 	return &DbStore{
 		FilePath: filepath,
 		StoragePath: storage_path,
-		Container: make(map[string]Db),
+		Container: make(map[string]*Db),
 	}
 }
 
@@ -99,12 +98,7 @@ func (store *DbStore) Add(db_name string) error {
 	if _, ok := store.Container[db_name]; ok {
 		return errors.New("Database already exists")
 	} else {
-		db := Db{
-			Name: db_name,
-			Path: filepath.Join(store.StoragePath, db_name),
-			Uid: uuid.New(),
-			Status: DB_STATUS_UNMOUNTED,
-		}
+		db := NewDb(db_name, filepath.Join(store.StoragePath, db_name))
 		store.Container[db_name] = db
 		store.WriteToFile()
 	}

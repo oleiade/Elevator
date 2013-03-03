@@ -14,6 +14,7 @@ type Request struct {
 	Db 		string 		`msgpack:"uid"`
 	Command string 		`msgpack:"cmd"`
 	Args 	[]string 	`msgpack:"args"`
+	Source	[]byte 		`msgpack:"-"`
 }
 
 type ResponseHeader struct {
