@@ -48,7 +48,10 @@ class Environment(dict):
             self[section] = {}
 
         for (arg, value) in args:
-            self[section][arg] = value
+            if value is None and self['global']:
+                self[section][arg] = self['global'][arg]
+            else:
+                self[section][arg] = value
 
     def flush(self):
         """
