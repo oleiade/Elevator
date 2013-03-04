@@ -1,7 +1,6 @@
 package elevator
 
 import (
-	"fmt"
 	"log"
 	"bytes"
 	zmq "github.com/alecthomas/gozmq"
@@ -19,19 +18,17 @@ func server_socket(endpoint string) (zmq.Socket, error) {
 	return socket, nil
 }
 
-func request_handler(requests chan [][]byte, db_store *DbStore) {
-	for request := range requests {
-		req := new(Request)
-		msg := bytes.NewBuffer(request[1])
-		req.UnpackFrom(msg)
-		req.Source = request[0]
+func request_handler(parts [][]byte, db_store *DbStore) {
+	request := new(Request)
+	msg := bytes.NewBuffer(parts[1])
+	request.UnpackFrom(msg)
+	request.Source = parts[0]
 
-		if db, ok := db_store.Container[req.Db]; ok {
-			if db.Status == DB_STATUS_UNMOUNTED {
-				db.Mount()
-			}
-			go db.Forward(req)
+	if db, ok := db_store.Container[request.Db]; ok {
+		if db.Status == DB_STATUS_UNMOUNTED {
+			db.Mount()
 		}
+		db.Channel <- request
 	}
 }
 
@@ -48,16 +45,13 @@ func Runserver() {
 		zmq.PollItem{ Socket: socket, zmq.Events: zmq.POLLIN },
 	}
 
-	requests := make(chan [][]byte)
-	go request_handler(requests, db_store)
-
 	for i := 0; ; i++ {
 		 _, _ = zmq.Poll(poller, -1)
 
 		switch {
 		case poller[0].REvents & zmq.POLLIN != 0:
 			parts, _ := poller[0].Socket.RecvMultipart(0)
-			requests <- parts
+			go request_handler(parts, db_store)
 		}
 	}
 }

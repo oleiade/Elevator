@@ -2,6 +2,7 @@ package elevator
 
 import (
 	"fmt"
+	"time"
 	"errors"
 	leveldb 	"github.com/jmhodges/levigo"
 	uuid 		"code.google.com/p/go-uuid/uuid"
@@ -62,19 +63,11 @@ func (db *Db) Unmount() (err error) {
 	return nil
 }
 
-// Forward synchronously puts a value in
-// the Db channel. It intends to be used in a
-// goroutine, in order to keep Db operations
-// ordered while not blocking the incoming requests
-// handling.
-func (db *Db) Forward(request *Request) {
-	db.Channel <- request
-}
-
 // Routine listens on the Db channel awaiting
 // for incoming requests to execute and sends clients
 // response.
 func (db *Db) Routine() {
+	i := 2
 	for request := range db.Channel {
 		fmt.Println(request)
 	}
