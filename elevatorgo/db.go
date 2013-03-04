@@ -1,8 +1,6 @@
 package elevator
 
 import (
-	"fmt"
-	"time"
 	"errors"
 	leveldb 	"github.com/jmhodges/levigo"
 	uuid 		"code.google.com/p/go-uuid/uuid"
@@ -13,7 +11,7 @@ type Db struct {
 	Uid 		string 			`json:"uid"`
 	Path		string 			`json:"path"`
 	Status		int  			`json:"-"`
-	Connector 	*leveldb.DB		`json:"-"`
+	Connector 	*leveldb.DB		`json:"-"` 	
 	Channel 	chan *Request	`json:"-"`
 }
 
@@ -67,8 +65,7 @@ func (db *Db) Unmount() (err error) {
 // for incoming requests to execute and sends clients
 // response.
 func (db *Db) Routine() {
-	i := 2
 	for request := range db.Channel {
-		fmt.Println(request)
+		Exec(db, request)
 	}
 }
