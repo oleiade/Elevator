@@ -12,7 +12,10 @@ Allows async, multithreaded and/or remote access to a multi-leveldb backend.
 Relying on the zeromq network library and msgpack serialization format, it is made to be portable between languages and
 platforms.
 
-See `Documentation <http://oleiade.github.com/Elevator>`_ for more details
+See `Documentation <http://elevator.readthedocs.org>`_ for more details
+
+.. image:: http://api.flattr.com/button/flattr-badge-large.png
+    :target: https://flattr.com/submit/auto?user_id=oleiade&url=http://github.com/oleiade/Elevator&title=Elevator&language=&tags=github&category=software
 
 
 Depends on
