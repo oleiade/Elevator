@@ -6,6 +6,7 @@
 
 import sys
 import logging
+import traceback
 
 
 def loglevel_from_str(log_level_str):
@@ -50,3 +51,16 @@ def setup_loggers(config):
     errors_logger.addHandler(errors_file_stream)
 
     return activity_logger, errors_logger
+
+
+def log_critical(e):
+    errors_logger = logging.getLogger("errors_logger")
+    tb = traceback.format_exc()
+
+    # Log into errors log
+    errors_logger.critical(''.join(tb))
+    errors_logger.critical('{0}: {1}'.format(type(e), e.message))
+
+    # Log into stderr
+    logging.critical(''.join(tb))
+    logging.critical('{0}: {1}'.format(type(e), e.message))

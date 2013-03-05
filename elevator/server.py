@@ -5,7 +5,6 @@
 # See the file LICENSE for copying permission.
 
 import sys
-import traceback
 import zmq
 import logging
 import procname
@@ -13,7 +12,7 @@ import procname
 from elevator import args
 from elevator.db import DatabaseStore
 from elevator.config import Config
-from elevator.log import setup_loggers
+from elevator.log import setup_loggers, log_critical
 from elevator.backend import Backend
 from elevator.frontend import Frontend
 from elevator.utils.daemon import Daemon
@@ -24,22 +23,6 @@ def setup_process_name(config_file):
     process_name = 'elevator' + config
 
     procname.setprocname(process_name)
-
-
-def log_uncaught_exceptions(e, paranoid=False):
-    errors_logger = logging.getLogger("errors_logger")
-    tb = traceback.format_exc()
-
-    # Log into errors log
-    errors_logger.critical(''.join(tb))
-    errors_logger.critical('{0}: {1}'.format(type(e), e.message))
-
-    # Log into stderr
-    logging.critical(''.join(tb))
-    logging.critical('{0}: {1}'.format(type(e), e.message))
-
-    if paranoid:
-        sys.exit(1)
 
 
 def runserver(config):
@@ -76,7 +59,10 @@ def runserver(config):
             activity_logger.info('Done')
             return
         except Exception as e:
-            log_uncaught_exceptions(e, paranoid=config['paranoid'])
+            log_critical(e)
+            del backend
+            del frontend
+            return
 
 
 class ServerDaemon(Daemon):
