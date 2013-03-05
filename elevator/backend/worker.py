@@ -11,7 +11,6 @@ import logging
 import threading
 
 from elevator.api import Handler
-from elevator.env import Environment
 from elevator.message import Request, ResponseHeader,\
                              ResponseContent, MessageFormatError
 from elevator.utils.patterns import enum
@@ -41,7 +40,6 @@ class Worker(threading.Thread):
             WORKER_LAST_ACTION: self._last_activity_inst,
         }
         self.uid = uuid.uuid4().hex
-        self.env = Environment()
         self.zmq_context = zmq_context
 
         self.state = self.STATES.IDLE

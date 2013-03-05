@@ -18,13 +18,13 @@ def loglevel_from_str(log_level_str):
     return numeric_level
 
 
-def setup_loggers(env):
-    activity_log_file = env['global']['activity_log']
-    errors_log_file = env['global']['errors_log']
+def setup_loggers(config):
+    activity_log_file = config['activity_log']
+    errors_log_file = config['errors_log']
 
     # Compute numeric log level value from string
     # ex: "DEBUG"
-    log_level = loglevel_from_str(env['args']['log_level'])
+    log_level = loglevel_from_str(config['log_level'])
 
     # Set up logging format and formatter instance
     log_format = "[%(asctime)s] %(levelname)s %(funcName)s : %(message)s"
