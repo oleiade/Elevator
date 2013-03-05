@@ -18,8 +18,7 @@ def init_parser():
     parser.add_argument('-c', '--config', action='store', type=str,
                         default=DEFAULT_CONFIG_FILE)
     # tcp or ipc
-    parser.add_argument('-t', '--transport', action='store', type=str,
-                        default='tcp')
+    parser.add_argument('-t', '--transport', action='store', type=str)
     parser.add_argument('-b', '--bind', action='store', type=str)
     parser.add_argument('-p', '--port', action='store', type=str)
     parser.add_argument('-w', '--workers', action='store', type=int, default=4)
