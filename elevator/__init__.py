@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-version = (0, "5a")
+version = (0, "5b")
 
 __title__ = "Elevator"
 __author__ = "Oleiade"
