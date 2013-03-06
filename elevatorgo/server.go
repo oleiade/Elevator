@@ -6,6 +6,11 @@ import (
 	zmq "github.com/alecthomas/gozmq"
 )
 
+type ClientSocket struct {
+	id 		[]byte
+	socket  *zmq.Socket
+}
+
 func server_socket(endpoint string) (zmq.Socket, error) {
 	context, err := zmq.NewContext()
 	if err != nil { return nil, err }
@@ -18,11 +23,11 @@ func server_socket(endpoint string) (zmq.Socket, error) {
 	return socket, nil
 }
 
-func request_handler(parts [][]byte, db_store *DbStore) {
+func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbStore) {
 	request := new(Request)
-	msg := bytes.NewBuffer(parts[1])
+	msg := bytes.NewBuffer(raw_msg)
 	request.UnpackFrom(msg)
-	request.Source = parts[0]
+	request.Source = client_socket
 
 	if db, ok := db_store.Container[request.Db]; ok {
 		if db.Status == DB_STATUS_UNMOUNTED {
@@ -51,7 +56,14 @@ func Runserver() {
 		switch {
 		case poller[0].REvents & zmq.POLLIN != 0:
 			parts, _ := poller[0].Socket.RecvMultipart(0)
-			go request_handler(parts, db_store)
+			
+			client_socket := ClientSocket{
+				id: parts[0],
+				socket: &socket,
+			}
+			msg := parts[1]
+			
+			go request_handler(&client_socket, msg, db_store)
 		}
 	}
 }

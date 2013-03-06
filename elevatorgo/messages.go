@@ -11,10 +11,10 @@ type Message interface {
 }
 
 type Request struct {
-	Db 		string 		`msgpack:"uid"`
-	Command string 		`msgpack:"cmd"`
-	Args 	[]string 	`msgpack:"args"`
-	Source	[]byte 		`msgpack:"-"`
+	Db 		string 			`msgpack:"uid"`
+	Command string 			`msgpack:"cmd"`
+	Args 	[]string 		`msgpack:"args"`
+	Source	*ClientSocket 	`msgpack:"-"`
 }
 
 type ResponseHeader struct {
