@@ -15,7 +15,7 @@ class Config(dict):
     get, load, flush methods. Handles lists of values too.
     Basically Acts like a basic key/value store.
     """
-    def __init__(self, f, *args, **kwargs):
+    def __init__(self, f=None, *args, **kwargs):
         if f:
             self.update_with_file(f)  # Has to be called last!
 
