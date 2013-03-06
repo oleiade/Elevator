@@ -100,33 +100,22 @@ Usage
 .. code-block:: bash
 
     $ elevator --help
-    usage: elevator [-h] [-dctbpwPv]
+
+    usage: elevator [-hdctbpwv]
 
     Elevator command line manager
 
     optional arguments:
-        -h, --help        show this help message and exit
-
-        -d, --daemon      Launch elevator as a daemon
-
-        -c, --config      Path to elevator server config file, eventually
-
-        -t, --transport   Transport layer : tcp | ipc
-
-        -b, --bind        If tcp transport is selected: ip the server
-                          socket should be listening on.
-
-        -p, --port        Port the server should listen on
-
-        -w, --workers     How many workers should be spawned (Threads
-                          with concurrent access to all the db store)
-
-        -P, --paranoid    If option is set, Elevator will shutdown
-                          and log on first unhandled exception
-
-        -v, --log-level   Log level, see python logging documentation
-                          for more information :
-                          http://docs.python.org/library/logging.html#logger-objects
+      -h, --help            Show this help message and exit
+      -d, --daemon          Launch elevator as a daemon
+      -c, --config          Elevator config file path
+      -t, --transport       Transport layer: tcp or ipc
+      -b, --bind            Address the server will be binded to
+      -p, --port            Port the server should listen on
+      -w, --workers         Workers to be spawned count
+      -v, --log-level       Log level, see python logging documentation
+                            for more information :
+                            http://docs.python.org/library/logging.html#logger-objects
 
 
 .. _configuration:
