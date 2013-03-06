@@ -49,16 +49,9 @@ In order to ease your Elevator deployment, a `puppet module <http://github.com/o
 Installation
 ============
 
-The easy way::
+Just::
 
-    pip install elevator
-
-The hacker way::
-
-    $ pip install fabric
-    $ fab build
-    $ pip install -r requirements.txt
-    $ python setup.py install
+    pip install Elevator
 
 
 Usage

@@ -79,16 +79,16 @@ Just run:
 Installation
 ==================
 
-We consider here that you've succesfully installed leveldb >= 1.6 and libzmq in order
+We consider here that you've succesfully installed ``leveldb >= 1.6`` and ``zmq 3.2`` in order
 for python packages to build against compatible versions of the libs.
 
 If you already have installed ``pip`` and are comfortable with it's usage,
-you can go straight away with::
+you can go straight forward with::
 
-    pip install elevator
+    pip install Elevator
 
 
-But if you don't::
+But if you don't, after having downloaded the package::
 
     python setup.py install
 
