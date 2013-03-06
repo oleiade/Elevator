@@ -14,6 +14,9 @@ platforms.
 
 See `Documentation <http://elevator.readthedocs.org>`_ for more details
 
+
+Elevator is an open source software under the MIT license. Any hackers are welcome to supply ideas, features requests, patches, Pull requests and so on.  `Documentation's development page <http://elevator.readthedocs.org>`_ contains comprehensive info on contributing, repository layout, our release strategy, and more.
+
 .. image:: http://api.flattr.com/button/flattr-badge-large.png
     :target: https://flattr.com/submit/auto?user_id=oleiade&url=http://github.com/oleiade/Elevator&title=Elevator&language=&tags=github&category=software
 
@@ -22,8 +25,8 @@ Depends on
 ----------
 
 - zmq-3.X
-- pyzmq (built with zmq-3.X)
 - leveldb
+- pyzmq (built with zmq-3.X)
 - plyvel
 
 
