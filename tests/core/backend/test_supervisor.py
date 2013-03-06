@@ -10,20 +10,19 @@ from elevator.backend.supervisor import Supervisor
 from elevator.backend.worker import Worker
 from elevator.backend.protocol import WORKER_STATUS
 
-from ..fakers import gen_test_env
+from ..fakers import gen_test_config
 
 
 class SupervisorTest(unittest2.TestCase):
     def setUp(self):
         zmq_context = zmq.Context()
-        env = gen_test_env()
+        config = gen_test_config()
 
-        self.database_store = env['global']['database_store']
-        self.databases_storage_path = env['global']['databases_storage_path']
+        self.database_store = config['database_store']
+        self.databases_storage_path = config['databases_storage_path']
         if not os.path.exists(self.databases_storage_path):
             os.mkdir(self.databases_storage_path)
-        self.db_handler = DatabaseStore(self.database_store,
-                                           self.databases_storage_path)
+        self.db_handler = DatabaseStore(config)
 
         # Let's fake a backend for workers to talk to
         self.socket = zmq_context.socket(zmq.DEALER)

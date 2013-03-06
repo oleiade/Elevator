@@ -11,7 +11,7 @@ from elevator.db import DatabaseStore
 from elevator.constants import *
 from elevator.message import Request
 
-from .fakers import gen_test_env
+from .fakers import gen_test_config
 
 
 class ApiTests(unittest2.TestCase):
@@ -22,11 +22,11 @@ class ApiTests(unittest2.TestCase):
     def setUp(self):
         self.store = '/tmp/store.json'
         self.dest = '/tmp/dbs'
-        self.env = gen_test_env()
+        self.config = gen_test_config()
         if not os.path.exists(self.dest):
             os.mkdir(self.dest)
 
-        self.databases = DatabaseStore(self.store, self.dest)
+        self.databases = DatabaseStore(self.config)
         self.default_db_uid = self.databases.index['name_to_uid']['default']
         self._bootstrap_db(self.databases[self.default_db_uid].connector)
         self.handler = Handler(self.databases)
