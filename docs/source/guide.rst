@@ -52,11 +52,20 @@ Setuptools comes with some Python installations by default; if yours doesn’t, 
 Zmq and Leveldb
 --------------------
 
-Elevator requires `zmq <http://zeromq.org>`_ and `leveldb <http://code.google.com/p/leveldb/>`_ libraries are installed on the system. Most unix systems provides
-these libraries through their package managers. For example, debian provides both a libleveldb1 and libleveldb-dev packages and libzmq-dev. On osx, you would be able to install them using brew.
+Elevator requires `zmq 3.2 <http://zeromq.org>`_ and `leveldb >= 1.6 <http://code.google.com/p/leveldb/>`_ libraries are installed on the system.
 
-Anyway, Elevator is shipped with a fabfile included and rules to automatically download, compile, and install
-both leveldb and zmq libraries. To use it, you'll need `fabric <http://docs.fabfile.org/>`_ installed.
+Most unix systems should provides these libraries through their package managers. However, if yours does not and you're using a debian-like distribution, ``deb.oleiade.com`` repo is here to help you.
+
+The repository exposes ``libzmq3``, ``libzmq3-dev``, ``libleveldb1`` and ``libleveldb1-dev`` packages. Just add the following line to your ``/etc/apt/sources.list``:
+
+.. code-block:: bash
+
+    deb http://deb.oleiade.com/debian oneiric main
+
+and there you go.
+
+
+If you're note using a debian distribution derivate, and your system does not provide any ``leveldb`` and/or ``zmq 3.2`` decent package, Elevator is shipped with a fabfile providing rules to automatically download, compile, and install both libraries. To use it, you'll need `fabric <http://docs.fabfile.org/>`_ installed.
 
 Just run:
 

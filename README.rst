@@ -21,13 +21,29 @@ Elevator is an open source software under the MIT license. Any hackers are welco
     :target: https://flattr.com/submit/auto?user_id=oleiade&url=http://github.com/oleiade/Elevator&title=Elevator&language=&tags=github&category=software
 
 
-Depends on
-----------
+Dependencies
+============
 
 - zmq-3.X
 - leveldb
 - pyzmq (built with zmq-3.X)
 - plyvel
+
+
+Debian repository
+-----------------
+
+The ``deb.oleiade.com`` debian repository exposes ``libzmq3``, ``libzmq3-dev``, ``libleveldb1`` and ``libleveldb1-dev`` packages in order to ease your dependencies management. Just add the following line to your ``/etc/apt/sources.list``:
+
+.. code-block:: bash
+
+    deb http://deb.oleiade.com/debian oneiric main
+
+
+Puppet
+------
+
+In order to ease your Elevator deployment, a `puppet module <http://github.com/oleiade/puppet-elevator>`_ has been developed. Note that it will automatically add the debian repository to your nodes.
 
 
 Installation
