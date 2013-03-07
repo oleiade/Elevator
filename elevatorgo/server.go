@@ -7,8 +7,8 @@ import (
 )
 
 type ClientSocket struct {
-	id 		[]byte
-	socket  *zmq.Socket
+	Id 		[]byte
+	Socket  zmq.Socket
 }
 
 func server_socket(endpoint string) (zmq.Socket, error) {
@@ -58,8 +58,8 @@ func Runserver() {
 			parts, _ := poller[0].Socket.RecvMultipart(0)
 			
 			client_socket := ClientSocket{
-				id: parts[0],
-				socket: &socket,
+				Id: parts[0],
+				Socket: socket,
 			}
 			msg := parts[1]
 			

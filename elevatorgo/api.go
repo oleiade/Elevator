@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"bytes"
 	leveldb 	"github.com/jmhodges/levigo"
-	// zmq 		"github.com/alecthomas/gozmq"
 
 )
 
@@ -22,8 +21,8 @@ func Exec(db *Db, request *Request) {
 
 
 func Forward(header *ResponseHeader, content *ResponseContent, request *Request) error {
-	socket := request.Source.socket
-	address := request.Source.id
+	socket := request.Source.Socket
+	address := request.Source.Id
 	parts := make([][]byte, 3)
 
 	var header_buf 	bytes.Buffer
@@ -35,8 +34,10 @@ func Forward(header *ResponseHeader, content *ResponseContent, request *Request)
 	parts[1] = header_buf.Bytes()
 	parts[2] = content_buf.Bytes()
 
-	err := &socket.SendMultipart(parts)
+	err := socket.SendMultipart(parts, 0)
 	if err != nil { return err }
+
+	return nil
 }
 
 
@@ -52,15 +53,17 @@ func Get(db *Db, request *Request) error {
 	if err != nil {
 		header.Status = SUCCESS_STATUS
 		header.Err_code = KEY_ERROR
-		header.Err_msg = string(err)
+		header.Err_msg = string(err.Error())
 	}
-
+	
+	data_container := make([][]byte, 1)
+	data_container[0] = data
 	content := ResponseContent{
-		Datas: data,
+		Datas: data_container,
 	}
 
 	fmt.Println(string(data))
-	Forward(header, content, request)
+	Forward(&header, &content, request)
 
 	return nil
 }
