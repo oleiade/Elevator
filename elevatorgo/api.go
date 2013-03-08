@@ -10,6 +10,7 @@ import (
 var command_handlers = map[string]func(*Db, *Request) error {
 	DB_GET: Get,
 	DB_PUT: Put,
+	DB_DELETE: Delete,
 }
 
 
@@ -46,14 +47,13 @@ func Get(db *Db, request *Request) error {
 	key := request.Args[0]
 	data, err := db.Connector.Get(ro, []byte(key))
 
-	header := ResponseHeader{
-		Status: SUCCESS_STATUS,
-	}	
+	fmt.Println(key)
 
+	var header *ResponseHeader
 	if err != nil {
-		header.Status = SUCCESS_STATUS
-		header.Err_code = KEY_ERROR
-		header.Err_msg = string(err.Error())
+		header = NewFailureResponseHeader(KEY_ERROR, string(err.Error()))
+	} else {
+		header = NewSuccessResponseHeader()
 	}
 	
 	data_container := make([][]byte, 1)
@@ -62,8 +62,7 @@ func Get(db *Db, request *Request) error {
 		Datas: data_container,
 	}
 
-	fmt.Println(string(data))
-	Forward(&header, &content, request)
+	Forward(header, &content, request)
 
 	return nil
 }
@@ -71,11 +70,43 @@ func Get(db *Db, request *Request) error {
 
 func Put(db *Db, request *Request) error {
 	wo := leveldb.NewWriteOptions()
-
 	key := request.Args[0]
 	value := request.Args[1]
 	err := db.Connector.Put(wo, []byte(key), []byte(value))
-	if err != nil { return err }
+
+	fmt.Println(key)
+	
+	var header *ResponseHeader
+	if err != nil {
+		header = NewFailureResponseHeader(VALUE_ERROR, string(err.Error()))
+	} else {
+		header = NewSuccessResponseHeader()
+	}
+
+	content := ResponseContent{}
+
+	Forward(header, &content, request)
+
+	return nil
+}
+
+func Delete(db *Db, request *Request) error {
+	wo := leveldb.NewWriteOptions()
+	key := request.Args[0]
+	err := db.Connector.Delete(wo, []byte(key))
+
+	fmt.Println(key)
+
+	var header *ResponseHeader
+	if err != nil {
+		header = NewFailureResponseHeader(KEY_ERROR, string(err.Error()))		
+	} else {
+		header = NewSuccessResponseHeader()
+	}
+
+	content := ResponseContent{}
+
+	Forward(header, &content, request)
 
 	return nil
 }

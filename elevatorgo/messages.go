@@ -35,6 +35,20 @@ func NewRequest(command string, args []string) *Request {
 	}
 }
 
+func NewSuccessResponseHeader() *ResponseHeader {
+	return &ResponseHeader{
+		Status: SUCCESS_STATUS,
+	}
+}
+
+func NewFailureResponseHeader(err_code int, err_msg string) *ResponseHeader {
+	return &ResponseHeader{
+		Status: FAILURE_STATUS,
+		Err_code: err_code,
+		Err_msg: err_msg,
+	}
+}
+
 func (r *Request) PackInto(buffer *bytes.Buffer) error {
 	enc := msgpack.NewEncoder(buffer)
 	err := enc.Encode(r)
