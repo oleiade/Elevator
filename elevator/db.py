@@ -133,8 +133,8 @@ class DatabaseStore(dict):
         result = {}
 
         for uid, data in self.iteritems():
-            if 'last_access' in data:
-                result[uid] = data['last_access']
+            if hasattr(data, 'last_access'):
+                result[uid] = data.last_access
 
         return result
 
