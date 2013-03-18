@@ -1,5 +1,13 @@
 
-n.n.n / 2013-02-01 
+0.5c / 2013-03-18
+==================
+
+  * Fix : DatabaseStore last acess property
+  * Fix: init script creates pid file
+  * Fix: pyzmq version
+  * Fix: explicit daemon init failures
+
+0.5 / 2013-02-01
 ==================
 
   * Remove: legacy setup_loggers function
