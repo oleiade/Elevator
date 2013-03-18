@@ -25,6 +25,8 @@ set -e
 case "$1" in
   start)
     echo -n "Starting $DESC: "
+    touch $PIDFILE $LOGFILE
+    chown elevator:elevator $PIDFILE $LOGFILE
     if $DAEMON $DAEMON_ARGS
     then
         echo "$NAME."
