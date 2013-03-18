@@ -8,6 +8,7 @@ import sys
 import zmq
 import logging
 import procname
+import daemon
 
 from elevator import args
 from elevator.db import DatabaseStore
@@ -79,7 +80,7 @@ def main():
     setup_process_name(cmdline.config)
 
     if config['daemon'] is True:
-        server_daemon = ServerDaemon('/var/run/elevator.pid')
-        server_daemon.start()
+        with daemon.DaemonContext(pidfile=open('/var/run/elevator.pid', 'a+'), stderr=sys.stderr):
+            runserver(config)
     else:
         runserver(config)
