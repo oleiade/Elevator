@@ -6,15 +6,13 @@
 
 import zmq
 
-from elevator.env import Environment
-
 from .supervisor import Supervisor
 from .atm import Majordome
 
 
 class Backend(object):
-    def __init__(self, db_handler, workers_count=4, **kwargs):
-        self.env = Environment()
+    def __init__(self, db_handler, config, **kwargs):
+        self.config = config
         self.databases = db_handler
 
         self.zmq_context = zmq.Context()
@@ -22,7 +20,7 @@ class Backend(object):
         self.socket.bind('inproc://backend')
 
         self.supervisor = Supervisor(self.zmq_context, self.databases)
-        self.supervisor.init_workers(workers_count)
+        self.supervisor.init_workers(config['workers'])
 
         self.start_majordome()
 
@@ -32,10 +30,10 @@ class Backend(object):
         self.socket.close()
 
     def start_majordome(self):
-        if int(self.env['global']['majordome_interval']) > 0:
+        if int(self.config['majordome_interval']) > 0:
             self.majordome = Majordome(self.supervisor,
                                        self.databases,
-                                       int(self.env['global']['majordome_interval']))
+                                       int(self.config['majordome_interval']))
             self.majordome.start()
 
     def stop_majordome(self):

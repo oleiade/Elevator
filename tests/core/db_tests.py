@@ -12,7 +12,7 @@ from elevator.constants import SUCCESS_STATUS, FAILURE_STATUS,\
                                KEY_ERROR, RUNTIME_ERROR, DATABASE_ERROR
 from elevator.db import Database, DatabaseStore, DatabaseOptions
 
-from .fakers import gen_test_env
+from .fakers import gen_test_config
 from .utils import rm_from_pattern
 
 
@@ -28,10 +28,10 @@ class DatabasesTest(unittest2.TestCase):
     def setUp(self):
         self.store = '/tmp/store.json'
         self.dest = '/tmp/dbs'
-        self.env = gen_test_env()
+        self.config = gen_test_config()
         if not os.path.exists(self.dest):
             os.mkdir(self.dest)
-        self.handler = DatabaseStore(self.store, self.dest)
+        self.handler = DatabaseStore(self.config)
 
     def tearDown(self):
         self.handler.__del__()

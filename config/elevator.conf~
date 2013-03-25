@@ -18,7 +18,7 @@ database_store = /var/lib/elevator/store.json
 default_db = default
 
 # Transport layer: tcp or ipc
-transport = tcp
+transport = ipc
 
 # Accept connections on the specified port, default is 4141.
 # If port 0 is specified Elevator will not listen on a TCP socket.

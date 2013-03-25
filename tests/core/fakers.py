@@ -11,7 +11,7 @@ import tempfile
 import ConfigParser
 import random
 
-from elevator.env import Environment
+from elevator.config import Config
 
 mkdtemp = lambda _dir: tempfile.mkdtemp(suffix='-test',
                                         prefix='elevator-',
@@ -21,33 +21,31 @@ mkstemp = lambda suffix, _dir: tempfile.mkstemp(suffix="-test" + suffix,
                                                 dir=_dir)[1]
 
 
-def gen_test_env():
+def gen_test_config():
     tmp = mkdtemp('/tmp')
-    return Environment(**{
-        'global': {
-            'daemonize': 'no',
-            'pidfile': os.path.join(tmp, 'elevator_test.pid'),
-            'databases_storage_path': os.path.join(tmp, 'elevator_test'),
-            'database_store': os.path.join(tmp, 'elevator_test/store.json'),
-            'default_db': 'default',
-            'port': 4141,
-            'bind': '127.0.0.1',
-            'activity_log': os.path.join(tmp, 'elevator_test.log'),
-            'errors_log': os.path.join(tmp, 'elevator_errors.log'),
-            'max_cache_size': 1024,
-        }
+    return Config(**{
+        'daemonize': 'no',
+        'pidfile': os.path.join(tmp, 'elevator_test.pid'),
+        'databases_storage_path': os.path.join(tmp, 'elevator_test'),
+        'database_store': os.path.join(tmp, 'elevator_test/store.json'),
+        'default_db': 'default',
+        'port': 4141,
+        'bind': '127.0.0.1',
+        'activity_log': os.path.join(tmp, 'elevator_test.log'),
+        'errors_log': os.path.join(tmp, 'elevator_errors.log'),
+        'max_cache_size': 1024,
     })
 
 
 def gen_test_conf():
     """Generates a ConfigParser object built with test options values"""
     global_config_options = {
-            "pidfile": mkstemp('.pid', '/tmp'),
-            "databases_storage_path": mkdtemp('/tmp'),  # Will be randomly set later
-            "database_store": mkstemp('.json', '/tmp'),
-            "port": str(random.randint(4142, 60000)),
-            "activity_log": mkstemp('.log', '/tmp'),
-            "errors_log": mkstemp('_errors.log', '/tmp'),
+        "pidfile": mkstemp('.pid', '/tmp'),
+        "databases_storage_path": mkdtemp('/tmp'),  # Will be randomly set later
+        "database_store": mkstemp('.json', '/tmp'),
+        "port": str(random.randint(4142, 60000)),
+        "activity_log": mkstemp('.log', '/tmp'),
+        "errors_log": mkstemp('_errors.log', '/tmp'),
     }
     config = ConfigParser.ConfigParser()
     config.add_section('global')

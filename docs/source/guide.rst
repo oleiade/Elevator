@@ -52,11 +52,20 @@ Setuptools comes with some Python installations by default; if yours doesn’t, 
 Zmq and Leveldb
 --------------------
 
-Elevator requires `zmq <http://zeromq.org>`_ and `leveldb <http://code.google.com/p/leveldb/>`_ libraries are installed on the system. Most unix systems provides
-these libraries through their package managers. For example, debian provides both a libleveldb1 and libleveldb-dev packages and libzmq-dev. On osx, you would be able to install them using brew.
+Elevator requires `zmq 3.2 <http://zeromq.org>`_ and `leveldb >= 1.6 <http://code.google.com/p/leveldb/>`_ libraries are installed on the system.
 
-Anyway, Elevator is shipped with a fabfile included and rules to automatically download, compile, and install
-both leveldb and zmq libraries. To use it, you'll need `fabric <http://docs.fabfile.org/>`_ installed.
+Most unix systems should provides these libraries through their package managers. However, if yours does not and you're using a debian-like distribution, ``deb.oleiade.com`` repo is here to help you.
+
+The repository exposes ``libzmq3``, ``libzmq3-dev``, ``libleveldb1`` and ``libleveldb1-dev`` packages. Just add the following line to your ``/etc/apt/sources.list``:
+
+.. code-block:: bash
+
+    deb http://deb.oleiade.com/debian oneiric main
+
+and there you go.
+
+
+If you're note using a debian distribution derivate, and your system does not provide any ``leveldb`` and/or ``zmq 3.2`` decent package, Elevator is shipped with a fabfile providing rules to automatically download, compile, and install both libraries. To use it, you'll need `fabric <http://docs.fabfile.org/>`_ installed.
 
 Just run:
 
@@ -70,16 +79,16 @@ Just run:
 Installation
 ==================
 
-We consider here that you've succesfully installed leveldb >= 1.6 and libzmq in order
+We consider here that you've succesfully installed ``leveldb >= 1.6`` and ``zmq 3.2`` in order
 for python packages to build against compatible versions of the libs.
 
 If you already have installed ``pip`` and are comfortable with it's usage,
-you can go straight away with::
+you can go straight forward with::
 
-    pip install elevator
+    pip install Elevator
 
 
-But if you don't::
+But if you don't, after having downloaded the package::
 
     python setup.py install
 
@@ -91,33 +100,22 @@ Usage
 .. code-block:: bash
 
     $ elevator --help
-    usage: elevator [-h] [-dctbpwPv]
+
+    usage: elevator [-hdctbpwv]
 
     Elevator command line manager
 
     optional arguments:
-        -h, --help        show this help message and exit
-
-        -d, --daemon      Launch elevator as a daemon
-
-        -c, --config      Path to elevator server config file, eventually
-
-        -t, --transport   Transport layer : tcp | ipc
-
-        -b, --bind        If tcp transport is selected: ip the server
-                          socket should be listening on.
-
-        -p, --port        Port the server should listen on
-
-        -w, --workers     How many workers should be spawned (Threads
-                          with concurrent access to all the db store)
-
-        -P, --paranoid    If option is set, Elevator will shutdown
-                          and log on first unhandled exception
-
-        -v, --log-level   Log level, see python logging documentation
-                          for more information :
-                          http://docs.python.org/library/logging.html#logger-objects
+      -h, --help            Show this help message and exit
+      -d, --daemon          Launch elevator as a daemon
+      -c, --config          Elevator config file path
+      -t, --transport       Transport layer: tcp or ipc
+      -b, --bind            Address the server will be binded to
+      -p, --port            Port the server should listen on
+      -w, --workers         Workers to be spawned count
+      -v, --log-level       Log level, see python logging documentation
+                            for more information :
+                            http://docs.python.org/library/logging.html#logger-objects
 
 
 .. _configuration:

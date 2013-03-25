@@ -13,7 +13,6 @@ import ujson as json
 from shutil import rmtree
 from plyvel import CorruptionError
 
-from .env import Environment
 from .constants import OS_ERROR, DATABASE_ERROR
 from .utils.patterns import enum
 from .helpers.internals import failure, success
@@ -108,15 +107,14 @@ class Database(object):
 class DatabaseStore(dict):
     STATUSES = enum('MOUNTED', 'UNMOUNTED')
 
-    def __init__(self, store_file, storage_path, *args, **kwargs):
-        self.env = Environment()
+    def __init__(self, config, *args, **kwargs):
         self.index = dict().fromkeys('name_to_uid')
 
         self.index['name_to_uid'] = {}
         self['reverse_name_index'] = {}
         self['paths_index'] = {}
-        self.storage_path = storage_path
-        self.store_file = store_file
+        self.store_file = config['database_store']
+        self.storage_path = config['databases_storage_path']
 
         self._global_cache_size = None
 
@@ -135,8 +133,8 @@ class DatabaseStore(dict):
         result = {}
 
         for uid, data in self.iteritems():
-            if 'last_access' in data:
-                result[uid] = data['last_access']
+            if hasattr(data, 'last_access'):
+                result[uid] = data.last_access
 
         return result
 

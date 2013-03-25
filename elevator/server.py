@@ -5,61 +5,34 @@
 # See the file LICENSE for copying permission.
 
 import sys
-import traceback
 import zmq
 import logging
 import procname
+import daemon
 
 from elevator import args
 from elevator.db import DatabaseStore
-from elevator.env import Environment
-from elevator.log import setup_loggers
+from elevator.config import Config
+from elevator.log import setup_loggers, log_critical
 from elevator.backend import Backend
 from elevator.frontend import Frontend
 from elevator.utils.daemon import Daemon
 
 
-ARGS = args.init_parser().parse_args(sys.argv[1:])
-
-
-def setup_process_name(env):
-    args = env['args']
-    endpoint = ' {0}://{1}:{2} '.format(args['transport'],
-                                        args['bind'],
-                                        args['port'])
-    config = ' --config {0} '.format(args['config'])
-    process_name = 'elevator' + endpoint + config
+def setup_process_name(config_file):
+    config = ' -c {0} '.format(config_file)
+    process_name = 'elevator' + config
 
     procname.setprocname(process_name)
 
 
-def log_uncaught_exceptions(e, paranoid=False):
-    errors_logger = logging.getLogger("errors_logger")
-    tb = traceback.format_exc()
-
-    # Log into errors log
-    errors_logger.critical(''.join(tb))
-    errors_logger.critical('{0}: {1}'.format(type(e), e.message))
-
-    # Log into stderr
-    logging.critical(''.join(tb))
-    logging.critical('{0}: {1}'.format(type(e), e.message))
-
-    if paranoid:
-        sys.exit(1)
-
-
-def runserver(env):
-    args = env['args']
-    setup_loggers(env)
+def runserver(config):
+    setup_loggers(config)
     activity_logger = logging.getLogger("activity_logger")
 
-    database_store = env['global']['database_store']
-    databases_storage = env['global']['databases_storage_path']
-    databases = DatabaseStore(database_store, databases_storage)
-
-    backend = Backend(databases, args['workers'])
-    frontend = Frontend(args['transport'], ':'.join([args['bind'], args['port']]))
+    databases = DatabaseStore(config)
+    backend = Backend(databases, config)
+    frontend = Frontend(config)
 
     poller = zmq.Poller()
     poller.register(backend.socket, zmq.POLLIN)
@@ -87,27 +60,27 @@ def runserver(env):
             activity_logger.info('Done')
             return
         except Exception as e:
-            log_uncaught_exceptions(e, paranoid=args['paranoid'])
+            log_critical(e)
+            del backend
+            del frontend
+            return
 
 
 class ServerDaemon(Daemon):
-    def run(self):
-        env = Environment()  # Already bootstraped singleton obj
+    def run(self, config):
         while True:
-            runserver(env)
+            runserver(config)
 
 
 def main():
-    # As Environment object is a singleton
-    # every further instanciation of the object
-    # will point on this one, and conf will be
-    # present in it yet.
-    env = Environment(ARGS.config)
-    env.load_from_args('args', ARGS._get_kwargs())
-    setup_process_name(env)
+    cmdline = args.init_parser().parse_args(sys.argv[1:])
+    config = Config(cmdline.config)
 
-    if env['args']['daemon'] is True:
-        server_daemon = ServerDaemon('/var/run/elevator.pid')
-        server_daemon.start()
+    config.update_with_args(cmdline._get_kwargs())
+    setup_process_name(cmdline.config)
+
+    if config['daemon'] is True:
+        with daemon.DaemonContext(pidfile=open('/var/run/elevator.pid', 'a+'), stderr=sys.stderr):
+            runserver(config)
     else:
-        runserver(env)
+        runserver(config)

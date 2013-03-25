@@ -50,8 +50,9 @@ setup(
     zip_safe=True,
     install_requires=[
         'lz4',
+        'python-daemon==1.5.5',
         'msgpack-python',
-        'pyzmq',
+        'pyzmq==13.0.0',
         'unittest2',
         'ujson',
         'procname',

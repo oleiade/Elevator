@@ -14,32 +14,44 @@ platforms.
 
 See `Documentation <http://elevator.readthedocs.org>`_ for more details
 
+
+Elevator is an open source software under the MIT license. Any hackers are welcome to supply ideas, features requests, patches, Pull requests and so on.  `Documentation's development page <http://elevator.readthedocs.org>`_ contains comprehensive info on contributing, repository layout, our release strategy, and more.
+
 .. image:: http://api.flattr.com/button/flattr-badge-large.png
     :target: https://flattr.com/submit/auto?user_id=oleiade&url=http://github.com/oleiade/Elevator&title=Elevator&language=&tags=github&category=software
 
 
-Depends on
-----------
+Dependencies
+============
 
 - zmq-3.X
-- pyzmq (built with zmq-3.X)
 - leveldb
+- pyzmq (built with zmq-3.X)
 - plyvel
+
+
+Debian repository
+-----------------
+
+The ``deb.oleiade.com`` debian repository exposes ``libzmq3``, ``libzmq3-dev``, ``libleveldb1`` and ``libleveldb1-dev`` packages in order to ease your dependencies management. Just add the following line to your ``/etc/apt/sources.list``:
+
+.. code-block:: bash
+
+    deb http://deb.oleiade.com/debian oneiric main
+
+
+Puppet
+------
+
+In order to ease your Elevator deployment, a `puppet module <http://github.com/oleiade/puppet-elevator>`_ has been developed. Note that it will automatically add the debian repository to your nodes.
 
 
 Installation
 ============
 
-The easy way::
+Just::
 
-    pip install elevator
-
-The hacker way::
-
-    $ pip install fabric
-    $ fab build
-    $ pip install -r requirements.txt
-    $ python setup.py install
+    pip install Elevator
 
 
 Usage
@@ -56,19 +68,22 @@ See ``config/elevator.conf`` for an example of Elevator configuration.
 .. code-block:: bash
 
     $ elevator --help
-    usage: elevator -h
+
+    usage: elevator [-hdctbpwv]
 
     Elevator command line manager
 
     optional arguments:
-        -h, --help       show this help message and exit
-        -d, --daemon      Launch elevator as a daemon
-        -c, --config      Path to elevator server config file, eventually
-        -t, --transport   Transfert protocol (tcp | ipc)
-        -b, --bind        Ip to bind server to
-        -p, --port        Port the server should listen on
-        -w, --workers     How many workers should be spawned (Threads with concurrent access to all the db store)
-        -P, --paranoid    If option is set, Elevator will shutdown and log on first unhandled exception
+      -h, --help            Show this help message and exit
+      -d, --daemon          Launch elevator as a daemon
+      -c, --config          Elevator config file path
+      -t, --transport       Transport layer: tcp or ipc
+      -b, --bind            Address the server will be binded to
+      -p, --port            Port the server should listen on
+      -w, --workers         Workers to be spawned count
+      -v, --log-level       Log level, see python logging documentation
+                            for more information :
+                            http://docs.python.org/library/logging.html#logger-objects
 
 
 Clients
