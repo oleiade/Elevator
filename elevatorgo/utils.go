@@ -10,3 +10,5 @@ func DirExists(path string) (bool, error) {
 
 	return file_info.IsDir(), nil
 }
+
+

@@ -7,7 +7,7 @@ import (
 )
 
 type Db struct {
-	Name		string			`json:"-"`
+	Name		string			`json:"name"`
 	Uid 		string 			`json:"uid"`
 	Path		string 			`json:"path"`
 	Status		int  			`json:"-"`

@@ -2,6 +2,7 @@ package elevator
 
 import (
 	"log"
+	"fmt"
 	"bytes"
 	zmq "github.com/alecthomas/gozmq"
 )
@@ -29,6 +30,7 @@ func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbSt
 	request.UnpackFrom(msg)
 	request.Source = client_socket
 
+	fmt.Println(request)
 	if db, ok := db_store.Container[request.Db]; ok {
 		if db.Status == DB_STATUS_UNMOUNTED {
 			db.Mount()

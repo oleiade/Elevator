@@ -12,7 +12,8 @@ import (
 type DbStore struct {
 	FilePath			string
 	StoragePath			string
-	Container			map[string]*Db
+	Container			map[string] *Db
+	NameToUid			map[string] string
 }
 
 
@@ -21,7 +22,16 @@ func NewDbStore(filepath string, storage_path string) (*DbStore) {
 	return &DbStore{
 		FilePath: filepath,
 		StoragePath: storage_path,
-		Container: make(map[string]*Db),
+		Container: make(map[string] *Db),
+		NameToUid: make(map[string] string),
+	}
+}
+
+func (store *DbStore) updateNameToUidIndex() {
+	for _, db := range store.Container {
+		if _, present := store.NameToUid[db.Name]; present == false {
+			store.NameToUid[db.Name] = db.Uid
+		}
 	}
 }
 
@@ -34,6 +44,8 @@ func (store *DbStore) ReadFromFile() (err error) {
 
 	err = json.Unmarshal(data, &store.Container)
 	if err != nil { return err }
+
+	store.updateNameToUidIndex()
 
 	return nil
 }
@@ -67,7 +79,7 @@ func (store *DbStore) Load() (err error) {
 // Mount sets the database status to DB_STATUS_MOUNTED
 // and instantiates the according leveldb connector
 func (store *DbStore) Mount(db_name string) error {
-	if db, ok := store.Container[db_name]; ok {
+	if db, present := store.Container[db_name]; present {
 		err := db.Mount()
 		if err != nil { return err }
 	} else {
@@ -81,7 +93,7 @@ func (store *DbStore) Mount(db_name string) error {
 // Unmount sets the database status to DB_STATUS_UNMOUNTED
 // and deletes the according leveldb connector
 func (store *DbStore) Unmount(db_name string) error {
-	if db, ok := store.Container[db_name]; ok {
+	if db, present := store.Container[db_name]; present {
 		err := db.Unmount()
 		if err != nil { return err }
 	} else {
@@ -93,13 +105,14 @@ func (store *DbStore) Unmount(db_name string) error {
 
 
 // Add a db to the DbStore and syncs it
-// to the store file"""
+// to the store file
 func (store *DbStore) Add(db_name string) error {
-	if _, ok := store.Container[db_name]; ok {
+	if _, present := store.NameToUid[db_name]; present {
 		return errors.New("Database already exists")
 	} else {
 		db := NewDb(db_name, filepath.Join(store.StoragePath, db_name))
-		store.Container[db_name] = db
+		store.Container[db.Uid] = db
+		store.updateNameToUidIndex()
 		store.WriteToFile()
 	}
 
@@ -110,9 +123,13 @@ func (store *DbStore) Add(db_name string) error {
 // Drop removes a database from DbStore, and syncs it
 // to store file
 func (store *DbStore) Drop(db_name string) error {
-	if db, ok := store.Container[db_name]; ok {
+	if db_uid, present := store.NameToUid[db_name]; present {
+		db := store.Container[db_uid]
 		db_path := db.Path
-		delete(store.Container, db_name)
+
+		delete(store.Container, db_uid)
+		delete(store.NameToUid, db_name)
+		
 		store.WriteToFile()
 
 		err := os.RemoveAll(db_path)
@@ -128,7 +145,8 @@ func (store *DbStore) Drop(db_name string) error {
 // Status returns a database status defined by constants
 // DB_STATUS_MOUNTED and DB_STATUS_UNMOUNTED
 func (store *DbStore) Status(db_name string) (int, error) {
-	if db, ok := store.Container[db_name]; ok {
+	if db_uid, present := store.NameToUid[db_name]; present {
+		db := store.Container[db_uid]
 		return db.Status, nil
 	}
 
@@ -139,7 +157,9 @@ func (store *DbStore) Status(db_name string) (int, error) {
 // Exists checks if a database present in DbStore 
 // exists on disk.
 func (store *DbStore) Exists(db_name string) (bool, error) {
-	if db, ok := store.Container[db_name]; ok {
+	if db_uid, present := store.NameToUid[db_name]; present {
+		db := store.Container[db_uid]
+		
 		exists, err := DirExists(db.Path)
 		if err != nil { return false, err}
 
@@ -161,8 +181,8 @@ func (store *DbStore) List() ([]string) {
 	db_names := make([]string, len(store.Container))
 
 	i := 0
-	for k, _ := range store.Container {
-		db_names[i] = k
+	for _, db := range store.Container {
+		db_names[i] = db.Name
 		i++
 	}
 
