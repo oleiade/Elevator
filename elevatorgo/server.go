@@ -31,11 +31,15 @@ func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbSt
 	request.Source = client_socket
 
 	fmt.Println(request)
-	if db, ok := db_store.Container[request.Db]; ok {
-		if db.Status == DB_STATUS_UNMOUNTED {
-			db.Mount()
+	if request.Db != "" {
+		if db, ok := db_store.Container[request.Db]; ok {
+			if db.Status == DB_STATUS_UNMOUNTED {
+				db.Mount()
+			}
+			db.Channel <- request
 		}
-		db.Channel <- request
+	} else {
+		go store_commands[request.Command](db_store, request)
 	}
 }
 

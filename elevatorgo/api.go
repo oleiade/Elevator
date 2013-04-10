@@ -7,15 +7,19 @@ import (
 
 )
 
-var command_handlers = map[string]func(*Db, *Request) error {
+var database_commands = map[string] func(*Db, *Request) error {
 	DB_GET: Get,
 	DB_PUT: Put,
 	DB_DELETE: Delete,
 }
 
+var store_commands = map[string] func(*DbStore, *Request) error {
+	DB_CONNECT: DbConnect,
+}
+
 
 func Exec(db *Db, request *Request) {
-	if f, ok := command_handlers[request.Command]; ok {
+	if f, ok := database_commands[request.Command]; ok {
 		f(db, request)
 	}
 }
@@ -110,3 +114,27 @@ func Delete(db *Db, request *Request) error {
 
 	return nil
 }
+
+func DbConnect(db_store *DbStore, request *Request) error {
+	db_name := request.Args[0]
+	db_uid, exists := db_store.NameToUid[db_name]
+
+	var header *ResponseHeader
+	if exists {
+		header = NewSuccessResponseHeader()
+	} else {
+		header = NewFailureResponseHeader(DATABASE_ERROR, "Database does not exist")
+	}
+
+	data_container := make([][]byte, 1)
+	data_container[0] = []byte(db_uid)
+	content := ResponseContent{
+		Datas: data_container,
+	}
+
+	Forward(header, &content, request)
+
+	return nil
+
+}
+
