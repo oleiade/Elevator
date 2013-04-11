@@ -15,6 +15,7 @@ var database_commands = map[string] func(*Db, *Request) error {
 
 var store_commands = map[string] func(*DbStore, *Request) error {
 	DB_CONNECT: DbConnect,
+	DB_LIST: DbList,
 }
 
 
@@ -51,8 +52,6 @@ func Get(db *Db, request *Request) error {
 	key := request.Args[0]
 	data, err := db.Connector.Get(ro, []byte(key))
 
-	fmt.Println(key)
-
 	var header *ResponseHeader
 	if err != nil {
 		header = NewFailureResponseHeader(KEY_ERROR, string(err.Error()))
@@ -78,8 +77,6 @@ func Put(db *Db, request *Request) error {
 	value := request.Args[1]
 	err := db.Connector.Put(wo, []byte(key), []byte(value))
 
-	fmt.Println(key)
-	
 	var header *ResponseHeader
 	if err != nil {
 		header = NewFailureResponseHeader(VALUE_ERROR, string(err.Error()))
@@ -98,8 +95,6 @@ func Delete(db *Db, request *Request) error {
 	wo := leveldb.NewWriteOptions()
 	key := request.Args[0]
 	err := db.Connector.Delete(wo, []byte(key))
-
-	fmt.Println(key)
 
 	var header *ResponseHeader
 	if err != nil {
@@ -135,6 +130,25 @@ func DbConnect(db_store *DbStore, request *Request) error {
 	Forward(header, &content, request)
 
 	return nil
+}
 
+func DbList(db_store *DbStore, request *Request) error {
+	db_names := db_store.List()
+	header := NewSuccessResponseHeader()
+	data_container := make([][]byte, len(db_names))
+
+	for index, db_name := range db_names {
+		data_container[index] = []byte(db_name)
+	}
+
+	fmt.Println(db_names)
+
+	content := ResponseContent{
+		Datas: data_container,
+	}
+
+	Forward(header, &content, request)
+
+	return nil
 }
 
