@@ -1,27 +1,26 @@
 package elevator
 
 import (
+	uuid "code.google.com/p/go-uuid/uuid"
 	"errors"
-	leveldb 	"github.com/jmhodges/levigo"
-	uuid 		"code.google.com/p/go-uuid/uuid"
+	leveldb "github.com/jmhodges/levigo"
 )
 
 type Db struct {
-	Name		string			`json:"name"`
-	Uid 		string 			`json:"uid"`
-	Path		string 			`json:"path"`
-	Status		int  			`json:"-"`
-	Connector 	*leveldb.DB		`json:"-"` 	
-	Channel 	chan *Request	`json:"-"`
+	Name      string        `json:"name"`
+	Uid       string        `json:"uid"`
+	Path      string        `json:"path"`
+	Status    int           `json:"-"`
+	Connector *leveldb.DB   `json:"-"`
+	Channel   chan *Request `json:"-"`
 }
 
-
-func NewDb(db_name string, path string) (*Db) {
+func NewDb(db_name string, path string) *Db {
 	return &Db{
-		Name: db_name,
-		Path: path,
-		Uid: uuid.New(),
-		Status: DB_STATUS_UNMOUNTED,
+		Name:    db_name,
+		Path:    path,
+		Uid:     uuid.New(),
+		Status:  DB_STATUS_UNMOUNTED,
 		Channel: make(chan *Request),
 	}
 }
@@ -33,9 +32,11 @@ func (db *Db) Mount() (err error) {
 		opts := leveldb.NewOptions()
 		opts.SetCache(leveldb.NewLRUCache(512))
 		opts.SetCreateIfMissing(true)
-		
+
 		db.Connector, err = leveldb.Open(db.Path, opts)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 
 		db.Status = DB_STATUS_MOUNTED
 		db.Channel = make(chan *Request)

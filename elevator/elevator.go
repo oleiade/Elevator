@@ -1,46 +1,46 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"flag"
-	elevator "github.com/oleiade/Elevator"
+	"fmt"
 	configfile "github.com/msbranco/goconfig"
+	elevator "github.com/oleiade/Elevator"
+	"log"
 )
 
-var configFile 	string
-var daemonMode 	bool
-var transport  	string
-var bind 		string
-var port 		int
-var logLevel 	string
+var configFile string
+var daemonMode bool
+var transport string
+var bind string
+var port int
+var logLevel string
 
 func init() {
 	const (
 		// config
-		defaultConfigFile 	= "/etc/elevator/elevator.conf"
-		configUsage         = "Path to elevator server config file, eventually"
+		defaultConfigFile = "/etc/elevator/elevator.conf"
+		configUsage       = "Path to elevator server config file, eventually"
 
 		// daemon
-		defaultDaemonMode 	= false
-		daemonModeUsage 	= "Launch elevator as a daemon"
+		defaultDaemonMode = false
+		daemonModeUsage   = "Launch elevator as a daemon"
 
 		// transport
-		defaultTransport 	= "tcp"
-		transportUsage 		= "Transport layer : tcp | ipc"
+		defaultTransport = "tcp"
+		transportUsage   = "Transport layer : tcp | ipc"
 
 		// bind
-		defaultBind 		= "127.0.0.1"
-		bindUsage 			= `If tcp transport is selected: ip the server
+		defaultBind = "127.0.0.1"
+		bindUsage   = `If tcp transport is selected: ip the server
 		                      socket should be listening on.`
 
 		// port
-		defaultPort 		= 4141
-		portUsage 			= "Port the server should listen on"
+		defaultPort = 4141
+		portUsage   = "Port the server should listen on"
 
 		// log level
-		defaultLogLevel 	= "DEBUG"
-		logLevelUsage 		= `Log level, see python logging documentation
+		defaultLogLevel = "DEBUG"
+		logLevelUsage   = `Log level, see python logging documentation
                       		  for more information :
                       		  http://docs.python.org/library/logging.html#logger-objects`
 	)
@@ -66,8 +66,10 @@ func init() {
 
 func main() {
 	flag.Parse()
-	config, err := configfile.ReadConfigFile(configFile);
-	if err != nil { log.Fatal(err) }
+	config, err := configfile.ReadConfigFile(configFile)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Println("Elevator running on %s://%s:%s", transport, bind, port)
 	elevator.Runserver(config)

@@ -1,23 +1,21 @@
 package elevator
 
 import (
-	"fmt"
 	"bytes"
-	leveldb 	"github.com/jmhodges/levigo"
-
+	"fmt"
+	leveldb "github.com/jmhodges/levigo"
 )
 
-var database_commands = map[string] func(*Db, *Request) error {
-	DB_GET: Get,
-	DB_PUT: Put,
+var database_commands = map[string]func(*Db, *Request) error{
+	DB_GET:    Get,
+	DB_PUT:    Put,
 	DB_DELETE: Delete,
 }
 
-var store_commands = map[string] func(*DbStore, *Request) error {
+var store_commands = map[string]func(*DbStore, *Request) error{
 	DB_CONNECT: DbConnect,
-	DB_LIST: DbList,
+	DB_LIST:    DbList,
 }
-
 
 func Exec(db *Db, request *Request) {
 	if f, ok := database_commands[request.Command]; ok {
@@ -25,13 +23,12 @@ func Exec(db *Db, request *Request) {
 	}
 }
 
-
 func Forward(header *ResponseHeader, content *ResponseContent, request *Request) error {
 	socket := request.Source.Socket
 	address := request.Source.Id
 	parts := make([][]byte, 3)
 
-	var header_buf 	bytes.Buffer
+	var header_buf bytes.Buffer
 	var content_buf bytes.Buffer
 	header.PackInto(&header_buf)
 	content.PackInto(&content_buf)
@@ -41,11 +38,12 @@ func Forward(header *ResponseHeader, content *ResponseContent, request *Request)
 	parts[2] = content_buf.Bytes()
 
 	err := socket.SendMultipart(parts, 0)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
-
 
 func Get(db *Db, request *Request) error {
 	ro := leveldb.NewReadOptions()
@@ -58,7 +56,7 @@ func Get(db *Db, request *Request) error {
 	} else {
 		header = NewSuccessResponseHeader()
 	}
-	
+
 	data_container := make([][]byte, 1)
 	data_container[0] = data
 	content := ResponseContent{
@@ -69,7 +67,6 @@ func Get(db *Db, request *Request) error {
 
 	return nil
 }
-
 
 func Put(db *Db, request *Request) error {
 	wo := leveldb.NewWriteOptions()
@@ -98,7 +95,7 @@ func Delete(db *Db, request *Request) error {
 
 	var header *ResponseHeader
 	if err != nil {
-		header = NewFailureResponseHeader(KEY_ERROR, string(err.Error()))		
+		header = NewFailureResponseHeader(KEY_ERROR, string(err.Error()))
 	} else {
 		header = NewSuccessResponseHeader()
 	}
@@ -151,4 +148,3 @@ func DbList(db_store *DbStore, request *Request) error {
 
 	return nil
 }
-
