@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log"
 	"flag"
-	"elevator"
+	elevator "github.com/oleiade/Elevator"
+	configfile "github.com/msbranco/goconfig"
 )
 
 var configFile 	string
@@ -65,9 +66,9 @@ func init() {
 
 func main() {
 	flag.Parse()
-	db_store := elevator.NewDbStore("/tmp/test.json", "/tmp")
-	err := db_store.Add("default")
+	config, err := configfile.ReadConfigFile(configFile);
 	if err != nil { log.Fatal(err) }
+
 	fmt.Println("Elevator running on %s://%s:%s", transport, bind, port)
-	elevator.Runserver()
+	elevator.Runserver(config)
 }
