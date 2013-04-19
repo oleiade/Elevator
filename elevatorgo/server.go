@@ -13,7 +13,7 @@ type ClientSocket struct {
 	Socket  zmq.Socket
 }
 
-func server_socket(endpoint string) (zmq.Socket, error) {
+func server_socket(endpoint string) (*zmq.Socket, error) {
 	context, err := zmq.NewContext()
 	if err != nil { return nil, err }
 
@@ -76,7 +76,7 @@ func Runserver(config *configfile.ConfigFile) {
 			
 			client_socket := ClientSocket{
 				Id: parts[0],
-				Socket: socket,
+				Socket: *socket,
 			}
 			msg := parts[1]
 			
