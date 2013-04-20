@@ -31,6 +31,14 @@ ELEVATOR_BIN := $(CURDIR)/$(ELEVATOR_BIN_RELATIVE)
 all: $(ELEVATOR_BIN)
 
 $(ELEVATOR_BIN): $(ELEVATOR_DIR)
+	# Build leveldb shared lib and install levigo against it
+	@(git clone https://code.google.com/p/leveldb/ /tmp/leveldb ; cd /tmp/leveldb ; make)
+	@CGO_CFLAGS="-I/tmp/leveldb/include" CGO_LDFLAGS="-L/tmp/leveldb" go get github.com/jmhodges/levigo
+
+	# Specifically install gozmq zmq3 compatible version
+	@go get -tags zmq_3_x github.com/alecthomas/gozmq
+
+	# Proceed to elevator build
 	@mkdir -p  $(dir $@)
 	@(cd $(ELEVATOR_MAIN); go get $(GO_OPTIONS); go build $(GO_OPTIONS) $(BUILD_OPTIONS) -o $@)
 	@echo $(ELEVATOR_BIN_RELATIVE) is created.
