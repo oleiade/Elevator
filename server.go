@@ -26,7 +26,7 @@ func server_socket(endpoint string) (*zmq.Socket, error) {
 
 	socket.Bind(endpoint)
 
-	return socket, nil
+	return &socket, nil
 }
 
 func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbStore) {
@@ -55,10 +55,11 @@ func Runserver(config *configfile.ConfigFile) {
 	}
 
 	socket, err := server_socket("tcp://" + endpoint)
-	defer socket.Close()
+	defer (*socket).Close()
 	if err != nil {
 		log.Fatal(err)
 	}
+
 
 	// Bootstraping database store
 	store_path, err := config.GetString("global", "database_store")
@@ -75,7 +76,7 @@ func Runserver(config *configfile.ConfigFile) {
 	}
 
 	poller := zmq.PollItems{
-		zmq.PollItem{Socket: socket, zmq.Events: zmq.POLLIN},
+		zmq.PollItem{Socket: *socket, zmq.Events: zmq.POLLIN},
 	}
 
 	for i := 0; ; i++ {
