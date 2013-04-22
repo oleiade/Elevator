@@ -44,7 +44,7 @@ func (c *Config) FromFile(filepath string) error {
 	for i := 0; i < fields_count; i++ {
 		indexslice[0] = i
 		field := reflect.TypeOf(c).Elem().FieldByIndex(indexslice)
-		field_value := reflect.ValueOf(&field)
+		field_value := reflect.ValueOf(&field).Elem()
 
 		switch {
 		case field.Type.Kind() == reflect.Bool:
@@ -64,9 +64,9 @@ func (c *Config) FromFile(filepath string) error {
 		case field.Type.Kind() == reflect.String:
 			config_value, err := config.GetString("core", field.Tag.Get("ini"))
 			fmt.Println(config_value)
-			fmt.Println(reflect.TypeOf(config_value))
+			fmt.Println(field_value.CanSet())
 			if err == nil {
-				field_value.Elem().SetString(config_value)
+				field_value.SetString(config_value)
 			}
 		}
 	}
