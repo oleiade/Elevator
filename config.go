@@ -1,14 +1,12 @@
 package elevator
 
 import (
-	"fmt"
 	"reflect"
 	goconfig "github.com/msbranco/goconfig"
 )
 
 type Config struct {
 	Daemon			bool	`ini:"daemonize"`
-	Port 			int		`ini:"port"`
 	Endpoint		string	`ini:"endpoint"`
 	Pidfile			string	`ini:"pidfile"`
 	StorePath		string	`ini:"database_store_path"`
@@ -22,9 +20,7 @@ type Config struct {
 func NewConfig() *Config {
 	return &Config{
 		Daemon: false,
-		Port: 4141,
-		Endpoint: "tcp://127.0.0.1",
-		Pidfile: "/var/run/elevator.pid",
+		Endpoint: "tcp://127.0.0.1:4141",
 		StorePath: "/var/lib/elevator/store",
 		StoragePath: "/var/lib/elevator",
 		DefaultDb: "sandbox",
@@ -35,38 +31,26 @@ func NewConfig() *Config {
 }
 
 func (c *Config) FromFile(filepath string) error {
-	config, err := goconfig.ReadConfigFile(filepath)
+	ini_config, err := goconfig.ReadConfigFile(filepath)
 	if err != nil { return err }
 
-	indexslice := []int{0}
-	fields_count := reflect.TypeOf(c).Elem().NumField()
+	config := reflect.ValueOf(c).Elem()
+	config_type := config.Type()
 
-	for i := 0; i < fields_count; i++ {
-		indexslice[0] = i
-		field := reflect.TypeOf(c).Elem().FieldByIndex(indexslice)
-		field_value := reflect.ValueOf(&field).Elem()
+	for i := 0; i < config.NumField() ; i++ {
+		struct_field := config.Field(i)
+		field_tag := config_type.Field(i).Tag.Get("ini")
 
 		switch {
-		case field.Type.Kind() == reflect.Bool:
-			config_value, err := config.GetBool("core", field.Tag.Get("ini"))
-			fmt.Println(config_value)
-			
-
+		case struct_field.Type().Kind() == reflect.Bool:
+			config_value, err := ini_config.GetBool("core", field_tag)
 			if err == nil {
-				field_value.SetBool(config_value)
+				struct_field.SetBool(config_value)
 			}
-		case field.Type.Kind() == reflect.Int64:
-			config_value, err := config.GetInt64("core", field.Tag.Get("ini"))
-			fmt.Println(config_value)
-			if err == nil { 
-				field_value.SetInt(config_value)
-			}
-		case field.Type.Kind() == reflect.String:
-			config_value, err := config.GetString("core", field.Tag.Get("ini"))
-			fmt.Println(config_value)
-			fmt.Println(field_value.CanSet())
+		case struct_field.Type().Kind() == reflect.String:
+			config_value, err := ini_config.GetString("core", field_tag)
 			if err == nil {
-				field_value.SetString(config_value)
+				struct_field.SetString(config_value)
 			}
 		}
 	}
