@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	configfile "github.com/msbranco/goconfig"
 	elevator "github.com/oleiade/Elevator"
-	"log"
 )
 
 var configFile string
@@ -70,6 +70,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	c := elevator.NewConfig()
+	c.FromFile(configFile)
+	fmt.Println(c)
 
 	fmt.Println("Elevator running on %s://%s:%s", transport, bind, port)
 	elevator.Runserver(config)
