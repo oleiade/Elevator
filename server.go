@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	zmq "github.com/alecthomas/gozmq"
-	configfile "github.com/msbranco/goconfig"
 	"log"
 )
 
@@ -48,29 +47,15 @@ func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbSt
 	}
 }
 
-func Runserver(config *configfile.ConfigFile) {
-	endpoint, err := config.GetString("global", "endpoint")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	socket, err := server_socket("tcp://" + endpoint)
+func Runserver(config *Config) {
+	socket, err := server_socket(config.Endpoint)
 	defer (*socket).Close()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-
-	// Bootstraping database store
-	store_path, err := config.GetString("global", "database_store")
-	storage_path, err := config.GetString("global", "databases_storage_path")
-	default_db, err := config.GetString("global", "default_db")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	db_store := NewDbStore(store_path, storage_path)
-	err = db_store.Add(default_db)
+	db_store := NewDbStore(config.StorePath, config.StoragePath)
+	err = db_store.Add(config.DefaultDb)
 	if err != nil {
 		log.Fatal(err)
 	}

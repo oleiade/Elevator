@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	configfile "github.com/msbranco/goconfig"
 	elevator "github.com/oleiade/Elevator"
 )
 
@@ -45,36 +44,22 @@ func init() {
                       		  http://docs.python.org/library/logging.html#logger-objects`
 	)
 
-	flag.StringVar(&configFile, "conf", defaultConfigFile, configUsage)
 	flag.StringVar(&configFile, "c", defaultConfigFile, configUsage+" (shorthand)")
-
-	flag.BoolVar(&daemonMode, "daemon", defaultDaemonMode, daemonModeUsage)
 	flag.BoolVar(&daemonMode, "d", defaultDaemonMode, daemonModeUsage)
-
-	flag.StringVar(&transport, "transport", defaultTransport, transportUsage)
 	flag.StringVar(&transport, "t", defaultTransport, transportUsage)
-
-	flag.StringVar(&bind, "bind", defaultBind, bindUsage)
 	flag.StringVar(&bind, "b", defaultBind, bindUsage)
-
-	flag.IntVar(&port, "port", defaultPort, portUsage)
 	flag.IntVar(&port, "p", defaultPort, portUsage)
-
-	flag.StringVar(&logLevel, "log-level", defaultLogLevel, logLevelUsage)
 	flag.StringVar(&logLevel, "l", defaultLogLevel, logLevelUsage)
 }
 
 func main() {
 	flag.Parse()
-	config, err := configfile.ReadConfigFile(configFile)
+	c := elevator.NewConfig()
+	err := c.FromFile(configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	c := elevator.NewConfig()
-	c.FromFile(configFile)
-	fmt.Println(c)
-
 	fmt.Println("Elevator running on %s://%s:%s", transport, bind, port)
-	elevator.Runserver(config)
+	elevator.Runserver(c)
 }
