@@ -23,7 +23,7 @@ func NewConfig() *Config {
 		Endpoint: "tcp://127.0.0.1:4141",
 		StorePath: "/var/lib/elevator/store",
 		StoragePath: "/var/lib/elevator",
-		DefaultDb: "sandbox",
+		DefaultDb: "default",
 		ActivityLog: "/var/log/elevator/activity.log",
 		ErrorsLog: "/var/log/elevator/errors.log",
 		Unixsocket: "",

@@ -1,8 +1,9 @@
 package elevator
 
 import (
-	uuid "code.google.com/p/go-uuid/uuid"
+	"log"
 	"errors"
+	uuid "code.google.com/p/go-uuid/uuid"
 	leveldb "github.com/jmhodges/levigo"
 )
 
@@ -66,6 +67,7 @@ func (db *Db) Unmount() (err error) {
 // for incoming requests to execute and sends clients
 // response.
 func (db *Db) Routine() {
+	log.Printf("%s routine started", db.Name)
 	for request := range db.Channel {
 		Exec(db, request)
 	}

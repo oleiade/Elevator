@@ -2,7 +2,6 @@ package elevator
 
 import (
 	"bytes"
-	"fmt"
 	zmq "github.com/alecthomas/gozmq"
 	"log"
 )
@@ -34,7 +33,7 @@ func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbSt
 	request.UnpackFrom(msg)
 	request.Source = client_socket
 
-	fmt.Println(request)
+	log.Println(request)
 	if request.Db != "" {
 		if db, ok := db_store.Container[request.Db]; ok {
 			if db.Status == DB_STATUS_UNMOUNTED {
@@ -55,10 +54,9 @@ func Runserver(config *Config) {
 	}
 
 	db_store := NewDbStore(config.StorePath, config.StoragePath)
-	err = db_store.Add(config.DefaultDb)
-	if err != nil {
-		log.Fatal(err)
-	}
+	db_store.ReadFromFile()
+	db_store.Add(config.DefaultDb)
+	log.Println(db_store)
 
 	poller := zmq.PollItems{
 		zmq.PollItem{Socket: *socket, zmq.Events: zmq.POLLIN},
