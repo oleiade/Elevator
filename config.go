@@ -14,7 +14,6 @@ type Config struct {
 	DefaultDb		string	`ini:"default_db"`
 	ActivityLog		string	`ini:"activity_log"`
 	ErrorsLog		string	`ini:"errors_log"`
-	Unixsocket		string	`ini:"unixsocket"`
 }
 
 func NewConfig() *Config {
@@ -26,7 +25,6 @@ func NewConfig() *Config {
 		DefaultDb: "default",
 		ActivityLog: "/var/log/elevator/activity.log",
 		ErrorsLog: "/var/log/elevator/errors.log",
-		Unixsocket: "",
 	}
 }
 
