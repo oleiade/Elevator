@@ -24,7 +24,7 @@ func server_socket(endpoint string) (*zmq.Socket, error) {
 
 	socket.Bind(endpoint)
 
-	return &socket, nil
+	return socket, nil
 }
 
 func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbStore) {
@@ -53,11 +53,14 @@ func Runserver(config *Config) {
 	}
 
 	db_store := NewDbStore(config.StorePath, config.StoragePath)
-	db_store.ReadFromFile()
-	db_store.Add(config.DefaultDb)
+	err = db_store.Load()
+	if err != nil {
+		err = db_store.Add("default")
+		if err != nil { log.Fatal(err) }
+	}
 
 	poller := zmq.PollItems{
-		zmq.PollItem{Socket: *socket, zmq.Events: zmq.POLLIN},
+		zmq.PollItem{Socket: socket, zmq.Events: zmq.POLLIN},
 	}
 
 	for i := 0; ; i++ {

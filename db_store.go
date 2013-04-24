@@ -57,6 +57,13 @@ func (store *DbStore) ReadFromFile() (err error) {
 func (store *DbStore) WriteToFile() (err error) {
 	var data []byte
 
+	// Check the directory hosting the store exists
+	store_base_path := filepath.Dir(store.FilePath)
+	_, err = os.Stat(store_base_path)
+	if os.IsNotExist(err) {
+		return err
+	}
+
 	data, err = json.Marshal(store.Container)
 	if err != nil {
 		return err
@@ -83,9 +90,9 @@ func (store *DbStore) Load() (err error) {
 
 // Mount sets the database status to DB_STATUS_MOUNTED
 // and instantiates the according leveldb connector
-func (store *DbStore) Mount(db_name string) error {
+func (store *DbStore) Mount(db_name string) (err error) {
 	if db, present := store.Container[db_name]; present {
-		err := db.Mount()
+		err = db.Mount()
 		if err != nil {
 			return err
 		}
@@ -98,9 +105,9 @@ func (store *DbStore) Mount(db_name string) error {
 
 // Unmount sets the database status to DB_STATUS_UNMOUNTED
 // and deletes the according leveldb connector
-func (store *DbStore) Unmount(db_name string) error {
+func (store *DbStore) Unmount(db_name string) (err error) {
 	if db, present := store.Container[db_name]; present {
-		err := db.Unmount()
+		err = db.Unmount()
 		if err != nil {
 			return err
 		}
@@ -113,14 +120,15 @@ func (store *DbStore) Unmount(db_name string) error {
 
 // Add a db to the DbStore and syncs it
 // to the store file
-func (store *DbStore) Add(db_name string) error {
+func (store *DbStore) Add(db_name string) (err error) {
 	if _, present := store.NameToUid[db_name]; present {
 		return errors.New("Database already exists")
 	} else {
 		db := NewDb(db_name, filepath.Join(store.StoragePath, db_name))
 		store.Container[db.Uid] = db
 		store.updateNameToUidIndex()
-		store.WriteToFile()
+		err = store.WriteToFile()
+		if err != nil { return err}
 	}
 
 	return nil
@@ -128,7 +136,7 @@ func (store *DbStore) Add(db_name string) error {
 
 // Drop removes a database from DbStore, and syncs it
 // to store file
-func (store *DbStore) Drop(db_name string) error {
+func (store *DbStore) Drop(db_name string) (err error) {
 	if db_uid, present := store.NameToUid[db_name]; present {
 		db := store.Container[db_uid]
 		db_path := db.Path
@@ -138,7 +146,7 @@ func (store *DbStore) Drop(db_name string) error {
 
 		store.WriteToFile()
 
-		err := os.RemoveAll(db_path)
+		err = os.RemoveAll(db_path)
 		if err != nil {
 			return err
 		}
