@@ -37,7 +37,7 @@ The ``deb.oleiade.com`` debian repository exposes ``libzmq3``, ``libzmq3-dev`` p
 
 .. code-block:: bash
 
-    deb http://deb.oleiade.com/debian oneiric main
+  deb http://deb.oleiade.com/debian oneiric main
 
 
 Puppet
@@ -51,11 +51,15 @@ Installation
 
 1. First, make sure you have a `Go <http://http://golang.org/>`_ language compiler and `git <http://gitscm.org>`_ installed.
 
-2. Then, clone this repository::
+2. Then, clone this repository
+  
+.. code-block:: bash
   
   git clone git@github.com:oleiade/Elevator
 
 3. Last, build and copy to a system ``PATH`` location
+
+.. code-block:: bash
 
   cd Elevator
   make VERBOSE=1
