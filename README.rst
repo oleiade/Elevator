@@ -23,21 +23,22 @@ Elevator is an open source software under the MIT license. Any hackers are welco
 Dependencies
 ============
 
-- zmq-3.X
-- leveldb >= 1.6
+::
 
-As of today, the Elevator provided Makefile will download, build, and compile on-time against ``leveldb``, 
-so you don't need to bother about it. But, though it might not be necessary in the future, installing ``libzmq3`` and ``libzmq3-dev`` system wide is mandatory.
+  zmq-3.X
+  leveldb >= 1.6
 
 
 Debian repository
 -----------------
 
-The ``deb.oleiade.com`` debian repository exposes ``libzmq3``, ``libzmq3-dev`` packages in order to ease your dependencies management. Just add the following line to your ``/etc/apt/sources.list``:
+The ``deb.oleiade.com`` debian repository exposes ``libzmq3``, ``libzmq3-dev``, ``libleveldb1`` and ``libleveldb1-dev`` packages in order to ease your dependencies management. Just add the following line to your ``/etc/apt/sources.list``:
 
 .. code-block:: bash
 
-  deb http://deb.oleiade.com/debian oneiric main
+  $ gpg --keyserver pgp.mit.edu --recv-keys A9171B8592EDE36B
+  $ gpg --armor --export A9171B8592EDE36B | apt-key add -
+  $ echo "deb http://deb.oleiade.com/debian oneiric main" >> /etc/apt/sources.list
 
 
 Puppet
