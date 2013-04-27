@@ -25,7 +25,7 @@ type ResponseHeader struct {
 }
 
 type ResponseContent struct {
-	Datas [][]byte `msgpack:"datas"`
+	Datas interface{} `msgpack:"datas"`
 }
 
 func NewRequest(command string, args []string) *Request {

@@ -10,6 +10,7 @@ var database_commands = map[string]func(*Db, *Request) error{
 	DB_GET:    Get,
 	DB_PUT:    Put,
 	DB_DELETE: Delete,
+	DB_RANGE: Range,
 }
 
 var store_commands = map[string]func(*DbStore, *Request) error{
@@ -103,6 +104,39 @@ func Delete(db *Db, request *Request) error {
 	content := ResponseContent{}
 
 	Forward(header, &content, request)
+
+	return nil
+}
+
+func Range(db *Db, request *Request) error {
+	read_options := leveldb.NewReadOptions()
+	snapshot := db.Connector.NewSnapshot()
+	read_options.SetSnapshot(snapshot)
+
+	var data [][]string
+
+	start := []byte(request.Args[0])
+	end := []byte(request.Args[1])
+
+	it := db.Connector.NewIterator(read_options)
+	defer it.Close()
+	it.Seek(start)
+
+	for it = it; it.Valid(); it.Next() {
+		if bytes.Compare(it.Key(), end) >= 1 {
+			break
+		}
+		data = append(data, []string{string(it.Key()), string(it.Value())})
+	}
+
+	header := NewSuccessResponseHeader()
+	content := ResponseContent{
+		Datas: data,
+	}
+
+	Forward(header, &content, request)
+
+	db.Connector.ReleaseSnapshot(snapshot)
 
 	return nil
 }
