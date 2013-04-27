@@ -7,10 +7,11 @@ import (
 )
 
 var database_commands = map[string]func(*Db, *Request) error{
-	DB_GET:    Get,
-	DB_PUT:    Put,
-	DB_DELETE: Delete,
-	DB_RANGE: Range,
+	DB_GET:    	Get,
+	DB_MGET:	MGet,
+	DB_PUT:    	Put,
+	DB_DELETE: 	Delete,
+	DB_RANGE: 	Range,
 }
 
 var store_commands = map[string]func(*DbStore, *Request) error{
@@ -106,6 +107,50 @@ func Delete(db *Db, request *Request) error {
 	content := ResponseContent{}
 
 	Forward(header, &content, request)
+
+	return nil
+}
+
+func MGet(db *Db, request *Request) error {
+	read_options := leveldb.NewReadOptions()
+	snapshot := db.Connector.NewSnapshot()
+	read_options.SetSnapshot(snapshot)
+
+	var data []string = make([]string, len(request.Args))
+
+	if len(request.Args) > 0 {
+		start := request.Args[0]
+		end := request.Args[len(request.Args) - 1]
+		keys_index := make(map[string]int)
+
+		for index, element := range request.Args {
+			keys_index[element] = index
+		}
+
+		it := db.Connector.NewIterator(read_options)
+		defer it.Close()
+		it.Seek([]byte(start))
+
+		for it = it; it.Valid(); it.Next() {
+			if bytes.Compare(it.Key(), []byte(end)) > 1 {
+				break
+			}
+
+			if index, present := keys_index[string(it.Key())] ; present {
+				data[index] = string(it.Value())
+			}
+		}
+
+	}
+
+	header := NewSuccessResponseHeader()
+	content := ResponseContent{
+		Datas: data,
+	}
+
+	Forward(header, &content, request)
+
+	db.Connector.ReleaseSnapshot(snapshot)
 
 	return nil
 }
