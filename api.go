@@ -49,7 +49,10 @@ func Forward(header *ResponseHeader, content *ResponseContent, request *Request)
 func Get(db *Db, request *Request) error {
 	ro := leveldb.NewReadOptions()
 	key := request.Args[0]
-	data, err := db.Connector.Get(ro, []byte(key))
+
+	var data []string
+
+	value, err := db.Connector.Get(ro, []byte(key))
 
 	var header *ResponseHeader
 	if err != nil {
@@ -58,10 +61,9 @@ func Get(db *Db, request *Request) error {
 		header = NewSuccessResponseHeader()
 	}
 
-	data_container := make([][]byte, 1)
-	data_container[0] = data
+	data = append(data, string(value))
 	content := ResponseContent{
-		Datas: data_container,
+		Datas: data,
 	}
 
 	Forward(header, &content, request)
