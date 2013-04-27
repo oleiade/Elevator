@@ -3,6 +3,8 @@ package elevator
 import (
 	"bytes"
 	"fmt"
+	"log"
+	"strconv"
 	leveldb "github.com/jmhodges/levigo"
 )
 
@@ -12,6 +14,7 @@ var database_commands = map[string]func(*Db, *Request) error{
 	DB_PUT:    	Put,
 	DB_DELETE: 	Delete,
 	DB_RANGE: 	Range,
+	DB_SLICE:	Slice,
 }
 
 var store_commands = map[string]func(*DbStore, *Request) error{
@@ -177,6 +180,48 @@ func Range(db *Db, request *Request) error {
 	}
 
 	header := NewSuccessResponseHeader()
+	content := ResponseContent{
+		Datas: data,
+	}
+
+	Forward(header, &content, request)
+
+	db.Connector.ReleaseSnapshot(snapshot)
+
+	return nil
+}
+
+func Slice(db *Db, request *Request) error {
+	read_options := leveldb.NewReadOptions()
+	snapshot := db.Connector.NewSnapshot()
+	read_options.SetSnapshot(snapshot)
+
+	var header *ResponseHeader
+	var data [][]string
+
+	start := []byte(request.Args[0])
+	limit, err := strconv.Atoi(request.Args[1])
+
+	if err == nil {
+		it := db.Connector.NewIterator(read_options)
+		defer it.Close()
+		it.Seek(start)
+
+		i := 0
+		for it = it; it.Valid(); it.Next() {
+			if i >= limit {
+				break
+			}
+
+			data = append(data, []string{string(it.Key()), string(it.Value())})		
+			i++
+		}
+		header = NewSuccessResponseHeader()
+	} else {
+		log.Println(err)
+		header = NewFailureResponseHeader(TYPE_ERROR, string(err.Error()))
+	}
+
 	content := ResponseContent{
 		Datas: data,
 	}
