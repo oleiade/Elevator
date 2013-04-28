@@ -2,7 +2,6 @@ package elevator
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"strconv"
 	leveldb "github.com/jmhodges/levigo"
@@ -18,10 +17,11 @@ var database_commands = map[string]func(*Db, *Request) error{
 }
 
 var store_commands = map[string]func(*DbStore, *Request) error{
+	DB_CREATE:	DbCreate,
 	DB_CONNECT: DbConnect,
-	DB_LIST:    DbList,
 	DB_MOUNT:	DbMount,
 	DB_UMOUNT:	DbUnmount,
+	DB_LIST:    DbList,
 }
 
 func Exec(db *Db, request *Request) {
@@ -235,6 +235,23 @@ func Slice(db *Db, request *Request) error {
 	return nil
 }
 
+func DbCreate(db_store *DbStore, request *Request) error {
+	var header	*ResponseHeader
+	db_name := request.Args[0]
+
+	err := db_store.Add(db_name)
+	if err != nil {
+		header = NewFailureResponseHeader(DATABASE_ERROR, string(err.Error()))
+	} else {
+		header = NewSuccessResponseHeader()
+	}
+
+	content := ResponseContent{}
+	Forward(header, &content, request)
+
+	return nil
+}
+
 func DbConnect(db_store *DbStore, request *Request) error {
 	db_name := request.Args[0]
 	db_uid, exists := db_store.NameToUid[db_name]
@@ -259,14 +276,13 @@ func DbConnect(db_store *DbStore, request *Request) error {
 
 func DbList(db_store *DbStore, request *Request) error {
 	db_names := db_store.List()
+	log.Println(db_names)
 	header := NewSuccessResponseHeader()
 	data_container := make([][]byte, len(db_names))
 
 	for index, db_name := range db_names {
 		data_container[index] = []byte(db_name)
 	}
-
-	fmt.Println(db_names)
 
 	content := ResponseContent{
 		Datas: data_container,
@@ -288,7 +304,7 @@ func DbMount(db_store *DbStore, request *Request) error {
 		if err != nil {
 			return err
 		}
-		
+
 		header = NewSuccessResponseHeader()
 	} else {
 		header = NewFailureResponseHeader(DATABASE_ERROR, "Database does not exist")
