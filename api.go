@@ -20,6 +20,8 @@ var database_commands = map[string]func(*Db, *Request) error{
 var store_commands = map[string]func(*DbStore, *Request) error{
 	DB_CONNECT: DbConnect,
 	DB_LIST:    DbList,
+	DB_MOUNT:	DbMount,
+	DB_UMOUNT:	DbUnmount,
 }
 
 func Exec(db *Db, request *Request) {
@@ -269,6 +271,54 @@ func DbList(db_store *DbStore, request *Request) error {
 	content := ResponseContent{
 		Datas: data_container,
 	}
+
+	Forward(header, &content, request)
+
+	return nil
+}
+
+
+func DbMount(db_store *DbStore, request *Request) error {
+	var header *ResponseHeader
+	db_name := request.Args[0]
+	db_uid, exists := db_store.NameToUid[db_name]
+
+	if exists {
+		err := db_store.Mount(db_store.Container[db_uid].Name)
+		if err != nil {
+			return err
+		}
+		
+		header = NewSuccessResponseHeader()
+	} else {
+		header = NewFailureResponseHeader(DATABASE_ERROR, "Database does not exist")
+	}
+
+	content := ResponseContent{}
+
+	Forward(header, &content, request)
+
+	return nil
+
+}
+
+func DbUnmount(db_store *DbStore, request *Request) error {
+	var header *ResponseHeader
+	db_name := request.Args[0]
+	db_uid, exists := db_store.NameToUid[db_name]
+
+	if exists {
+		err := db_store.Unmount(db_uid)
+		if err != nil {
+			return err
+		}
+
+		header = NewSuccessResponseHeader()
+	} else {
+		header = NewFailureResponseHeader(DATABASE_ERROR, "Database does not exist")
+	}
+
+	content := ResponseContent{}
 
 	Forward(header, &content, request)
 

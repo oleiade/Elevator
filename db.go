@@ -1,7 +1,6 @@
 package elevator
 
 import (
-	"log"
 	"errors"
 	uuid "code.google.com/p/go-uuid/uuid"
 	leveldb "github.com/jmhodges/levigo"
@@ -53,9 +52,9 @@ func (db *Db) Mount() (err error) {
 // and deletes the according leveldb connector
 func (db *Db) Unmount() (err error) {
 	if db.Status == DB_STATUS_MOUNTED {
-		db.Status = DB_STATUS_UNMOUNTED
-		db.Connector = nil
+		db.Connector.Close()
 		close(db.Channel)
+		db.Status = DB_STATUS_UNMOUNTED
 	} else {
 		return errors.New("Database already unmounted")
 	}
@@ -67,7 +66,6 @@ func (db *Db) Unmount() (err error) {
 // for incoming requests to execute and sends clients
 // response.
 func (db *Db) Routine() {
-	log.Printf("%s routine started", db.Name)
 	for request := range db.Channel {
 		Exec(db, request)
 	}

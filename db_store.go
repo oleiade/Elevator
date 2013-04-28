@@ -90,8 +90,8 @@ func (store *DbStore) Load() (err error) {
 
 // Mount sets the database status to DB_STATUS_MOUNTED
 // and instantiates the according leveldb connector
-func (store *DbStore) Mount(db_name string) (err error) {
-	if db, present := store.Container[db_name]; present {
+func (store *DbStore) Mount(db_uid string) (err error) {
+	if db, present := store.Container[db_uid]; present {
 		err = db.Mount()
 		if err != nil {
 			return err
@@ -105,8 +105,8 @@ func (store *DbStore) Mount(db_name string) (err error) {
 
 // Unmount sets the database status to DB_STATUS_UNMOUNTED
 // and deletes the according leveldb connector
-func (store *DbStore) Unmount(db_name string) (err error) {
-	if db, present := store.Container[db_name]; present {
+func (store *DbStore) Unmount(db_uid string) (err error) {
+	if db, present := store.Container[db_uid]; present {
 		err = db.Unmount()
 		if err != nil {
 			return err
