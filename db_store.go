@@ -128,7 +128,8 @@ func (store *DbStore) Add(db_name string) (err error) {
 		store.Container[db.Uid] = db
 		store.updateNameToUidIndex()
 		err = store.WriteToFile()
-		if err != nil { return err}
+		if err != nil { return err }
+		db.Mount()
 	}
 
 	return nil
@@ -141,9 +142,9 @@ func (store *DbStore) Drop(db_name string) (err error) {
 		db := store.Container[db_uid]
 		db_path := db.Path
 
+		store.Unmount(db_uid)
 		delete(store.Container, db_uid)
 		delete(store.NameToUid, db_name)
-
 		store.WriteToFile()
 
 		err = os.RemoveAll(db_path)

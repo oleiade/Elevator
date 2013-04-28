@@ -18,6 +18,7 @@ var database_commands = map[string]func(*Db, *Request) error{
 
 var store_commands = map[string]func(*DbStore, *Request) error{
 	DB_CREATE:	DbCreate,
+	DB_DROP:	DbDrop,
 	DB_CONNECT: DbConnect,
 	DB_MOUNT:	DbMount,
 	DB_UMOUNT:	DbUnmount,
@@ -240,6 +241,23 @@ func DbCreate(db_store *DbStore, request *Request) error {
 	db_name := request.Args[0]
 
 	err := db_store.Add(db_name)
+	if err != nil {
+		header = NewFailureResponseHeader(DATABASE_ERROR, string(err.Error()))
+	} else {
+		header = NewSuccessResponseHeader()
+	}
+
+	content := ResponseContent{}
+	Forward(header, &content, request)
+
+	return nil
+}
+
+func DbDrop(db_store *DbStore, request *Request) error {
+	var header 	*ResponseHeader
+	db_name := request.Args[0]
+
+	err := db_store.Drop(db_name)
 	if err != nil {
 		header = NewFailureResponseHeader(DATABASE_ERROR, string(err.Error()))
 	} else {
