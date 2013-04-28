@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -124,7 +125,28 @@ func (store *DbStore) Add(db_name string) (err error) {
 	if _, present := store.NameToUid[db_name]; present {
 		return errors.New("Database already exists")
 	} else {
-		db := NewDb(db_name, filepath.Join(store.StoragePath, db_name))
+		var db_path string
+
+		if IsFilePath(db_name) {
+			if !filepath.IsAbs(db_name) {
+				return errors.New("Cannot create database from relative path")
+			}
+
+			db_path = db_name
+			// Check base db path exists
+			dir := filepath.Dir(db_name)
+			exists, err := DirExists(dir)
+			if err != nil {
+				log.Println(err)
+				return err
+			} else if !exists {
+				return errors.New(fmt.Sprintf("%s does not exist", dir))
+			}
+		} else {
+			db_path = filepath.Join(store.StoragePath, db_name)
+		}
+
+		db := NewDb(db_name, db_path)
 		store.Container[db.Uid] = db
 		store.updateNameToUidIndex()
 		err = store.WriteToFile()

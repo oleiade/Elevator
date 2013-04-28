@@ -294,7 +294,6 @@ func DbConnect(db_store *DbStore, request *Request) error {
 
 func DbList(db_store *DbStore, request *Request) error {
 	db_names := db_store.List()
-	log.Println(db_names)
 	header := NewSuccessResponseHeader()
 	data_container := make([][]byte, len(db_names))
 
