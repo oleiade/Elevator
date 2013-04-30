@@ -8,7 +8,8 @@ import sys
 import zmq
 import logging
 import procname
-import daemon
+
+from lockfile.linklockfile import LinkLockFile
 
 from elevator import args
 from elevator.db import DatabaseStore
@@ -16,7 +17,7 @@ from elevator.config import Config
 from elevator.log import setup_loggers, log_critical
 from elevator.backend import Backend
 from elevator.frontend import Frontend
-from elevator.utils.daemon import Daemon
+from elevator.utils.daemon import daemon
 
 
 def setup_process_name(config_file):
@@ -65,13 +66,6 @@ def runserver(config):
             del frontend
             return
 
-
-class ServerDaemon(Daemon):
-    def run(self, config):
-        while True:
-            runserver(config)
-
-
 def main():
     cmdline = args.init_parser().parse_args(sys.argv[1:])
     config = Config(cmdline.config)
@@ -80,7 +74,9 @@ def main():
     setup_process_name(cmdline.config)
 
     if config['daemon'] is True:
-        with daemon.DaemonContext(pidfile=open('/var/run/elevator.pid', 'a+'), stderr=sys.stderr):
+        daemon_context = daemon(pidfile=config['pidfile'])
+
+        with daemon_context:
             runserver(config)
     else:
         runserver(config)
