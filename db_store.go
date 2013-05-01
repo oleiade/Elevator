@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	l4g 		"github.com/alecthomas/log4go"
 )
 
 type DbStore struct {
@@ -92,6 +92,7 @@ func (store *DbStore) Load() (err error) {
 // Mount sets the database status to DB_STATUS_MOUNTED
 // and instantiates the according leveldb connector
 func (store *DbStore) Mount(db_uid string) (err error) {
+
 	if db, present := store.Container[db_uid]; present {
 		err = db.Mount()
 		if err != nil {
@@ -100,7 +101,7 @@ func (store *DbStore) Mount(db_uid string) (err error) {
 	} else {
 		return errors.New("Database does not exist")
 	}
-
+	
 	return nil
 }
 
@@ -137,7 +138,7 @@ func (store *DbStore) Add(db_name string) (err error) {
 			dir := filepath.Dir(db_name)
 			exists, err := DirExists(dir)
 			if err != nil {
-				log.Println(err)
+				l4g.Error(err)
 				return err
 			} else if !exists {
 				return errors.New(fmt.Sprintf("%s does not exist", dir))
@@ -153,6 +154,10 @@ func (store *DbStore) Add(db_name string) (err error) {
 		if err != nil { return err }
 		db.Mount()
 	}
+
+	l4g.Debug(func()string {
+		return fmt.Sprintf("Database %s added to store", db_name)
+	})
 
 	return nil
 }
@@ -176,6 +181,10 @@ func (store *DbStore) Drop(db_name string) (err error) {
 	} else {
 		return errors.New("Database does not exist")
 	}
+
+	l4g.Debug(func()string {
+		return fmt.Sprintf("Database %s dropped from store", db_name)
+	})
 
 	return nil
 }

@@ -3,7 +3,8 @@ package elevator
 import (
 	"bytes"
 	"log"
-	zmq "github.com/alecthomas/gozmq"
+	zmq 		"github.com/alecthomas/gozmq"
+	l4g 		"github.com/alecthomas/log4go"
 )
 
 type ClientSocket struct {
@@ -32,6 +33,7 @@ func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbSt
 	msg := bytes.NewBuffer(raw_msg)
 	request.UnpackFrom(msg)
 	request.Source = client_socket
+	l4g.Debug(func()string { return request.String() })
 
 	if request.Db != "" {
 		if db, ok := db_store.Container[request.Db]; ok {

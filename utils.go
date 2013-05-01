@@ -2,6 +2,7 @@ package elevator
 
 import (
 	"os"
+	"bytes"
 	"strings"
 )
 
@@ -23,4 +24,18 @@ func IsFilePath(str string) bool {
 	}
 
 	return false
+}
+
+func Truncate(str string, l int) string {
+	var truncated bytes.Buffer
+
+	if len(str) > l {
+		for i := 0; i < l; i++ {
+			truncated.WriteString(string(str[i]))
+		}
+	} else {
+		return str
+	}
+
+	return truncated.String()
 }

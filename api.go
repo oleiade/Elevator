@@ -2,9 +2,9 @@ package elevator
 
 import (
 	"bytes"
-	"log"
 	"strconv"
-	leveldb "github.com/jmhodges/levigo"
+	leveldb 	"github.com/jmhodges/levigo"
+	l4g 		"github.com/alecthomas/log4go"
 )
 
 var database_commands = map[string]func(*Db, *Request) error{
@@ -31,7 +31,8 @@ func Exec(db *Db, request *Request) {
 	}
 }
 
-func Forward(header *ResponseHeader, content *ResponseContent, request *Request) error {
+func Forward(header *ResponseHeader, content *ResponseContent, request *Request) error {	
+	l4g.Debug(func()string { return header.String() })
 	socket := request.Source.Socket
 	address := request.Source.Id
 	parts := make([][]byte, 3)
@@ -221,7 +222,7 @@ func Slice(db *Db, request *Request) error {
 		}
 		header = NewSuccessResponseHeader()
 	} else {
-		log.Println(err)
+		l4g.Error(err)
 		header = NewFailureResponseHeader(TYPE_ERROR, string(err.Error()))
 	}
 

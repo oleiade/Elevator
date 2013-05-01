@@ -2,6 +2,7 @@ package elevator
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/ugorji/go-msgpack"
 )
 
@@ -49,6 +50,11 @@ func NewFailureResponseHeader(err_code int, err_msg string) *ResponseHeader {
 	}
 }
 
+func (r *Request) String() string {
+	return fmt.Sprintf("<Request uid:%s command:%s args:%s>",
+					   r.Db, r.Command, r.Args)
+}
+
 func (r *Request) PackInto(buffer *bytes.Buffer) error {
 	enc := msgpack.NewEncoder(buffer)
 	err := enc.Encode(r)
@@ -67,6 +73,11 @@ func (r *Request) UnpackFrom(data *bytes.Buffer) error {
 	}
 
 	return nil
+}
+
+func (header *ResponseHeader) String() string {
+	return fmt.Sprintf("<ResponseHeader status:%d err_code:%d err_msg:%s compression:%d>",
+					   header.Status, header.Err_code, header.Err_msg, header.Compression)
 }
 
 func (header *ResponseHeader) PackInto(buffer *bytes.Buffer) error {

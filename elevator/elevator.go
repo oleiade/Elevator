@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"log"
-	elevator "github.com/oleiade/Elevator"
+	elevator 	"github.com/oleiade/Elevator"
+	l4g 		"github.com/alecthomas/log4go"
 )
 
 var configFile string
@@ -36,11 +36,11 @@ func main() {
 	config := elevator.NewConfig()
 	err := config.FromFile(configFile)
 	if err != nil {
-		log.Fatal(err)
+		l4g.Crash(err)
 	}
 
 	// implement config override via cmdline
 
-	log.Printf("Elevator running on %s", config.Endpoint)
+	l4g.Info("Elevator running on %s", config.Endpoint)
 	elevator.Runserver(config)
 }
