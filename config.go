@@ -55,3 +55,15 @@ func (c *Config) FromFile(filepath string) error {
 
 	return nil
 }
+
+// A bit verbose, and not that dry, but could not find
+// more clever for now.
+func (c *Config) UpdateFromCmdline(cmdline *Cmdline) {
+	if *cmdline.DaemonMode != DEFAULT_DAEMON_MODE {
+		c.Daemon = *cmdline.DaemonMode
+	}
+
+	if *cmdline.Endpoint != DEFAULT_ENDPOINT {
+		c.Endpoint = *cmdline.Endpoint
+	}
+}

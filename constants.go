@@ -47,3 +47,10 @@ const (
 	SIGNAL_BATCH_PUT    = 1
 	SIGNAL_BATCH_DELETE = 0
 )
+
+// Command line parsing default values
+const (
+	DEFAULT_CONFIG_FILE = "/etc/elevator/elevator.conf"
+	DEFAULT_DAEMON_MODE = false
+	DEFAULT_ENDPOINT = ""
+)
