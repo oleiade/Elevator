@@ -14,6 +14,7 @@ type Config struct {
 	DefaultDb		string	`ini:"default_db"`
 	ActivityLog		string	`ini:"activity_log"`
 	ErrorsLog		string	`ini:"errors_log"`
+	LogLevel		string	`ini:"log_level"`
 }
 
 func NewConfig() *Config {
@@ -25,6 +26,7 @@ func NewConfig() *Config {
 		DefaultDb: "default",
 		ActivityLog: "/var/log/elevator/activity.log",
 		ErrorsLog: "/var/log/elevator/errors.log",
+		LogLevel: "INFO",
 	}
 }
 
@@ -65,5 +67,9 @@ func (c *Config) UpdateFromCmdline(cmdline *Cmdline) {
 
 	if *cmdline.Endpoint != DEFAULT_ENDPOINT {
 		c.Endpoint = *cmdline.Endpoint
+	}
+
+	if *cmdline.LogLevel != DEFAULT_LOG_LEVEL {
+		c.LogLevel = *cmdline.LogLevel
 	}
 }

@@ -134,6 +134,11 @@ Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``
   # ipc:///tmp/elevator.sock
   endpoint = tcp://127.0.0.1:4141
 
+  # Sets the logging verbosity, possible values are:
+  # DEBUG, FINEST, FINE, DEBUG, TRACE,
+  # INFO, WARNING, ERROR, CRITICAL
+  log_level=INFO
+
   # Path to file were server activity should be logged
   activity_log = /var/log/elevator.log
 

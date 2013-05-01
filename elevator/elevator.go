@@ -18,6 +18,10 @@ func main() {
 
 	config.UpdateFromCmdline(cmdline)
 
+	l4g.AddFilter("stdout",
+				  elevator.LogLevels[config.LogLevel],
+				  l4g.NewConsoleLogWriter())
+
 	l4g.Info("Elevator running on %s", config.Endpoint)
 	elevator.Runserver(config)
 }
