@@ -2,6 +2,7 @@ package elevator
 
 import (
 	"bytes"
+	"errors"
 	"strconv"
 	leveldb 	"github.com/jmhodges/levigo"
 	l4g 		"github.com/alecthomas/log4go"
@@ -55,11 +56,17 @@ func Forward(header *ResponseHeader, content *ResponseContent, request *Request)
 }
 
 func Get(db *Db, request *Request) error {
-	ro := leveldb.NewReadOptions()
-	key := request.Args[0]
+	var key	string
+
+	if args, ok := request.Args.([]string); ok {
+		key = args[0]
+	} else {
+		return errors.New("Unable cast args to []string")
+	}
 
 	var data []string
 
+	ro := leveldb.NewReadOptions()
 	value, err := db.Connector.Get(ro, []byte(key))
 
 	var header *ResponseHeader
@@ -80,9 +87,17 @@ func Get(db *Db, request *Request) error {
 }
 
 func Put(db *Db, request *Request) error {
+	var key		string
+	var value	string
+
+	if args, ok := request.Args.([]string); ok {
+		key = args[0]
+		value = args[1]
+	} else {
+		return errors.New("Unable to cast args to []string")
+	}
+
 	wo := leveldb.NewWriteOptions()
-	key := request.Args[0]
-	value := request.Args[1]
 	err := db.Connector.Put(wo, []byte(key), []byte(value))
 
 	var header *ResponseHeader
@@ -100,8 +115,15 @@ func Put(db *Db, request *Request) error {
 }
 
 func Delete(db *Db, request *Request) error {
+	var key		string
+
+	if args, ok := request.Args.([]string); ok {
+		key = args[0]
+	} else {
+		return errors.New("Unable to cast args to []string")
+	}
+
 	wo := leveldb.NewWriteOptions()
-	key := request.Args[0]
 	err := db.Connector.Delete(wo, []byte(key))
 
 	var header *ResponseHeader
@@ -119,18 +141,20 @@ func Delete(db *Db, request *Request) error {
 }
 
 func MGet(db *Db, request *Request) error {
+	args := request.Args.([]string)
+
 	read_options := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
 	read_options.SetSnapshot(snapshot)
 
-	var data []string = make([]string, len(request.Args))
+	var data []string = make([]string, len(args))
 
-	if len(request.Args) > 0 {
-		start := request.Args[0]
-		end := request.Args[len(request.Args) - 1]
+	if len(args) > 0 {
+		start := args[0]
+		end := args[len(args) - 1]
 		keys_index := make(map[string]int)
 
-		for index, element := range request.Args {
+		for index, element := range args {
 			keys_index[element] = index
 		}
 
@@ -163,14 +187,21 @@ func MGet(db *Db, request *Request) error {
 }
 
 func Range(db *Db, request *Request) error {
+	var start	[]byte
+	var end		[]byte
+
+	if args, ok := request.Args.([]string); ok {
+		start = []byte(args[0])
+		end = []byte(args[1])
+	} else {
+		return errors.New("Unable to cast args to []string")
+	}
+
 	read_options := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
 	read_options.SetSnapshot(snapshot)
 
 	var data [][]string
-
-	start := []byte(request.Args[0])
-	end := []byte(request.Args[1])
 
 	it := db.Connector.NewIterator(read_options)
 	defer it.Close()
@@ -196,6 +227,15 @@ func Range(db *Db, request *Request) error {
 }
 
 func Slice(db *Db, request *Request) error {
+	var start			[]byte
+	var limit			int
+	var limit_type_err	error
+
+	if args, ok := request.Args.([]string); ok {
+		start = []byte(args[0])
+		limit, limit_type_err = strconv.Atoi(args[1])
+	}
+
 	read_options := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
 	read_options.SetSnapshot(snapshot)
@@ -203,10 +243,10 @@ func Slice(db *Db, request *Request) error {
 	var header *ResponseHeader
 	var data [][]string
 
-	start := []byte(request.Args[0])
-	limit, err := strconv.Atoi(request.Args[1])
-
-	if err == nil {
+	if limit_type_err != nil {
+		l4g.Error(limit_type_err)
+		header = NewFailureResponseHeader(TYPE_ERROR, string(limit_type_err.Error()))
+	} else {
 		it := db.Connector.NewIterator(read_options)
 		defer it.Close()
 		it.Seek(start)
@@ -221,9 +261,6 @@ func Slice(db *Db, request *Request) error {
 			i++
 		}
 		header = NewSuccessResponseHeader()
-	} else {
-		l4g.Error(err)
-		header = NewFailureResponseHeader(TYPE_ERROR, string(err.Error()))
 	}
 
 	content := ResponseContent{
@@ -238,8 +275,15 @@ func Slice(db *Db, request *Request) error {
 }
 
 func DbCreate(db_store *DbStore, request *Request) error {
+	var db_name	string
+
+	if args, ok := request.Args.([]string); ok {
+		db_name = args[0]
+	} else {
+		return errors.New("Unable to cast args to []string")
+	}
+
 	var header	*ResponseHeader
-	db_name := request.Args[0]
 
 	err := db_store.Add(db_name)
 	if err != nil {
@@ -255,8 +299,15 @@ func DbCreate(db_store *DbStore, request *Request) error {
 }
 
 func DbDrop(db_store *DbStore, request *Request) error {
+	var db_name	string
+
+	if args, ok := request.Args.([]string); ok {
+		db_name = args[0]
+	} else {
+		return errors.New("Unable to cast args to []string")
+	}
+
 	var header 	*ResponseHeader
-	db_name := request.Args[0]
 
 	err := db_store.Drop(db_name)
 	if err != nil {
@@ -272,7 +323,14 @@ func DbDrop(db_store *DbStore, request *Request) error {
 }
 
 func DbConnect(db_store *DbStore, request *Request) error {
-	db_name := request.Args[0]
+	var db_name	string
+
+	if args, ok := request.Args.([]string); ok {
+		db_name = args[0]
+	} else {
+		return errors.New("Unable to cast args to []string")
+	}
+
 	db_uid, exists := db_store.NameToUid[db_name]
 
 	var header *ResponseHeader
@@ -313,8 +371,15 @@ func DbList(db_store *DbStore, request *Request) error {
 
 
 func DbMount(db_store *DbStore, request *Request) error {
+	var db_name	string
+
+	if args, ok := request.Args.([]string); ok {
+		db_name = args[0]
+	} else {
+		return errors.New("Unable to cast args to []string")
+	}
+
 	var header *ResponseHeader
-	db_name := request.Args[0]
 	db_uid, exists := db_store.NameToUid[db_name]
 
 	if exists {
@@ -337,8 +402,15 @@ func DbMount(db_store *DbStore, request *Request) error {
 }
 
 func DbUnmount(db_store *DbStore, request *Request) error {
+	var db_name	string
+
+	if args, ok := request.Args.([]string); ok {
+		db_name = args[0]
+	} else {
+		return errors.New("Unable to cast args to []string")
+	}
+
 	var header *ResponseHeader
-	db_name := request.Args[0]
 	db_uid, exists := db_store.NameToUid[db_name]
 
 	if exists {

@@ -14,7 +14,7 @@ type Message interface {
 type Request struct {
 	Db      string        `msgpack:"uid"`
 	Command string        `msgpack:"cmd"`
-	Args    []string      `msgpack:"args"`
+	Args    interface{}   `msgpack:"args"`
 	Source  *ClientSocket `msgpack:"-"`
 }
 
@@ -23,6 +23,13 @@ type ResponseHeader struct {
 	Err_code    int    `msgpack:"err_code"`
 	Err_msg     string `msgpack:"err_msg"`
 	Compression int    `msgpack:"compression"`
+}
+
+type Batch []BatchOperation
+
+type BatchOperation struct {
+	op_code 	int
+	op_data		[]string
 }
 
 type ResponseContent struct {
