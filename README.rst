@@ -119,7 +119,7 @@ Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``
   pidfile = /var/run/elevator.pid
 
   # Where databases files should be store on the filesystem.
-  databases_storage_path = /var/lib/elevator
+  databases_store_path = /var/lib/elevator
 
   # Where should the file describing the databases store be
   # put on file system
