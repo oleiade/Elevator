@@ -22,6 +22,11 @@ func main() {
 				  elevator.LogLevels[config.LogLevel],
 				  l4g.NewConsoleLogWriter())
 
-	l4g.Info("Elevator running on %s", config.Endpoint)
-	elevator.Runserver(config)
+	if config.Daemon {
+		if err := elevator.Daemon(config); err != nil {
+			log.Fatal(err)
+		}
+	} else { 
+		elevator.ListenAndServe(config)
+	}
 }

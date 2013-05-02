@@ -1,8 +1,9 @@
 package elevator
 
 import (
-	"bytes"
+	"fmt"
 	"log"
+	"bytes"
 	zmq 		"github.com/alecthomas/gozmq"
 	l4g 		"github.com/alecthomas/log4go"
 )
@@ -47,7 +48,9 @@ func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbSt
 	}
 }
 
-func Runserver(config *Config) {
+func ListenAndServe(config *Config) error {
+	l4g.Info(fmt.Sprintf("Elevator started on %s", config.Endpoint))
+
 	socket, err := server_socket(config.Endpoint)
 	defer (*socket).Close()
 	if err != nil {
@@ -65,7 +68,7 @@ func Runserver(config *Config) {
 		zmq.PollItem{Socket: *socket, zmq.Events: zmq.POLLIN},
 	}
 
-	for i := 0; ; i++ {
+	for {
 		_, _ = zmq.Poll(poller, -1)
 
 		switch {
@@ -81,4 +84,6 @@ func Runserver(config *Config) {
 			go request_handler(&client_socket, msg, db_store)
 		}
 	}
+
+	return nil
 }

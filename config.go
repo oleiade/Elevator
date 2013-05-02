@@ -21,6 +21,7 @@ func NewConfig() *Config {
 	return &Config{
 		Daemon: false,
 		Endpoint: "tcp://127.0.0.1:4141",
+		Pidfile: "/var/run/elevator.pid",
 		StorePath: "/var/lib/elevator/store",
 		StoragePath: "/var/lib/elevator",
 		DefaultDb: "default",
