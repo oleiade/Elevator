@@ -40,7 +40,7 @@ Request messages format goes like this:
     {
         "meta": { ... },
         "uid": string,
-        "cmd": int,
+        "cmd": string,
         "args": [ string... ]
     }
 
