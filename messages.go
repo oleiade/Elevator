@@ -12,10 +12,10 @@ type Message interface {
 }
 
 type Request struct {
-	Db      string        `msgpack:"uid"`
-	Command string        `msgpack:"cmd"`
-	Args    interface{}   `msgpack:"args"`
-	Source  *ClientSocket `msgpack:"-"`
+	Db      	string        	`msgpack:"uid"`
+	Command 	string       	`msgpack:"cmd"`
+	Args    	[]interface{}   `msgpack:"args"`
+	Source  	*ClientSocket 	`msgpack:"-"`
 }
 
 type ResponseHeader struct {
@@ -25,18 +25,11 @@ type ResponseHeader struct {
 	Compression int    `msgpack:"compression"`
 }
 
-type Batch []BatchOperation
-
-type BatchOperation struct {
-	op_code 	int
-	op_data		[]string
-}
-
 type ResponseContent struct {
 	Datas interface{} `msgpack:"datas"`
 }
 
-func NewRequest(command string, args []string) *Request {
+func NewRequest(command string, args []interface{}) *Request {
 	return &Request{
 		Command: command,
 		Args:    args,
