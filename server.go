@@ -36,8 +36,8 @@ func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbSt
 	request.Source = client_socket
 	l4g.Debug(func()string { return request.String() })
 
-	if request.Db != "" {
-		if db, ok := db_store.Container[request.Db]; ok {
+	if request.DbUid != "" {
+		if db, ok := db_store.Container[request.DbUid]; ok {
 			if db.Status == DB_STATUS_UNMOUNTED {
 				db.Mount()
 			}

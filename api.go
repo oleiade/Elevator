@@ -1,9 +1,8 @@
 package elevator
 
 import (
-	"log"
 	"bytes"
-	"errors"
+	"strconv"
 	leveldb 	"github.com/jmhodges/levigo"
 	l4g 		"github.com/alecthomas/log4go"
 )
@@ -56,11 +55,7 @@ func Forward(header *ResponseHeader, content *ResponseContent, request *Request)
 }
 
 func Get(db *Db, request *Request) error {
-	key, ok := request.Args[0].(string)
-	if !ok {
-		return errors.New("Unable to extract args from request")
-	}
-
+	key := request.Args[0]
 	var data []string
 
 	ro := leveldb.NewReadOptions()
@@ -84,11 +79,8 @@ func Get(db *Db, request *Request) error {
 }
 
 func Put(db *Db, request *Request) error {
-	key, ok := request.Args[0].(string)
-	value, ok := request.Args[1].(string)
-	if !ok {
-		return errors.New("Unable to extract args from request")
-	}
+	key := request.Args[0]
+	value := request.Args[1]
 
 	wo := leveldb.NewWriteOptions()
 	err := db.Connector.Put(wo, []byte(key), []byte(value))
@@ -108,10 +100,7 @@ func Put(db *Db, request *Request) error {
 }
 
 func Delete(db *Db, request *Request) error {
-	key, ok := request.Args[0].(string)
-	if !ok {
-		return errors.New("Unable to cast args to []string")
-	}
+	key := request.Args[0]
 
 	wo := leveldb.NewWriteOptions()
 	err := db.Connector.Delete(wo, []byte(key))
@@ -138,24 +127,21 @@ func MGet(db *Db, request *Request) error {
 	var data []string = make([]string, len(request.Args))
 
 	if len(request.Args) > 0 {
-		start, ok := request.Args[0].([]byte)
-		end, ok := request.Args[len(request.Args) - 1].([]byte)
-		if !ok {
-			return errors.New("Unable to extract args from request")
-		}
+		start := request.Args[0]
+		end := request.Args[len(request.Args) - 1]
 
 		keys_index := make(map[string]int)
 
 		for index, element := range request.Args {
-			keys_index[element.(string)] = index
+			keys_index[element] = index
 		}
 
 		it := db.Connector.NewIterator(read_options)
 		defer it.Close()
-		it.Seek(start)
+		it.Seek([]byte(start))
 
 		for it = it; it.Valid(); it.Next() {
-			if bytes.Compare(it.Key(), end) > 1 {
+			if bytes.Compare(it.Key(), []byte(end)) > 1 {
 				break
 			}
 
@@ -179,11 +165,8 @@ func MGet(db *Db, request *Request) error {
 }
 
 func Range(db *Db, request *Request) error {
-	start, ok := request.Args[0].([]byte)
-	end, ok := request.Args[1].([]byte)
-	if !ok {
-		return errors.New("Unable to extract args from request")
-	}
+	start := request.Args[0]
+	end := request.Args[1]
 
 	read_options := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
@@ -193,10 +176,10 @@ func Range(db *Db, request *Request) error {
 
 	it := db.Connector.NewIterator(read_options)
 	defer it.Close()
-	it.Seek(start)
+	it.Seek([]byte(start))
 
 	for it = it; it.Valid(); it.Next() {
-		if bytes.Compare(it.Key(), end) >= 1 {
+		if bytes.Compare(it.Key(), []byte(end)) >= 1 {
 			break
 		}
 		data = append(data, []string{string(it.Key()), string(it.Value())})
@@ -215,11 +198,8 @@ func Range(db *Db, request *Request) error {
 }
 
 func Slice(db *Db, request *Request) error {
-	start, ok := request.Args[0].([]byte)
-	limit, ok := request.Args[1].(int)
-	if !ok {
-		return errors.New("Unable to extract args from request")
-	}
+	start := request.Args[0]
+	limit, _ := strconv.Atoi(request.Args[1])
 
 	read_options := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
@@ -230,7 +210,7 @@ func Slice(db *Db, request *Request) error {
 
 	it := db.Connector.NewIterator(read_options)
 	defer it.Close()
-	it.Seek(start)
+	it.Seek([]byte(start))
 
 	i := 0
 	for it = it; it.Valid(); it.Next() {
@@ -257,10 +237,7 @@ func Slice(db *Db, request *Request) error {
 
 
 func DbCreate(db_store *DbStore, request *Request) error {
-	db_name, ok	:= request.Args[0].(string)
-	if !ok {
-		return errors.New("Unable to extract args from request")
-	}
+	db_name := request.Args[0]
 
 	var header	*ResponseHeader
 
@@ -278,10 +255,7 @@ func DbCreate(db_store *DbStore, request *Request) error {
 }
 
 func DbDrop(db_store *DbStore, request *Request) error {
-	db_name, ok	:= request.Args[0].(string)
-	if !ok {
-		return errors.New("Unable to extract args from request")
-	}
+	db_name	:= request.Args[0]
 
 	var header 	*ResponseHeader
 
@@ -299,12 +273,7 @@ func DbDrop(db_store *DbStore, request *Request) error {
 }
 
 func DbConnect(db_store *DbStore, request *Request) error {
-	db_name, ok := request.Args[0].(string)
-	if !ok {
-		l4g.Debug("ERROR")
-		return errors.New("Unable to cast args to []string")
-	}
-
+	db_name := request.Args[0]
 	db_uid, exists := db_store.NameToUid[db_name]
 
 	var header *ResponseHeader
@@ -345,10 +314,7 @@ func DbList(db_store *DbStore, request *Request) error {
 
 
 func DbMount(db_store *DbStore, request *Request) error {
-	db_name, ok	:= request.Args[0].(string)
-	if !ok {
-		return errors.New("Unable to extract args from request")
-	}
+	db_name	:= request.Args[0]
 
 	var header *ResponseHeader
 	db_uid, exists := db_store.NameToUid[db_name]
@@ -373,10 +339,7 @@ func DbMount(db_store *DbStore, request *Request) error {
 }
 
 func DbUnmount(db_store *DbStore, request *Request) error {
-	db_name, ok := request.Args[0].(string)
-	if !ok {
-		return errors.New("Unable to extract args from request")
-	}
+	db_name := request.Args[0]
 
 	var header *ResponseHeader
 	db_uid, exists := db_store.NameToUid[db_name]
