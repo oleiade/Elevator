@@ -126,7 +126,7 @@ func MGet(db *Db, request *Request) error {
 		defer it.Close()
 		it.Seek([]byte(start))
 
-		for it = it; it.Valid(); it.Next() {
+		for ; it.Valid(); it.Next() {
 			if bytes.Compare(it.Key(), []byte(end)) > 1 {
 				break
 			}

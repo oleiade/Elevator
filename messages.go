@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/ugorji/go-msgpack"
-	"log"
 )
 
 type Message interface {
