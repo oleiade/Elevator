@@ -150,3 +150,11 @@ Clients
 
 *C* : *Coming soon*
 
+
+Thanks
+======
+
+I wish to thank `Botify <http://botify.com>`_ which hires me and gave me the opportunity to spend some time on the project. To `Francisco Roque <http://>`_ and `BioQl <http://>`_ for their active support and feedback. Thanks to `Greg leclercq <>`_ for it's great advices and clever ideas.
+
+I'd really like to thanks the `Zeromq <http://zeromq.org>`_ and `Leveldb <>`_ creators and maintainers for their amazing work, without which, none of this would have been possible.
+
