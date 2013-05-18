@@ -1,6 +1,7 @@
 package elevator
 
 import (
+	"log"
 	"bytes"
 	"fmt"
 	"github.com/ugorji/go-msgpack"
@@ -25,10 +26,48 @@ type Response struct {
 	Data		[]string
 }
 
+type BatchOperations []BatchOperation
+
+type BatchOperation struct {
+	OpCode		string
+	OpArgs		[]string
+}
+
 func NewRequest(command string, args []string) *Request {
 	return &Request{
 		Command: command,
 		Args: args,
+	}
+}
+
+func NewResponse(status int, err_code int, err_msg string, data []string) *Response {
+	return &Response{
+		Status: status,
+		Err_code: err_code,
+		Err_msg: err_msg,
+		Data: data,
+	}
+}
+
+func NewSuccessResponse(data []string) *Response {
+	return &Response {
+		Status: SUCCESS_STATUS,
+		Data: data,
+	}
+}
+
+func NewFailureResponse(err_code int, err_msg string) *Response {
+	return &Response {
+		Status: FAILURE_STATUS,
+		Err_code: err_code,
+		Err_msg: err_msg,
+	}
+}
+
+func NewBatchOperation(op_code string, op_args []string) *BatchOperation {
+	return &BatchOperation{
+		OpCode: op_code,
+		OpArgs: op_args,
 	}
 }
 
@@ -80,30 +119,6 @@ func (r *Response) ToArray() []interface{} {
 	return response
 }
 
-func NewResponse(status int, err_code int, err_msg string, data []string) *Response {
-	return &Response{
-		Status: status,
-		Err_code: err_code,
-		Err_msg: err_msg,
-		Data: data,
-	}
-}
-
-func NewSuccessResponse(data []string) *Response {
-	return &Response {
-		Status: SUCCESS_STATUS,
-		Data: data,
-	}
-}
-
-func NewFailureResponse(err_code int, err_msg string) *Response {
-	return &Response {
-		Status: FAILURE_STATUS,
-		Err_code: err_code,
-		Err_msg: err_msg,
-	}
-}
-
 func (r *Response) PackInto(buffer *bytes.Buffer) error {
 	enc := msgpack.NewEncoder(buffer)
 	err := enc.Encode(r.ToArray())
@@ -112,4 +127,32 @@ func (r *Response) PackInto(buffer *bytes.Buffer) error {
 	}
 
 	return nil
+}
+
+
+func BatchOperationFromSlice(slice []string) *BatchOperation {
+	return NewBatchOperation(slice[0], slice[1:])
+}
+
+func BatchOperationsFromRequestArgs(args []string) *BatchOperations {
+	var ops 		BatchOperations
+	var cur_index	int = 0
+	var last_index	int = 0
+
+	for index, elem := range args {
+		cur_index = index
+		if index > 0 {
+			if elem == SIGNAL_BATCH_PUT || elem == SIGNAL_BATCH_DELETE {
+				ops = append(ops, *BatchOperationFromSlice(args[last_index:index]))
+				last_index = index
+			}
+		}
+	}
+
+	// Add the rest
+	if cur_index > 0 {
+		ops = append(ops, *BatchOperationFromSlice(args[last_index:cur_index + 1]))
+	}
+
+	return &ops
 }

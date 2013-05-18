@@ -44,8 +44,8 @@ const (
 
 // batches signals
 const (
-	SIGNAL_BATCH_PUT    = 1
-	SIGNAL_BATCH_DELETE = 0
+	SIGNAL_BATCH_PUT    = "BPUT"
+	SIGNAL_BATCH_DELETE = "BDEL"
 )
 
 // Command line parsing default values

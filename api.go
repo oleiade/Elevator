@@ -14,6 +14,7 @@ var database_commands = map[string]func(*Db, *Request) error{
 	DB_DELETE: 	Delete,
 	DB_RANGE: 	Range,
 	DB_SLICE:	Slice,
+	DB_BATCH:	Batch,
 }
 
 var store_commands = map[string]func(*DbStore, *Request) error{
@@ -207,6 +208,34 @@ func Slice(db *Db, request *Request) error {
 	return nil
 }
 
+func Batch(db *Db, request *Request) error {
+	var response	*Response
+	var operations	*BatchOperations
+	var batch		*leveldb.WriteBatch = leveldb.NewWriteBatch()
+
+	operations = BatchOperationsFromRequestArgs(request.Args)
+	
+	for _, operation := range *operations {
+		switch operation.OpCode {
+		case SIGNAL_BATCH_PUT:
+			batch.Put([]byte(operation.OpArgs[0]), []byte(operation.OpArgs[1]))
+		case SIGNAL_BATCH_DELETE:
+			batch.Delete([]byte(operation.OpArgs[0]))
+		}
+	}
+
+	wo := leveldb.NewWriteOptions()
+	err := db.Connector.Write(wo, batch)
+	if err != nil {
+		response = NewFailureResponse(VALUE_ERROR, string(err.Error()))
+	} else {
+		response = NewSuccessResponse([]string{})
+	}
+
+	Forward(response, request)
+
+	return nil
+}
 
 func DbCreate(db_store *DbStore, request *Request) error {
 	var response	*Response
