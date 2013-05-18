@@ -1,11 +1,11 @@
 package elevator
 
 import (
-	"fmt"
-	"log"
 	"bytes"
+	"fmt"
 	zmq "github.com/alecthomas/gozmq"
 	l4g "github.com/alecthomas/log4go"
+	"log"
 )
 
 type ClientSocket struct {
