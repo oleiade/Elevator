@@ -21,7 +21,7 @@ If you're trying to implement a client, or just curious about how it really work
 .. _messages:
 
 Messages
-=======
+========
 
 Every messages exchanged between Elevator and clients consist in a serialized `msgpack <http://msgpack.org>`_ ``Array``. For a matter of simplicity, performances, and static typed languages compatibility the ``array`` data-structure was prefered to a ``hash-map`` (as in the past versions).
 
@@ -42,9 +42,9 @@ Request messages array format goes like this:
         nth argument,
     ]
 
-* **uid**, *string*: is the uid of the database the command should be ran against 
+* **uid**, *string*: is the uid of the database the command should be ran against
 * **cmd**, *string*:  is the command you'd like the server to run
-* **args**, **string(s)**: are the command arguments. 
+* **args**, **string(s)**: are the command arguments.
 
 
 **Example** of key-value insertion::
@@ -128,106 +128,448 @@ Response
         "c",
     ]
 
-*The response came in WARNING_STATUS, indicating that the command was only partially succesfull. Indeed, the second result data is an empty string. Indicating that the second key asked by the MGET operation could not be retrieved. Instead of failing, ``MGET`` operation normal behavior is to return empty strings in place of not found keys and WARNING_STATUS* 
+*The response came in WARNING_STATUS, indicating that the command was only partially succesfull. Indeed, the second result data is an empty string. Indicating that the second key asked by the MGET operation could not be retrieved. Instead of failing, ``MGET`` operation normal behavior is to return empty strings in place of not found keys and WARNING_STATUS*
 
 .. _constants:
 
-(coming soon)
+Constants
+=========
+
+Responses status
+----------------
+
+::
+
+    SUCCESS_STATUS = 1
+    FAILURE_STATUS = -1
+    WARNING_STATUS = -2
+
+
+Responses error codes
+---------------------
+
+::
+
+    TYPE_ERROR     = 0
+    KEY_ERROR      = 1
+    VALUE_ERROR    = 2
+    INDEX_ERROR    = 3
+    RUNTIME_ERROR  = 4
+    OS_ERROR       = 5
+    DATABASE_ERROR = 6
+    SIGNAL_ERROR   = 7
+    REQUEST_ERROR  = 8
+
+Commands codes
+--------------
+
+::
+
+    DB_GET     = "GET"
+    DB_PUT     = "PUT"
+    DB_DELETE  = "DELETE"
+    DB_RANGE   = "RANGE"
+    DB_SLICE   = "SLICE"
+    DB_BATCH   = "BATCH"
+    DB_MGET    = "MGET"
+    DB_PING    = "PING"
+    DB_CONNECT = "DBCONNECT"
+    DB_MOUNT   = "DBMOUNT"
+    DB_UMOUNT  = "DBUMOUNT"
+    DB_CREATE  = "DBCREATE"
+    DB_DROP    = "DBDROP"
+    DB_LIST    = "DBLIST"
+    DB_REPAIR  = "DBREPAIR"
+
+Batch command sub-operations codes
+----------------------------------
+
+::
+
+    SIGNAL_BATCH_PUT    = "BPUT"
+    SIGNAL_BATCH_DELETE = "BDEL"
+
 
 .. _commands:
 
 Commands
-============
+========
 
-.. _basics:
+GET
+---
 
-Basics
---------
-
-Server responds to some constants whenever it comes to give it commands. In the following listing, dbuid represents the database unique uid to operate the command over, it can be retrieved from a database name via 'CONNECT'. And batch_uid represents a valid server-side created batch (using BCREATE) to run commands over.
-
-``GET`` : Retrieves a value from a database
+Retrieves a value from a database
 
 * params :
-    * ``key`` : key to fetch
+    * **key** : key to fetch
 
-``MGET`` : Transactional bulk Get. Retrieves a list of keys values
-on a frozen database state.
+* typical request::
 
-* params :
-    * [ ``key1``, ``key2``, ..., ``keyn + 1``] : keys to fetch value from
+    [
+        "3a4d1416-b6bd-4fbf-b415-0efa868ff27c",
+        "GET",
+        "abc"
+    ]
 
-``PUT`` :  Inserts a value into a database
+* typical response::
 
-* params :
-    * ``key`` : key to insert
-    * ``value`` : value to insert
+    [
+        1,      # SUCCESS_STATUS
+        -1,
+        "",
+        "123"
+    ]
 
-``DELETE`` : Deletes a key from a database
 
-* params :
-    * ``key`` : key to delete
+MGET
+----
 
-``RANGE`` : Retrieves a range of key/value pairs from a database
-
-* params :
-    * ``key_from`` : key to start from
-    * ``key_to`` : key where to stop
-    * ``include_key`` : whether should keys be include in return values or not, default is ``True``
-    * ``include_value``: whether should values be included in return values or not, default is ``True``
-
-``SLICE`` : Extracts a slice (key/value pairs) from a database
+Transactional bulk Get. Retrieves a list of keys values from a frozen database state.
 
 * params :
-    * ``key_from`` : key to start from
-    * ``offset`` : slice size
-    * ``include_key`` : whether should keys be include in return values or not, default is ``True``
-    * ``include_value``: whether should values be included in return values or not, default is ``True``
+    * **key1**, **key2**, ..., **keyn** : keys to fetch
+
+* typical request::
+
+    [
+        "3a4d1416-b6bd-4fbf-b415-0efa868ff27c",
+        "MGET",
+        "first",
+        "second",
+        "third"
+    ]
+
+* typical response::
+
+    [
+        1,      # SUCCESS_STATUS
+        -1,
+        "",
+        "1",
+        "2",
+        "3"
+    ]
+
+
+PUT
+---
+
+Inserts a value into a database
+
+* params :
+    * **key** : key to insert
+    * **value** : value to insert
+
+* typical request::
+
+    [
+        "3a4d1416-b6bd-4fbf-b415-0efa868ff27c",
+        "PUT",
+        "abc",
+        "123",
+    ]
+
+* typical response::
+
+    [
+        1,      # SUCCESS_STATUS
+        -1,
+        "",
+        nil
+    ]
+
+
+DELETE
+------
+
+Deletes a key from a database
+
+* params :
+    * **key** : key to delete
+
+* typical request::
+
+    [
+        "3a4d1416-b6bd-4fbf-b415-0efa868ff27c",
+        "DELETE",
+        "abc"
+    ]
+
+* typical response::
+
+    [
+        1,      # SUCCESS_STATUS
+        -1,
+        "",
+        nil
+    ]
+
+
+RANGE
+-----
+
+Retrieves a range of key/value pairs from a database
+
+* params :
+    * **key_from** : key to start from
+    * **key_to** : key where to stop
+
+* typical request::
+
+    [
+        "3a4d1416-b6bd-4fbf-b415-0efa868ff27c",
+        "RANGE",
+        "first",    # key from
+        "third"     # key to
+    ]
+
+* typical response::
+
+    [
+        1,          # SUCCESS_STATUS
+        -1,
+        "",
+        "first",    # key
+        "1",        # value
+        "second",   # key
+        "2",        # value
+        "third",    # key
+        "3"         # value
+    ]
+
+
+SLICE
+-----
+
+Extracts a slice (key/value pairs) from a database
+
+* params :
+    * **key_from** : key to start from
+    * **offset** : slice size
+
+* typical request::
+
+    [
+        "3a4d1416-b6bd-4fbf-b415-0efa868ff27c",
+        "SLICE",
+        "first",    # key from
+        "3"         # offset
+    ]
+
+* typical response::
+
+    [
+        1,          # SUCCESS_STATUS
+        -1,
+        "",
+        "first",    # key
+        "1",        # value
+        "second",   # key
+        "2",        # value
+        "third",    # key
+        "3"         # value
+    ]
+
+.. _batches:
+
+Batch commands
+==============
+
+BATCH
+-----
+
+Atomically applies all batch operations server-side
+
+* params :
+    * **operation1**, **operation-arg1**, **operation-arg2** ... : operations to execute server-side. Sequences of Batch operation signal and arguments.
+
+* typical request::
+
+    [
+        "3a4d1416-b6bd-4fbf-b415-0efa868ff27c",
+        "BATCH",
+        "BPUT",         # Batch PUT operation signal
+        "abc",          # Operation first arg
+        "123",          # Operation second arg
+        "BPUT",         # Batch PUT operation signal
+        "easy as",      # Operation first arg
+        "do re mi",     # Operation second arg
+        "BDEL",         # Batch DEL operation signal
+        "Jackson 5"     # Operation first arg
+    ]
+
+* typical response::
+
+    [
+        1,  (SUCCESS_STATUS),
+        -1,
+        "",
+        nil
+    ]
+
 
 .. _databases management:
 
 Databases management
-------------------------------
+--------------------
 
-``DBCONNECT`` : Retrieves a database uid from it's name. You can
-then use that uid to run commands over it.
+DBCONNECT
+---------
 
-* params :
-    * ``db_name`` : database name to retrieve uid from
-
-``DBMOUNT`` : Tells Elevator to mount a database. As a default, Elevator
-only mounts the 'default' database. You can only run commands over
-mounted database. Mounted database fills the Elevator cache, and increases
-Ram memory consomation.
+Retrieves a database uid from it's name. You can then use that uid to run commands over it.
 
 * params :
-    * ``db_name`` : database name to mount
+    * **db_name** : database name to retrieve uid from
 
-``DBUMOUNT`` : Tells Elevator to unmount a database, it is then
-unaccessible until you re-mount it. As a default, every databases except
-'default' are unmounted. Once a database is unmounted
-Elevator tries to free as much cache it used as possible.
+* typical request::
+
+    [
+        "",
+        "DBCONNECT",
+        "db name"
+    ]
+
+* typical response::
+
+    [
+        1,          # SUCCESS_STATUS
+        -1,
+        "",
+        "3a4d1416-b6bd-4fbf-b415-0efa868ff27c",
+    ]
+
+
+DBMOUNT
+-------
+
+Tells Elevator to mount a database. As a default, Elevator only mounts the 'default' database. You can only run commands over mounted database. Mounted database fills the Elevator cache, and increases Ram memory consomation.
 
 * params :
-    * ``db_name`` : database name to unmount
+    * **db_name** : database name to mount
 
-``DBCREATE`` : Creates a  new database
+* typical request::
+
+    [
+        "",
+        "DBMOUNT",
+        "db name"
+    ]
+
+* typical response::
+
+    [
+        1,          # SUCCESS_STATUS
+        -1,
+        "",
+        nil,
+    ]
+
+
+DBUMOUNT
+--------
+
+Tells Elevator to unmount a database, it is then unaccessible until you re-mount it. As a default, every databases except 'default' are unmounted. Once a database is unmounted Elevator tries to free as much cache it used as possible.
 
 * params :
-    * ``db_name`` : name of the created database
-    * ``db_options`` : options to create database with
+    * **db_name** : database name to unmount
 
-``DBLIST`` : Lists server's databases
+* typical request::
 
-``DBREPAIR`` : Repairs a broken (or too slow) database you already owns uid
+    [
+        "",
+        "DBUMOUNT",
+        "db name"
+    ]
+
+* typical response::
+
+    [
+        1,          # SUCCESS_STATUS
+        -1,
+        "",
+        nil
+    ]
+
+
+DBCREATE
+--------
+
+Creates a new database
+
+* params :
+    * **db_name** : name of the created database
+    * **db_options** : options to create database with
+
+* typical request::
+
+    [
+        "",
+        "DBCREATE",
+        "db name"
+    ]
+
+* typical response::
+
+    [
+        1,          # SUCCESS_STATUS
+        -1,
+        "",
+        nil,
+    ]
+
+
+DBLIST
+------
+
+Lists server's databases
+
+* typical request::
+
+    [
+        "",
+        "DBLIST",
+        ""
+    ]
+
+* typical response::
+
+    [
+        1,          # SUCCESS_STATUS
+        -1,
+        "",
+        "default",  # First db
+        "testdb"    # Second db
+    ]
+
+DBREPAIR
+--------
+
+Repairs a broken (or too slow) database
 
 **Notes** :
     * ``errors`` : In order not to expose too much information about Elevator internal errors to the client, only simple but explicit enough errors will be thrown by the database management commands. But, more (useful) informations will be logged in errors logs.
 
+* typical request::
+
+    [
+        "",
+        "DBREPAIR",
+        "testdb"
+    ]
+
+* typical response::
+
+    [
+        1,          # SUCCESS_STATUS
+        -1,
+        "",
+        nil
+    ]
+
 .. _database options:
 
 Database Options
-~~~~~~~~~~~~~~~~~~~~~
+----------------
 
 As Elevator uses `leveldb <http://http://code.google.com/p/leveldb/>`_ as a storage backend,
 you can operate a rather precise configuration of your databases using leveldb backend.
@@ -252,32 +594,4 @@ Here is a description offered by `py-leveldb <http://http://code.google.com/p/py
 Options should be passed as a hash map with the ``DBCREATE`` function. It comes with default
 values which will be overrided with the ones you set.
 
-
-.. _batches:
-
-Batches
----------
-
-``BATCH`` : Atomically applies all batch operations server-side
-    * params :
-        * [ ``operation1``, ``operation2``, ..., ``operation_n + 1``] : operations to
-        execute server-side. Pairs of Batch operation signal and arguments.
-        example:
-
-        .. code-block::python
-            [BATCH_OPERATION_SIGNAL, 'key', 'value if needed (Put)]
-
-**Nota** : operations are treated server-side as signal. Batches exposes two signals:
-
-.. code-block::python
-
-    BATCH_SIGNAL_PUT = 1
-    BATCH_SIGNAL_DELETE = 0
-
-.. _pipelines:
-
-Pipelines
-============
-
-(soon)
 
