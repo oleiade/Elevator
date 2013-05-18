@@ -3,13 +3,9 @@
 Welcome to Elevator
 ===================
 
-Welcome to Elevator's documentation.
+Elevator is an open source, on-disk key-value. It provides high-performance bulk read-write operations over **very** large datasets while exposing a simple and efficient API.
 
-Elevator is a high performance on-disk Key-Value store. It exposes a simple and efficient API allowing the user to work around with fast large dataset through ``batches`` (Write operations) and ``ranges/slices`` (Read operations) and with classic atomic operations such as `GET` `PUT` and `DELETE`.
-
-Written in Go, relying on the levelDB library as a storage backend, it provides a fast, async, and reliable access to a multi-db backend.
-
-Built upon the zeromq network library and msgpack serialization format it is made to be portable between languages and platforms.
+Written in Go, relying on the levelDB library as a storage backend, it provides a fast, async, and reliable access to a multi-db backend. Built upon the zeromq network library and msgpack serialization format it is made to be portable between languages and platforms.
 
 Elevator is an open source software under the MIT license. Any hackers are welcome to supply ideas, features requests, patches, Pull requests and so on.  `Documentation's development page <http://elevator.readthedocs.org>`_ contains comprehensive info on contributing, repository layout, our release strategy, and more.
 
