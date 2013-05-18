@@ -88,6 +88,4 @@ func ListenAndServe(config *Config) error {
 			go request_handler(&client_socket, msg, db_store)
 		}
 	}
-
-	return nil
 }
