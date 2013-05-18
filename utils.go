@@ -1,8 +1,8 @@
 package elevator
 
 import (
-	"os"
 	"bytes"
+	"os"
 	"strings"
 )
 

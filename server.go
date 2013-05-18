@@ -1,11 +1,11 @@
 package elevator
 
 import (
-	"fmt"
-	"log"
 	"bytes"
-	zmq 		"github.com/alecthomas/gozmq"
-	l4g 		"github.com/alecthomas/log4go"
+	"fmt"
+	zmq "github.com/alecthomas/gozmq"
+	l4g "github.com/alecthomas/log4go"
+	"log"
 )
 
 type ClientSocket struct {
@@ -34,7 +34,7 @@ func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbSt
 	msg := bytes.NewBuffer(raw_msg)
 	request.UnpackFrom(msg)
 	request.Source = client_socket
-	l4g.Debug(func()string { return request.String() })
+	l4g.Debug(func() string { return request.String() })
 
 	if request.DbUid != "" {
 		if db, ok := db_store.Container[request.DbUid]; ok {
@@ -61,7 +61,9 @@ func ListenAndServe(config *Config) error {
 	err = db_store.Load()
 	if err != nil {
 		err = db_store.Add("default")
-		if err != nil { log.Fatal(err) }
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	poller := zmq.PollItems{

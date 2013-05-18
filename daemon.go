@@ -1,15 +1,14 @@
 package elevator
 
 import (
-	"os"
-	"log"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"os/signal"
 	"strconv"
 	"syscall"
-	"os/signal"
-	"io/ioutil"
 )
-
 
 func createPidFile(pidfile string) error {
 	if pidString, err := ioutil.ReadFile(pidfile); err == nil {
@@ -33,13 +32,11 @@ func createPidFile(pidfile string) error {
 	return err
 }
 
-
 func removePidFile(pidfile string) {
 	if err := os.Remove(pidfile); err != nil {
 		log.Printf("Error removing %s: %s", pidfile, err)
 	}
 }
-
 
 func Daemon(config *Config) error {
 	if err := createPidFile(config.Pidfile); err != nil {
@@ -59,4 +56,3 @@ func Daemon(config *Config) error {
 
 	return ListenAndServe(config)
 }
-

@@ -52,6 +52,6 @@ const (
 const (
 	DEFAULT_CONFIG_FILE = "/etc/elevator/elevator.conf"
 	DEFAULT_DAEMON_MODE = false
-	DEFAULT_ENDPOINT = ""
-	DEFAULT_LOG_LEVEL = "INFO"
+	DEFAULT_ENDPOINT    = ""
+	DEFAULT_LOG_LEVEL   = "INFO"
 )

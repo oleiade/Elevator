@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	l4g "github.com/alecthomas/log4go"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	l4g 		"github.com/alecthomas/log4go"
 )
 
 type DbStore struct {
@@ -101,7 +101,7 @@ func (store *DbStore) Mount(db_uid string) (err error) {
 	} else {
 		return errors.New("Database does not exist")
 	}
-	
+
 	return nil
 }
 
@@ -151,11 +151,13 @@ func (store *DbStore) Add(db_name string) (err error) {
 		store.Container[db.Uid] = db
 		store.updateNameToUidIndex()
 		err = store.WriteToFile()
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		db.Mount()
 	}
 
-	l4g.Debug(func()string {
+	l4g.Debug(func() string {
 		return fmt.Sprintf("Database %s added to store", db_name)
 	})
 
@@ -182,7 +184,7 @@ func (store *DbStore) Drop(db_name string) (err error) {
 		return errors.New("Database does not exist")
 	}
 
-	l4g.Debug(func()string {
+	l4g.Debug(func() string {
 		return fmt.Sprintf("Database %s dropped from store", db_name)
 	})
 
@@ -200,7 +202,7 @@ func (store *DbStore) Status(db_name string) (int, error) {
 	return -1, errors.New("Database does not exist")
 }
 
-// Exists checks if a database present in DbStore 
+// Exists checks if a database present in DbStore
 // exists on disk.
 func (store *DbStore) Exists(db_name string) (bool, error) {
 	if db_uid, present := store.NameToUid[db_name]; present {

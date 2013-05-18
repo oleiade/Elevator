@@ -1,10 +1,10 @@
 package elevator
 
 import (
-	"log"
 	"bytes"
 	"fmt"
 	"github.com/ugorji/go-msgpack"
+	"log"
 )
 
 type Message interface {
@@ -13,54 +13,54 @@ type Message interface {
 }
 
 type Request struct {
-	DbUid      	string        	
-	Command 	string
-	Args  		[]string
-	Source  	*ClientSocket 	`msgpack:"-"`
+	DbUid   string
+	Command string
+	Args    []string
+	Source  *ClientSocket `msgpack:"-"`
 }
 
 type Response struct {
-	Status      int
-	Err_code    int
-	Err_msg     string
-	Data		[]string
+	Status   int
+	Err_code int
+	Err_msg  string
+	Data     []string
 }
 
 type BatchOperations []BatchOperation
 
 type BatchOperation struct {
-	OpCode		string
-	OpArgs		[]string
+	OpCode string
+	OpArgs []string
 }
 
 func NewRequest(command string, args []string) *Request {
 	return &Request{
 		Command: command,
-		Args: args,
+		Args:    args,
 	}
 }
 
 func NewResponse(status int, err_code int, err_msg string, data []string) *Response {
 	return &Response{
-		Status: status,
+		Status:   status,
 		Err_code: err_code,
-		Err_msg: err_msg,
-		Data: data,
+		Err_msg:  err_msg,
+		Data:     data,
 	}
 }
 
 func NewSuccessResponse(data []string) *Response {
-	return &Response {
+	return &Response{
 		Status: SUCCESS_STATUS,
-		Data: data,
+		Data:   data,
 	}
 }
 
 func NewFailureResponse(err_code int, err_msg string) *Response {
-	return &Response {
-		Status: FAILURE_STATUS,
+	return &Response{
+		Status:   FAILURE_STATUS,
 		Err_code: err_code,
-		Err_msg: err_msg,
+		Err_msg:  err_msg,
 	}
 }
 
@@ -73,12 +73,12 @@ func NewBatchOperation(op_code string, op_args []string) *BatchOperation {
 
 func (r *Request) String() string {
 	return fmt.Sprintf("<Request uid:%s command:%s args:%s>",
-					   r.DbUid, r.Command, r.Args)
+		r.DbUid, r.Command, r.Args)
 }
 
 func (r *Response) String() string {
 	return fmt.Sprintf("<Response status:%d err_code:%d err_msg:%s data:%s",
-					   r.Status, r.Err_code, r.Err_msg, r.Data)
+		r.Status, r.Err_code, r.Err_msg, r.Data)
 }
 
 func (r *Request) PackInto(buffer *bytes.Buffer) error {
@@ -129,15 +129,14 @@ func (r *Response) PackInto(buffer *bytes.Buffer) error {
 	return nil
 }
 
-
 func BatchOperationFromSlice(slice []string) *BatchOperation {
 	return NewBatchOperation(slice[0], slice[1:])
 }
 
 func BatchOperationsFromRequestArgs(args []string) *BatchOperations {
-	var ops 		BatchOperations
-	var cur_index	int = 0
-	var last_index	int = 0
+	var ops BatchOperations
+	var cur_index int = 0
+	var last_index int = 0
 
 	for index, elem := range args {
 		cur_index = index
@@ -151,7 +150,7 @@ func BatchOperationsFromRequestArgs(args []string) *BatchOperations {
 
 	// Add the rest
 	if cur_index > 0 {
-		ops = append(ops, *BatchOperationFromSlice(args[last_index:cur_index + 1]))
+		ops = append(ops, *BatchOperationFromSlice(args[last_index : cur_index+1]))
 	}
 
 	return &ops

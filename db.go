@@ -1,11 +1,11 @@
 package elevator
 
 import (
+	uuid "code.google.com/p/go-uuid/uuid"
 	"errors"
 	"fmt"
-	uuid 		"code.google.com/p/go-uuid/uuid"
-	leveldb 	"github.com/jmhodges/levigo"
-	l4g 		"github.com/alecthomas/log4go"
+	l4g "github.com/alecthomas/log4go"
+	leveldb "github.com/jmhodges/levigo"
 )
 
 type Db struct {
@@ -47,7 +47,7 @@ func (db *Db) Mount() (err error) {
 		return errors.New("Database already mounted")
 	}
 
-	l4g.Debug(func()string {
+	l4g.Debug(func() string {
 		return fmt.Sprintf("Database %s mounted", db.Name)
 	})
 
@@ -65,10 +65,9 @@ func (db *Db) Unmount() (err error) {
 		return errors.New("Database already unmounted")
 	}
 
-	l4g.Debug(func()string {
+	l4g.Debug(func() string {
 		return fmt.Sprintf("Database %s unmounted", db.Name)
 	})
-
 
 	return nil
 }

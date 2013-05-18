@@ -2,27 +2,27 @@ package elevator
 
 import (
 	"bytes"
+	l4g "github.com/alecthomas/log4go"
+	leveldb "github.com/jmhodges/levigo"
 	"strconv"
-	leveldb 	"github.com/jmhodges/levigo"
-	l4g 		"github.com/alecthomas/log4go"
 )
 
 var database_commands = map[string]func(*Db, *Request) error{
-	DB_GET:    	Get,
-	DB_MGET:	MGet,
-	DB_PUT:    	Put,
-	DB_DELETE: 	Delete,
-	DB_RANGE: 	Range,
-	DB_SLICE:	Slice,
-	DB_BATCH:	Batch,
+	DB_GET:    Get,
+	DB_MGET:   MGet,
+	DB_PUT:    Put,
+	DB_DELETE: Delete,
+	DB_RANGE:  Range,
+	DB_SLICE:  Slice,
+	DB_BATCH:  Batch,
 }
 
 var store_commands = map[string]func(*DbStore, *Request) error{
-	DB_CREATE:	DbCreate,
-	DB_DROP:	DbDrop,
+	DB_CREATE:  DbCreate,
+	DB_DROP:    DbDrop,
 	DB_CONNECT: DbConnect,
-	DB_MOUNT:	DbMount,
-	DB_UMOUNT:	DbUnmount,
+	DB_MOUNT:   DbMount,
+	DB_UMOUNT:  DbUnmount,
 	DB_LIST:    DbList,
 }
 
@@ -32,8 +32,8 @@ func Exec(db *Db, request *Request) {
 	}
 }
 
-func Forward(response *Response, request *Request) error {	
-	l4g.Debug(func()string { return response.String() })
+func Forward(response *Response, request *Request) error {
+	l4g.Debug(func() string { return response.String() })
 	socket := request.Source.Socket
 	address := request.Source.Id
 	parts := make([][]byte, 2)
@@ -53,8 +53,8 @@ func Forward(response *Response, request *Request) error {
 }
 
 func Get(db *Db, request *Request) error {
-	var response 	*Response
-	var key 		string = request.Args[0]
+	var response *Response
+	var key string = request.Args[0]
 
 	ro := leveldb.NewReadOptions()
 	value, err := db.Connector.Get(ro, []byte(key))
@@ -70,9 +70,9 @@ func Get(db *Db, request *Request) error {
 }
 
 func Put(db *Db, request *Request) error {
-	var response 	*Response
-	var key 		string = request.Args[0]
-	var value 		string = request.Args[1]
+	var response *Response
+	var key string = request.Args[0]
+	var value string = request.Args[1]
 
 	wo := leveldb.NewWriteOptions()
 	err := db.Connector.Put(wo, []byte(key), []byte(value))
@@ -88,8 +88,8 @@ func Put(db *Db, request *Request) error {
 }
 
 func Delete(db *Db, request *Request) error {
-	var response 	*Response
-	var key			string = request.Args[0]
+	var response *Response
+	var key string = request.Args[0]
 
 	wo := leveldb.NewWriteOptions()
 	err := db.Connector.Delete(wo, []byte(key))
@@ -105,8 +105,8 @@ func Delete(db *Db, request *Request) error {
 }
 
 func MGet(db *Db, request *Request) error {
-	var response	*Response
-	var data 		[]string = make([]string, len(request.Args))
+	var response *Response
+	var data []string = make([]string, len(request.Args))
 
 	read_options := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
@@ -114,7 +114,7 @@ func MGet(db *Db, request *Request) error {
 
 	if len(request.Args) > 0 {
 		start := request.Args[0]
-		end := request.Args[len(request.Args) - 1]
+		end := request.Args[len(request.Args)-1]
 
 		keys_index := make(map[string]int)
 
@@ -131,7 +131,7 @@ func MGet(db *Db, request *Request) error {
 				break
 			}
 
-			if index, present := keys_index[string(it.Key())] ; present {
+			if index, present := keys_index[string(it.Key())]; present {
 				data[index] = string(it.Value())
 			}
 		}
@@ -147,15 +147,14 @@ func MGet(db *Db, request *Request) error {
 }
 
 func Range(db *Db, request *Request) error {
-	var response 	*Response
-	var data 		[]string
-	var start 		string = request.Args[0]
-	var end 		string = request.Args[1]
+	var response *Response
+	var data []string
+	var start string = request.Args[0]
+	var end string = request.Args[1]
 
 	read_options := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
 	read_options.SetSnapshot(snapshot)
-
 
 	it := db.Connector.NewIterator(read_options)
 	defer it.Close()
@@ -177,9 +176,9 @@ func Range(db *Db, request *Request) error {
 }
 
 func Slice(db *Db, request *Request) error {
-	var response	*Response
-	var data 		[]string
-	var start 		string = request.Args[0]
+	var response *Response
+	var data []string
+	var start string = request.Args[0]
 
 	limit, _ := strconv.Atoi(request.Args[1])
 	read_options := leveldb.NewReadOptions()
@@ -209,12 +208,12 @@ func Slice(db *Db, request *Request) error {
 }
 
 func Batch(db *Db, request *Request) error {
-	var response	*Response
-	var operations	*BatchOperations
-	var batch		*leveldb.WriteBatch = leveldb.NewWriteBatch()
+	var response *Response
+	var operations *BatchOperations
+	var batch *leveldb.WriteBatch = leveldb.NewWriteBatch()
 
 	operations = BatchOperationsFromRequestArgs(request.Args)
-	
+
 	for _, operation := range *operations {
 		switch operation.OpCode {
 		case SIGNAL_BATCH_PUT:
@@ -238,8 +237,8 @@ func Batch(db *Db, request *Request) error {
 }
 
 func DbCreate(db_store *DbStore, request *Request) error {
-	var response	*Response
-	var db_name 	string = request.Args[0]
+	var response *Response
+	var db_name string = request.Args[0]
 
 	err := db_store.Add(db_name)
 	if err != nil {
@@ -254,8 +253,8 @@ func DbCreate(db_store *DbStore, request *Request) error {
 }
 
 func DbDrop(db_store *DbStore, request *Request) error {
-	var response 	*Response
-	var db_name		string = request.Args[0]
+	var response *Response
+	var db_name string = request.Args[0]
 
 	err := db_store.Drop(db_name)
 	if err != nil {
@@ -270,15 +269,15 @@ func DbDrop(db_store *DbStore, request *Request) error {
 }
 
 func DbConnect(db_store *DbStore, request *Request) error {
-	var response 	*Response
-	var db_name 	string = request.Args[0]
+	var response *Response
+	var db_name string = request.Args[0]
 
 	db_uid, exists := db_store.NameToUid[db_name]
 
 	if exists {
 		response = NewSuccessResponse([]string{db_uid})
 	} else {
-		 response = NewFailureResponse(DATABASE_ERROR, "Database does not exist")
+		response = NewFailureResponse(DATABASE_ERROR, "Database does not exist")
 	}
 
 	Forward(response, request)
@@ -287,7 +286,7 @@ func DbConnect(db_store *DbStore, request *Request) error {
 }
 
 func DbList(db_store *DbStore, request *Request) error {
-	var response 	*Response
+	var response *Response
 
 	db_names := db_store.List()
 	data := make([]string, len(db_names))
@@ -302,10 +301,9 @@ func DbList(db_store *DbStore, request *Request) error {
 	return nil
 }
 
-
 func DbMount(db_store *DbStore, request *Request) error {
-	var response 	*Response
-	var db_name		string = request.Args[0]
+	var response *Response
+	var db_name string = request.Args[0]
 
 	db_uid, exists := db_store.NameToUid[db_name]
 
@@ -327,8 +325,8 @@ func DbMount(db_store *DbStore, request *Request) error {
 }
 
 func DbUnmount(db_store *DbStore, request *Request) error {
-	var response	*Response
-	var db_name 	string = request.Args[0]
+	var response *Response
+	var db_name string = request.Args[0]
 
 	db_uid, exists := db_store.NameToUid[db_name]
 
