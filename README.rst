@@ -50,7 +50,7 @@ In order to ease your Elevator deployment, a `puppet module <http://github.com/o
 Installation
 ============
 
-1. First, make sure you have a `Go <http://http://golang.org/>`_ language compiler and `git <http://gitscm.org>`_ installed.
+1. First, make sure you have a `Go <http://http://golang.org/>`_ language compiler ``>= 1.1`` and `git <http://gitscm.org>`_ installed.
 
 2. Then, clone this repository
   
