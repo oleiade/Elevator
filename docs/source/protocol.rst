@@ -1,15 +1,15 @@
 .. _protocol:
 
-===========
-Protocol
-===========
+=======================
+Protocol Specifications
+=======================
 
 .. _communicate with elevator:
 
-Communicate with elevator
-==========================
+Communicate with Elevator
+=========================
 
-Depending on your Elevator configuration, once running it will either listen on a ``tcp://`` or ``ipc://`` socket handled by zeromq network library, waiting for requests to come in.
+Depending on your Elevator configuration, once running it will either listen on a ``tcp://`` or ``ipc://`` socket handled by `zeromq network library <http://http://www.zeromq.org/>`_, waiting for requests to come in.
 
 Elevator uses zeromq ``XREP`` and ``XREQ`` sockets, so that every commands passed through sockets are signed with a client id hash. X sockets queues messages as they come in order to prevent overload.
 
@@ -21,123 +21,118 @@ If you're trying to implement a client, or just curious about how it really work
 .. _messages:
 
 Messages
-==========
+=======
 
-Every messages exchanged between Elevator and clients consist in hash maps serialized using msgpack.
-Hash maps is a common data structure present in most languages, it was used because of it's
-simplicity, and similarity with json format, which many developpers are confortable with nowadays.
-`Msgpack <http://msgpack.org>`_ is a very popuplar and performant serialization protocol ported to many languages.
+Every messages exchanged between Elevator and clients consist in a serialized `msgpack <http://msgpack.org>`_ ``Array``. For a matter of simplicity, performances, and static typed languages compatibility the ``array`` data-structure was prefered to a ``hash-map`` (as in the past versions).
 
 .. _requests:
 
 Request
------------
+-------
 
-Request messages format goes like this:
+Request messages array format goes like this:
 
-.. code-block::json
+::
 
-    {
-        "meta": { ... },
-        "uid": string,
-        "cmd": string,
-        "args": [ string... ]
-    }
+    [
+        db uid,
+        command,
+        first argument,
+        ...,
+        nth argument,
+    ]
 
-* ``uid`` is the database affected by command uid
-* ``cmd`` is the command you'd like the server to run
-* ``args`` are the command arguments, nota that they should be in the order commands defines.
-* ``meta`` are the options you'd wish the server to take in account when dealing with your request.
+* **uid**, *string*: is the uid of the database the command should be ran against 
+* **cmd**, *string*:  is the command you'd like the server to run
+* **args**, **string(s)**: are the command arguments. 
 
 
-*example*::
+**Example** of key-value insertion::
 
-    {
-        "meta": {
-            "compression": true,
-        }
-        "uid": "theamazingdatabasewewannaupdatemd5hash",
-        "cmd": "PUT",
-        "args": ["key", "value"],
-    }
+    [
+        "3a4d1416-b6bd-4fbf-b415-0efa868ff27c",
+        "PUT",
+        "abc",
+        "123"
+    ]
 
+*Will put the ``abc`` -> ``123`` key value pair into pointed database*
+
+**Example** of multiple keys retrieval::
+
+    [
+        "3a4d1416-b6bd-4fbf-b415-0efa868ff27c",
+        "MGET",
+        "a",
+        "b",
+        "c",
+        "1"
+    ]
+
+*Will order Elevator to retrieve ``a, b, c, 1`` keys value from pointed database*
 
 .. _response:
 
 Response
-------------
+--------
 
-Responses comes into two parts (multipart). First response part is the Header,
-and the second one is the content.
+::
 
-.. _header:
+    [
+        status,
+        error code,
+        error message,
+        first result data,
+        ...
+        nth result data,
+    ]
 
-Header
-~~~~~~~~~~~
+* **status**, *integer*: response status emitted by the server, defined by ``SUCCESS_STATUS``  and ``FAILURE_STATUS`` constants_.
 
-.. code-block::json
+* **error code**, *integer*: Thrown error code, defined by ``*_ERROR`` messages constants_. Error codes describes the type of the error which occured server side during a command execution. **Beware** this field will be filled with ``-1`` value if no error was thrown.
 
-    {
-        "meta": { ... },
-        "status" : int,
-        "err_code": int,
-        "err_msg": string
-    }
+* **error message**, **string**: Thrown error message. Error messages describes the possible reasons of the command execution failure. **Beware** this field will be filled with empty ``string`` value if no error was thrown.
 
-* ``status`` is the response status emitted by the server.
+* **result data**, *string(s)* Resulting data of your operation, they always come as a flat succession of values.It's to the client to re-arrange them as he wants. If no data were to be returned, the 4th response value will be filled with ``nil`` value.
 
-* ``err_code`` and ``err_msg`` if server encountered an error dealing with the request, then an error code and error message will be present in response header.
+**Example** of a ``GET`` operation over a valid key response::
 
-* ``meta``  are the options the server to took in account when dealing with your request. example : if compression was requested, the response header will come back with compression meta too.
+    [
+        1,  (SUCCESS_STATUS constant)
+        -1,
+        "",
+        '123',
+    ]
 
+*Asked key value is ``123``, the operation was successful as ``SUCCESS_STATUS`` constant indicates, and ``error code``, ``error message`` fields are respectively set to -1 (no errors)  and empty string values*
 
-*example*::
+**Example** of a failing ``DBCREATE`` operation response::
 
-    {
-        "meta": {
-            "compression": true,
-        }
-        "status": -1,
-        "err_code": 0,
-        "err_msg": "Key doesn't exist",
-    }
+    [
+        -1, (FAILURE_STATUS constant)
+        6,  (DATABASE_ERROR constant)
+        "Database already exists",
+        nil,
+    ]
 
-.. _content:
+*``error code`` and ``error message`` indicates that the database couldn't be created as it already exists. Result data is left ``nil``*
 
-Content
-~~~~~~~~~~~~
+**Example** of a succesful MGET operation response::
 
-Second response part is the content,
-and the second one is the content.
+    [
+        -2,  (WARNING_STATUS constant)
+        -1,
+        "",
+        "a",
+        "",
+        "c",
+    ]
 
-.. code-block::json
+*The response came in WARNING_STATUS, indicating that the command was only partially succesfull. Indeed, the second result data is an empty string. Indicating that the second key asked by the MGET operation could not be retrieved. Instead of failing, ``MGET`` operation normal behavior is to return empty strings in place of not found keys and WARNING_STATUS* 
 
-    {
-        "datas": [ string... ],
-    }
+.. _constants:
 
-
-.. _meta:
-
-Meta
-~~~~~~~~~~~
-
-As you might have noticed, both requests and response header have a meta field. Though it's presence is mandatory in requests
-you can perfectly leave it as an empty hash map if you don't need it.
-
-It's goal is to let the client and server set options when they're exchanging requests and response. Today, only one option is
-supported, but their might be more coming as the development stream flows.
-
-*Meta options*:
-
-* ``compression`` : ``true`` | ``false``
-    When you're dealing with huge masses of datas (and I mean, **really** huge), you might notice Elevator slowing
-    down sometimes
-
-    That's because of the Response size which has to be sent over network (when your dealing with Elevator on your local
-    machine : generally ther's no problem). To fight the transfer time, and reduce the response size, Elevator can compress the responses
-    using lz4.
-
+(coming soon)
 
 .. _commands:
 
