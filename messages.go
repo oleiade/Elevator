@@ -12,47 +12,34 @@ type Message interface {
 }
 
 type Request struct {
-	Db      	string        	`msgpack:"uid"`
-	Command 	string       	`msgpack:"cmd"`
-	Args    	[]interface{}   `msgpack:"args"`
+	DbUid      	string        	
+	Command 	string
+	Args  		[]string
 	Source  	*ClientSocket 	`msgpack:"-"`
 }
 
-type ResponseHeader struct {
-	Status      int    `msgpack:"status"`
-	Err_code    int    `msgpack:"err_code"`
-	Err_msg     string `msgpack:"err_msg"`
-	Compression int    `msgpack:"compression"`
+type Response struct {
+	Status      int
+	Err_code    int
+	Err_msg     string
+	Data		[]string
 }
 
-type ResponseContent struct {
-	Datas interface{} `msgpack:"datas"`
-}
-
-func NewRequest(command string, args []interface{}) *Request {
+func NewRequest(command string, args []string) *Request {
 	return &Request{
 		Command: command,
-		Args:    args,
-	}
-}
-
-func NewSuccessResponseHeader() *ResponseHeader {
-	return &ResponseHeader{
-		Status: SUCCESS_STATUS,
-	}
-}
-
-func NewFailureResponseHeader(err_code int, err_msg string) *ResponseHeader {
-	return &ResponseHeader{
-		Status:   FAILURE_STATUS,
-		Err_code: err_code,
-		Err_msg:  err_msg,
+		Args: args,
 	}
 }
 
 func (r *Request) String() string {
 	return fmt.Sprintf("<Request uid:%s command:%s args:%s>",
-					   r.Db, r.Command, r.Args)
+					   r.DbUid, r.Command, r.Args)
+}
+
+func (r *Response) String() string {
+	return fmt.Sprintf("<Response status:%d err_code:%d err_msg:%s data:%s",
+					   r.Status, r.Err_code, r.Err_msg, r.Data)
 }
 
 func (r *Request) PackInto(buffer *bytes.Buffer) error {
@@ -66,33 +53,60 @@ func (r *Request) PackInto(buffer *bytes.Buffer) error {
 }
 
 func (r *Request) UnpackFrom(data *bytes.Buffer) error {
+	var raw_request []string
+
 	dec := msgpack.NewDecoder(data, nil)
-	err := dec.Decode(r)
+	err := dec.Decode(&raw_request)
 	if err != nil {
 		return err
 	}
 
+	r.DbUid = raw_request[0]
+	r.Command = raw_request[1]
+	r.Args = raw_request[2:]
+
 	return nil
 }
 
-func (header *ResponseHeader) String() string {
-	return fmt.Sprintf("<ResponseHeader status:%d err_code:%d err_msg:%s compression:%d>",
-					   header.Status, header.Err_code, header.Err_msg, header.Compression)
-}
+func (r *Response) ToArray() []interface{} {
+	var response []interface{}
 
-func (header *ResponseHeader) PackInto(buffer *bytes.Buffer) error {
-	enc := msgpack.NewEncoder(buffer)
-	err := enc.Encode(header)
-	if err != nil {
-		return err
+	response = append(response, r.Status, r.Err_code, r.Err_msg)
+
+	for _, d := range r.Data {
+		response = append(response, string(d))
 	}
 
-	return nil
+	return response
 }
 
-func (content *ResponseContent) PackInto(buffer *bytes.Buffer) error {
+func NewResponse(status int, err_code int, err_msg string, data []string) *Response {
+	return &Response{
+		Status: status,
+		Err_code: err_code,
+		Err_msg: err_msg,
+		Data: data,
+	}
+}
+
+func NewSuccessResponse(data []string) *Response {
+	return &Response {
+		Status: SUCCESS_STATUS,
+		Data: data,
+	}
+}
+
+func NewFailureResponse(err_code int, err_msg string) *Response {
+	return &Response {
+		Status: FAILURE_STATUS,
+		Err_code: err_code,
+		Err_msg: err_msg,
+	}
+}
+
+func (r *Response) PackInto(buffer *bytes.Buffer) error {
 	enc := msgpack.NewEncoder(buffer)
-	err := enc.Encode(content)
+	err := enc.Encode(r.ToArray())
 	if err != nil {
 		return err
 	}
