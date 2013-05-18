@@ -4,6 +4,7 @@ import (
 	l4g "github.com/alecthomas/log4go"
 )
 
+// Log levels binding
 var LogLevels = map[string]l4g.Level{
 	l4g.DEBUG.String():    l4g.DEBUG,
 	l4g.FINEST.String():   l4g.FINEST,

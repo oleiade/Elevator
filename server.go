@@ -1,11 +1,11 @@
 package elevator
 
 import (
-	"bytes"
 	"fmt"
+	"log"
+	"bytes"
 	zmq "github.com/alecthomas/gozmq"
 	l4g "github.com/alecthomas/log4go"
-	"log"
 )
 
 type ClientSocket struct {
@@ -13,6 +13,8 @@ type ClientSocket struct {
 	Socket zmq.Socket
 }
 
+// Creates and binds the zmq socket for the server
+// to listen on
 func server_socket(endpoint string) (*zmq.Socket, error) {
 	context, err := zmq.NewContext()
 	if err != nil {
