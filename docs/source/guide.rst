@@ -27,8 +27,8 @@ Dependencies
 
 Elevator depends on:
 
-* `Go >= 1.0 <http://golang.org>`_ language compiler
-* `zmq <http://zeromq.org>`_ (>= 3.x)
+* `Go >= 1.1 <http://golang.org>`_ language compiler
+* `zmq <http://zeromq.org>`_ (>= 3.2.X)
 * `leveldb <http://code.google.com/p/leveldb/>`_ (>= 1.6)
 
 
@@ -61,9 +61,9 @@ Installation
 1. First, make sure you have a `Go <http://http://golang.org/>`_ language compiler and `git <http://gitscm.org>`_ installed.
 
 2. Then, clone this repository
-  
+
 .. code-block:: bash
-  
+
   git clone git@github.com:oleiade/Elevator
 
 3. Last, build and copy to a system ``PATH`` location
@@ -74,18 +74,11 @@ Installation
   make VERBOSE=1
   sudo cp ./bin/elevator /usr/local/bin/elevator
 
+
 .. _usage:
 
 Usage
 =====
-
-Once Elevator is installed, you can then launch the server using the elevator executable.
-Note that a --daemon option is disposable, and allows you to run elevator server as a daemon,
-storing it's pid in ``.pid`` file in ``/tmp``.
-
-See ``config/elevator.conf`` for an example of Elevator configuration.
-
-*Example*:
 
 .. code-block:: bash
 
@@ -95,6 +88,10 @@ See ``config/elevator.conf`` for an example of Elevator configuration.
       -d=false: Launches elevator as a daemon
       -e="": Endpoint to bind elevator to
       -l="INFO": Sets elevator verbosity
+
+Once Elevator is installed, you can then launch the server using the elevator executable.
+Note that a ``-d`` option is disposable, and allows you to run elevator server as a daemon,
+storing it's pid in ``.pid`` file in ``/tmp``.
 
 
 .. _configuration:
@@ -132,7 +129,7 @@ Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``
 
   # Endpoint the server should be binded on. Disposable transport
   # layer are tcp and ipc. So for example if you wanna set elevator
-  # to listen on a unixsocket, you might set this value to 
+  # to listen on a unixsocket, you might set this value to
   # ipc:///tmp/elevator.sock
   endpoint = tcp://127.0.0.1:4141
 
@@ -151,6 +148,16 @@ Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``
 Clients
 =======
 
+Languages clients
+-----------------------
+
+A few languages clients for Elevator exists already:
+
+* `py-elevator <http://github.com/oleiade/py-elevator>`_ : Python client, stable
+* `go-elevator <http://github.com/oleiade/go-elevator>`_ : Go client module, under heavy development
+* `clj-elevator <http://github.com/oleiade/clj-elevator>`_ : Clojure client, under heavy development
+
+
 Command line (Experimental)
 --------------------------------
 
@@ -166,14 +173,6 @@ Ensure that you've got an elevator server running, and you're done:
 You'll probably want to consult the :ref:`Command line usage <cmdline>` section in order to learn more about
 it's usage.
 
-Languages clients
------------------------
-
-A few languages clients for Elevator exists already:
-
-* `py-elevator <http://github.com/oleiade/py-elevator>`_ : Python client, stable
-* `go-elevator <http://github.com/oleiade/go-elevator>`_ : Go client module, under heavy development
-* `clj-elevator <http://github.com/oleiade/clj-elevator>`_ : Clojure client, under heavy development
 
 Feel free to add your own and to ask for adding it here. See :ref:`protocol` for more details on how
 to implement your own client in your language.
