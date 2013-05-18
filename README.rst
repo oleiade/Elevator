@@ -5,16 +5,13 @@ Elevator
 .. image:: http://dl.dropbox.com/u/2497327/baneer.png
     :target: http://elevator.readthedocs.org
 
-High performance on-disk Key-Value store.
+Elevator is an open source, on-disk key-value. It provides high-performance bulk read-write operations over very large datasets while exposing a simple and efficient API.
 
-Written in Go, relying on the leveldb library as a storage backend, `Elevator <http://github.com/oleiade/Elevator>`_ provides  a fast, async, and reliable access to a multi-leveldb backend.
+Written in Go, relying on the levelDB library as a storage backend, it provides a fast, async, and reliable access to a multi-db backend. Built upon the zeromq network library and msgpack serialization format it is made to be portable between languages and platforms.
 
-Relying on the zeromq network library and msgpack serialization format, it is made to be portable between languages and platforms.
+Elevator is an open source software under the MIT license. Any hackers are welcome to supply ideas, features requests, patches, Pull requests and so on. Documentation’s development page contains comprehensive info on contributing, repository layout, our release strategy, and more.
 
 See `Documentation <http://elevator.readthedocs.org>`_ for more details
-
-
-Elevator is an open source software under the MIT license. Any hackers are welcome to supply ideas, features requests, patches, Pull requests and so on.  `Documentation's development page <http://elevator.readthedocs.org>`_ contains comprehensive info on contributing, repository layout, our release strategy, and more.
 
 .. image:: http://api.flattr.com/button/flattr-badge-large.png
     :target: https://flattr.com/submit/auto?user_id=oleiade&url=http://github.com/oleiade/Elevator&title=Elevator&language=&tags=github&category=software
@@ -53,9 +50,9 @@ Installation
 1. First, make sure you have a `Go <http://http://golang.org/>`_ language compiler ``>= 1.1`` and `git <http://gitscm.org>`_ installed.
 
 2. Then, clone this repository
-  
+
 .. code-block:: bash
-  
+
   git clone git@github.com:oleiade/Elevator
 
 3. Last, build and copy to a system ``PATH`` location
@@ -70,24 +67,16 @@ Installation
 Usage
 =====
 
-Once Elevator is installed, you can then launch the server using the elevator executable.
-Note that a --daemon option is disposable, and allows you to run elevator server as a daemon,
-storing it's pid in ``.pid`` file in ``/tmp``.
-
-See ``config/elevator.conf`` for an example of Elevator configuration.
-
-*Example*:
-
 .. code-block:: bash
 
 
   $ elevator -h
 
   Usage of ./bin/elevator:
-  
+
   -b="127.0.0.1": If tcp transport is selected: ip the server
                   socket should be listening on.
-  -c="/etc/elevator/elevator.conf": Path to elevator server 
+  -c="/etc/elevator/elevator.conf": Path to elevator server
                                     config file, eventually
   -d=false: Launch elevator as a daemon
   -l="DEBUG": Log level, see python logging documentation
@@ -95,6 +84,10 @@ See ``config/elevator.conf`` for an example of Elevator configuration.
                             http://docs.python.org/library/logging.html#logger-objects
   -p=4141: Port the server should listen on
   -t="tcp": Transport layer : tcp | ipc
+
+Once Elevator is installed, you can then launch the server using the elevator executable.
+Note that a --daemon option is disposable, and allows you to run elevator server as a daemon,
+storing it's pid in ``.pid`` file in ``/tmp``.
 
 
 Configuration
@@ -130,7 +123,7 @@ Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``
 
   # Endpoint the server should be binded on. Disposable transport
   # layer are tcp and ipc. So for example if you wanna set elevator
-  # to listen on a unixsocket, you might set this value to 
+  # to listen on a unixsocket, you might set this value to
   # ipc:///tmp/elevator.sock
   endpoint = tcp://127.0.0.1:4141
 
