@@ -31,20 +31,17 @@ func Exec(db *Db, request *Request) {
 	}
 }
 
-func Forward(header *ResponseHeader, content *ResponseContent, request *Request) error {	
-	l4g.Debug(func()string { return header.String() })
+func Forward(response *Response, request *Request) error {	
+	l4g.Debug(func()string { return response.String() })
 	socket := request.Source.Socket
 	address := request.Source.Id
-	parts := make([][]byte, 3)
+	parts := make([][]byte, 2)
 
-	var header_buf bytes.Buffer
-	var content_buf bytes.Buffer
-	header.PackInto(&header_buf)
-	content.PackInto(&content_buf)
+	var response_buf bytes.Buffer
+	response.PackInto(&response_buf)
 
 	parts[0] = address
-	parts[1] = header_buf.Bytes()
-	parts[2] = content_buf.Bytes()
+	parts[1] = response_buf.Bytes()
 
 	err := socket.SendMultipart(parts, 0)
 	if err != nil {
@@ -55,76 +52,64 @@ func Forward(header *ResponseHeader, content *ResponseContent, request *Request)
 }
 
 func Get(db *Db, request *Request) error {
-	key := request.Args[0]
-	var data []string
+	var response 	*Response
+	var key 		string = request.Args[0]
 
 	ro := leveldb.NewReadOptions()
 	value, err := db.Connector.Get(ro, []byte(key))
-
-	var header *ResponseHeader
 	if err != nil {
-		header = NewFailureResponseHeader(KEY_ERROR, string(err.Error()))
+		response = NewFailureResponse(KEY_ERROR, err.Error())
 	} else {
-		header = NewSuccessResponseHeader()
+		response = NewSuccessResponse([]string{string(value)})
 	}
 
-	data = append(data, string(value))
-	content := ResponseContent{
-		Datas: data,
-	}
-
-	Forward(header, &content, request)
+	Forward(response, request)
 
 	return nil
 }
 
 func Put(db *Db, request *Request) error {
-	key := request.Args[0]
-	value := request.Args[1]
+	var response 	*Response
+	var key 		string = request.Args[0]
+	var value 		string = request.Args[1]
 
 	wo := leveldb.NewWriteOptions()
 	err := db.Connector.Put(wo, []byte(key), []byte(value))
-
-	var header *ResponseHeader
 	if err != nil {
-		header = NewFailureResponseHeader(VALUE_ERROR, string(err.Error()))
+		response = NewFailureResponse(VALUE_ERROR, string(err.Error()))
 	} else {
-		header = NewSuccessResponseHeader()
+		response = NewSuccessResponse([]string{})
 	}
 
-	content := ResponseContent{}
-
-	Forward(header, &content, request)
+	Forward(response, request)
 
 	return nil
 }
 
 func Delete(db *Db, request *Request) error {
-	key := request.Args[0]
+	var response 	*Response
+	var key			string = request.Args[0]
 
 	wo := leveldb.NewWriteOptions()
 	err := db.Connector.Delete(wo, []byte(key))
-
-	var header *ResponseHeader
 	if err != nil {
-		header = NewFailureResponseHeader(KEY_ERROR, string(err.Error()))
+		response = NewFailureResponse(KEY_ERROR, string(err.Error()))
 	} else {
-		header = NewSuccessResponseHeader()
+		response = NewSuccessResponse([]string{})
 	}
 
-	content := ResponseContent{}
-
-	Forward(header, &content, request)
+	Forward(response, request)
 
 	return nil
 }
 
 func MGet(db *Db, request *Request) error {
+	var response	*Response
+	var data 		[]string = make([]string, len(request.Args))
+
 	read_options := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
 	read_options.SetSnapshot(snapshot)
-
-	var data []string = make([]string, len(request.Args))
 
 	if len(request.Args) > 0 {
 		start := request.Args[0]
@@ -152,12 +137,8 @@ func MGet(db *Db, request *Request) error {
 
 	}
 
-	header := NewSuccessResponseHeader()
-	content := ResponseContent{
-		Datas: data,
-	}
-
-	Forward(header, &content, request)
+	response = NewSuccessResponse(data)
+	Forward(response, request)
 
 	db.Connector.ReleaseSnapshot(snapshot)
 
@@ -165,14 +146,15 @@ func MGet(db *Db, request *Request) error {
 }
 
 func Range(db *Db, request *Request) error {
-	start := request.Args[0]
-	end := request.Args[1]
+	var response 	*Response
+	var data 		[]string
+	var start 		string = request.Args[0]
+	var end 		string = request.Args[1]
 
 	read_options := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
 	read_options.SetSnapshot(snapshot)
 
-	var data [][]string
 
 	it := db.Connector.NewIterator(read_options)
 	defer it.Close()
@@ -182,15 +164,11 @@ func Range(db *Db, request *Request) error {
 		if bytes.Compare(it.Key(), []byte(end)) >= 1 {
 			break
 		}
-		data = append(data, []string{string(it.Key()), string(it.Value())})
+		data = append(data, string(it.Key()), string(it.Value()))
 	}
 
-	header := NewSuccessResponseHeader()
-	content := ResponseContent{
-		Datas: data,
-	}
-
-	Forward(header, &content, request)
+	response = NewSuccessResponse(data)
+	Forward(response, request)
 
 	db.Connector.ReleaseSnapshot(snapshot)
 
@@ -198,15 +176,14 @@ func Range(db *Db, request *Request) error {
 }
 
 func Slice(db *Db, request *Request) error {
-	start := request.Args[0]
-	limit, _ := strconv.Atoi(request.Args[1])
+	var response	*Response
+	var data 		[]string
+	var start 		string = request.Args[0]
 
+	limit, _ := strconv.Atoi(request.Args[1])
 	read_options := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
 	read_options.SetSnapshot(snapshot)
-
-	var header *ResponseHeader
-	var data [][]string
 
 	it := db.Connector.NewIterator(read_options)
 	defer it.Close()
@@ -218,105 +195,89 @@ func Slice(db *Db, request *Request) error {
 			break
 		}
 
-		data = append(data, []string{string(it.Key()), string(it.Value())})		
+		data = append(data, string(it.Key()), string(it.Value()))
 		i++
 	}
 
-	header = NewSuccessResponseHeader()
-	content := ResponseContent{
-		Datas: data,
-	}
-
-	Forward(header, &content, request)
+	response = NewSuccessResponse(data)
+	Forward(response, request)
 
 	db.Connector.ReleaseSnapshot(snapshot)
-
 
 	return nil
 }
 
 
 func DbCreate(db_store *DbStore, request *Request) error {
-	db_name := request.Args[0]
-
-	var header	*ResponseHeader
+	var response	*Response
+	var db_name 	string = request.Args[0]
 
 	err := db_store.Add(db_name)
 	if err != nil {
-		header = NewFailureResponseHeader(DATABASE_ERROR, string(err.Error()))
+		response = NewFailureResponse(DATABASE_ERROR, string(err.Error()))
 	} else {
-		header = NewSuccessResponseHeader()
+		response = NewSuccessResponse([]string{})
 	}
 
-	content := ResponseContent{}
-	Forward(header, &content, request)
+	Forward(response, request)
 
 	return nil
 }
 
 func DbDrop(db_store *DbStore, request *Request) error {
-	db_name	:= request.Args[0]
-
-	var header 	*ResponseHeader
+	var response 	*Response
+	var db_name		string = request.Args[0]
 
 	err := db_store.Drop(db_name)
 	if err != nil {
-		header = NewFailureResponseHeader(DATABASE_ERROR, string(err.Error()))
+		response = NewFailureResponse(DATABASE_ERROR, string(err.Error()))
 	} else {
-		header = NewSuccessResponseHeader()
+		response = NewSuccessResponse([]string{})
 	}
 
-	content := ResponseContent{}
-	Forward(header, &content, request)
+	Forward(response, request)
 
 	return nil
 }
 
 func DbConnect(db_store *DbStore, request *Request) error {
-	db_name := request.Args[0]
+	var response 	*Response
+	var db_name 	string = request.Args[0]
+
 	db_uid, exists := db_store.NameToUid[db_name]
 
-	var header *ResponseHeader
 	if exists {
-		header = NewSuccessResponseHeader()
+		response = NewSuccessResponse([]string{db_uid})
 	} else {
-		header = NewFailureResponseHeader(DATABASE_ERROR, "Database does not exist")
+		 response = NewFailureResponse(DATABASE_ERROR, "Database does not exist")
 	}
 
-	data_container := make([][]byte, 1)
-	data_container[0] = []byte(db_uid)
-	content := ResponseContent{
-		Datas: data_container,
-	}
-
-	Forward(header, &content, request)
+	Forward(response, request)
 
 	return nil
 }
 
 func DbList(db_store *DbStore, request *Request) error {
+	var response 	*Response
+
 	db_names := db_store.List()
-	header := NewSuccessResponseHeader()
-	data_container := make([][]byte, len(db_names))
+	data := make([]string, len(db_names))
 
 	for index, db_name := range db_names {
-		data_container[index] = []byte(db_name)
+		data[index] = db_name
 	}
 
-	content := ResponseContent{
-		Datas: data_container,
-	}
-
-	Forward(header, &content, request)
+	response = NewSuccessResponse(data)
+	Forward(response, request)
 
 	return nil
 }
 
 
 func DbMount(db_store *DbStore, request *Request) error {
-	db_name	:= request.Args[0]
+	var response 	*Response
+	var db_name		string = request.Args[0]
 
-	var header *ResponseHeader
 	db_uid, exists := db_store.NameToUid[db_name]
 
 	if exists {
@@ -325,23 +286,21 @@ func DbMount(db_store *DbStore, request *Request) error {
 			return err
 		}
 
-		header = NewSuccessResponseHeader()
+		response = NewSuccessResponse([]string{})
 	} else {
-		header = NewFailureResponseHeader(DATABASE_ERROR, "Database does not exist")
+		response = NewFailureResponse(DATABASE_ERROR, "Database does not exist")
 	}
 
-	content := ResponseContent{}
-
-	Forward(header, &content, request)
+	Forward(response, request)
 
 	return nil
 
 }
 
 func DbUnmount(db_store *DbStore, request *Request) error {
-	db_name := request.Args[0]
+	var response	*Response
+	var db_name 	string = request.Args[0]
 
-	var header *ResponseHeader
 	db_uid, exists := db_store.NameToUid[db_name]
 
 	if exists {
@@ -350,14 +309,12 @@ func DbUnmount(db_store *DbStore, request *Request) error {
 			return err
 		}
 
-		header = NewSuccessResponseHeader()
+		response = NewSuccessResponse([]string{})
 	} else {
-		header = NewFailureResponseHeader(DATABASE_ERROR, "Database does not exist")
+		response = NewFailureResponse(DATABASE_ERROR, "Database does not exist")
 	}
 
-	content := ResponseContent{}
-
-	Forward(header, &content, request)
+	Forward(response, request)
 
 	return nil
 }
