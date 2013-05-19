@@ -18,15 +18,22 @@ func main() {
 
 	config.UpdateFromCmdline(cmdline)
 
+	// Set up loggers
 	l4g.AddFilter("stdout",
-				  elevator.LogLevels[config.LogLevel],
+				  l4g.INFO,
 				  l4g.NewConsoleLogWriter())
+	err = elevator.SetupFileLogger("file",
+								   config.LogLevel,
+								   config.LogFile)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if config.Daemon {
 		if err := elevator.Daemon(config); err != nil {
 			log.Fatal(err)
 		}
-	} else { 
+	} else {
 		elevator.ListenAndServe(config)
 	}
 }

@@ -12,8 +12,7 @@ type Config struct {
 	StorePath   string `ini:"database_store_path"`
 	StoragePath string `ini:"databases_storage_path"`
 	DefaultDb   string `ini:"default_db"`
-	ActivityLog string `ini:"activity_log"`
-	ErrorsLog   string `ini:"errors_log"`
+	LogFile 	string `ini:"log_file"`
 	LogLevel    string `ini:"log_level"`
 }
 
@@ -25,8 +24,7 @@ func NewConfig() *Config {
 		StorePath:   "/var/lib/elevator/store",
 		StoragePath: "/var/lib/elevator",
 		DefaultDb:   "default",
-		ActivityLog: "/var/log/elevator/activity.log",
-		ErrorsLog:   "/var/log/elevator/errors.log",
+		LogFile: 	 "/var/log/elevator.log",
 		LogLevel:    "INFO",
 	}
 }

@@ -135,9 +135,6 @@ Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``
   # Path to file were server activity should be logged
   activity_log = /var/log/elevator.log
 
-  # Path to file were server warnings, errors, exceptions should be logged
-  errors_log = /var/log/elevator_errors.log
-
 
 Clients
 =======
