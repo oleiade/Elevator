@@ -25,16 +25,6 @@ func (r *Request) String() string {
         r.DbUid, r.Command, r.Args)
 }
 
-func (r *Request) PackInto(buffer *bytes.Buffer) error {
-    enc := msgpack.NewEncoder(buffer)
-    err := enc.Encode(r)
-    if err != nil {
-        return err
-    }
-
-    return nil
-}
-
 func (r *Request) UnpackFrom(data *bytes.Buffer) error {
     var raw_request []string
 
