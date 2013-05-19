@@ -13,6 +13,13 @@ type Response struct {
     Data     []string
 }
 
+// String represents the Response as a normalized string
+func (r *Response) String() string {
+    return fmt.Sprintf("<Response status:%d err_code:%d err_msg:%s data:%s",
+        r.Status, r.Err_code, r.Err_msg, r.Data)
+}
+
+// NewResponse returns a pointer to a brand new allocated Response
 func NewResponse(status int, err_code int, err_msg string, data []string) *Response {
     return &Response{
         Status:   status,
@@ -22,6 +29,8 @@ func NewResponse(status int, err_code int, err_msg string, data []string) *Respo
     }
 }
 
+// NewSuccessResponse returns a pointer to a brand
+// new allocated succesfull Response
 func NewSuccessResponse(data []string) *Response {
     return &Response{
         Status: SUCCESS_STATUS,
@@ -29,6 +38,8 @@ func NewSuccessResponse(data []string) *Response {
     }
 }
 
+// NewFailureResponse returns a pointer to a brand
+// new allocated failure Response
 func NewFailureResponse(err_code int, err_msg string) *Response {
     return &Response{
         Status:   FAILURE_STATUS,
@@ -37,11 +48,7 @@ func NewFailureResponse(err_code int, err_msg string) *Response {
     }
 }
 
-func (r *Response) String() string {
-    return fmt.Sprintf("<Response status:%d err_code:%d err_msg:%s data:%s",
-        r.Status, r.Err_code, r.Err_msg, r.Data)
-}
-
+// ToArray transforms a Response to an array-like []interface{}
 func (r *Response) ToArray() []interface{} {
     var response []interface{}
 
@@ -54,6 +61,8 @@ func (r *Response) ToArray() []interface{} {
     return response
 }
 
+// PackInto method fulfills serializes the Response
+// into a msgpacked response message
 func (r *Response) PackInto(buffer *bytes.Buffer) error {
     enc := msgpack.NewEncoder(buffer)
     err := enc.Encode(r.ToArray())

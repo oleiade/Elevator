@@ -1,5 +1,6 @@
 package elevator
 
+
 type BatchOperations []BatchOperation
 
 type BatchOperation struct {
@@ -7,7 +8,8 @@ type BatchOperation struct {
     OpArgs []string
 }
 
-
+// NewBatchOperation builds a BatchOperation from batch operation
+// code and batch operation args
 func NewBatchOperation(op_code string, op_args []string) *BatchOperation {
     return &BatchOperation{
         OpCode: op_code,
@@ -15,10 +17,15 @@ func NewBatchOperation(op_code string, op_args []string) *BatchOperation {
     }
 }
 
+// BatchOperationFromSlice builds a BatchOperation from
+// a string slice containing the batch operation code and
+// arguments
 func BatchOperationFromSlice(slice []string) *BatchOperation {
     return NewBatchOperation(slice[0], slice[1:])
 }
 
+// BatchOperationsFromRequestArgs builds a BatchOperations from
+// a string slice resprensenting a sequence of batch operations
 func BatchOperationsFromRequestArgs(args []string) *BatchOperations {
     var ops BatchOperations
     var cur_index int = 0
