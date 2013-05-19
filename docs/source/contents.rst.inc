@@ -2,6 +2,6 @@
    :maxdepth: 2
 
    guide
-   cmdline
    protocol
+   api
    development
