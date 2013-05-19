@@ -27,6 +27,16 @@ func NewDb(db_name string, path string) *Db {
 	}
 }
 
+// StartRoutine listens on the Db channel awaiting
+// for incoming requests to execute. Willingly
+// blocking on each Exec call received through the
+// channel in order to protect requests.
+func (db *Db) StartRoutine() {
+	for request := range db.Channel {
+		processRequest(db, request)
+	}
+}
+
 // Mount sets the database status to DB_STATUS_MOUNTED
 // and instantiates the according leveldb connector
 func (db *Db) Mount() (err error) {
@@ -42,7 +52,7 @@ func (db *Db) Mount() (err error) {
 
 		db.Status = DB_STATUS_MOUNTED
 		db.Channel = make(chan *Request)
-		go db.Routine()
+		go db.StartRoutine()
 	} else {
 		error := errors.New(fmt.Sprintf("Database %s already mounted", db.Name))
 		l4g.Error(error)
@@ -74,13 +84,4 @@ func (db *Db) Unmount() (err error) {
 	})
 
 	return nil
-}
-
-// Routine listens on the Db channel awaiting
-// for incoming requests to execute and sends clients
-// response.
-func (db *Db) Routine() {
-	for request := range db.Channel {
-		Exec(db, request)
-	}
 }

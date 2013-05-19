@@ -2,7 +2,6 @@ package elevator
 
 import (
 	"bytes"
-	l4g "github.com/alecthomas/log4go"
 	leveldb "github.com/jmhodges/levigo"
 	"strconv"
 )
@@ -26,31 +25,6 @@ var store_commands = map[string]func(*DbStore, *Request) error{
 	DB_LIST:    DbList,
 }
 
-func Exec(db *Db, request *Request) {
-	if f, ok := database_commands[request.Command]; ok {
-		f(db, request)
-	}
-}
-
-func Forward(response *Response, request *Request) error {
-	l4g.Debug(func() string { return response.String() })
-	socket := request.Source.Socket
-	address := request.Source.Id
-	parts := make([][]byte, 2)
-
-	var response_buf bytes.Buffer
-	response.PackInto(&response_buf)
-
-	parts[0] = address
-	parts[1] = response_buf.Bytes()
-
-	err := socket.SendMultipart(parts, 0)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func Get(db *Db, request *Request) error {
 	var response *Response
@@ -64,7 +38,7 @@ func Get(db *Db, request *Request) error {
 		response = NewSuccessResponse([]string{string(value)})
 	}
 
-	Forward(response, request)
+	forwardResponse(response, request)
 
 	return nil
 }
@@ -82,7 +56,7 @@ func Put(db *Db, request *Request) error {
 		response = NewSuccessResponse([]string{})
 	}
 
-	Forward(response, request)
+	forwardResponse(response, request)
 
 	return nil
 }
@@ -99,7 +73,7 @@ func Delete(db *Db, request *Request) error {
 		response = NewSuccessResponse([]string{})
 	}
 
-	Forward(response, request)
+	forwardResponse(response, request)
 
 	return nil
 }
@@ -139,7 +113,7 @@ func MGet(db *Db, request *Request) error {
 	}
 
 	response = NewSuccessResponse(data)
-	Forward(response, request)
+	forwardResponse(response, request)
 
 	db.Connector.ReleaseSnapshot(snapshot)
 
@@ -168,7 +142,7 @@ func Range(db *Db, request *Request) error {
 	}
 
 	response = NewSuccessResponse(data)
-	Forward(response, request)
+	forwardResponse(response, request)
 
 	db.Connector.ReleaseSnapshot(snapshot)
 
@@ -200,7 +174,7 @@ func Slice(db *Db, request *Request) error {
 	}
 
 	response = NewSuccessResponse(data)
-	Forward(response, request)
+	forwardResponse(response, request)
 
 	db.Connector.ReleaseSnapshot(snapshot)
 
@@ -231,7 +205,7 @@ func Batch(db *Db, request *Request) error {
 		response = NewSuccessResponse([]string{})
 	}
 
-	Forward(response, request)
+	forwardResponse(response, request)
 
 	return nil
 }
@@ -247,7 +221,7 @@ func DbCreate(db_store *DbStore, request *Request) error {
 		response = NewSuccessResponse([]string{})
 	}
 
-	Forward(response, request)
+	forwardResponse(response, request)
 
 	return nil
 }
@@ -263,7 +237,7 @@ func DbDrop(db_store *DbStore, request *Request) error {
 		response = NewSuccessResponse([]string{})
 	}
 
-	Forward(response, request)
+	forwardResponse(response, request)
 
 	return nil
 }
@@ -280,7 +254,7 @@ func DbConnect(db_store *DbStore, request *Request) error {
 		response = NewFailureResponse(DATABASE_ERROR, "Database does not exist")
 	}
 
-	Forward(response, request)
+	forwardResponse(response, request)
 
 	return nil
 }
@@ -296,7 +270,7 @@ func DbList(db_store *DbStore, request *Request) error {
 	}
 
 	response = NewSuccessResponse(data)
-	Forward(response, request)
+	forwardResponse(response, request)
 
 	return nil
 }
@@ -318,7 +292,7 @@ func DbMount(db_store *DbStore, request *Request) error {
 		response = NewFailureResponse(DATABASE_ERROR, "Database does not exist")
 	}
 
-	Forward(response, request)
+	forwardResponse(response, request)
 
 	return nil
 
@@ -341,7 +315,7 @@ func DbUnmount(db_store *DbStore, request *Request) error {
 		response = NewFailureResponse(DATABASE_ERROR, "Database does not exist")
 	}
 
-	Forward(response, request)
+	forwardResponse(response, request)
 
 	return nil
 }

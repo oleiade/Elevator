@@ -15,7 +15,7 @@ type ClientSocket struct {
 
 // Creates and binds the zmq socket for the server
 // to listen on
-func server_socket(endpoint string) (*zmq.Socket, error) {
+func buildServerSocket(endpoint string) (*zmq.Socket, error) {
 	context, err := zmq.NewContext()
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func server_socket(endpoint string) (*zmq.Socket, error) {
 	return socket, nil
 }
 
-func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbStore) {
+func handleRequest(client_socket *ClientSocket, raw_msg []byte, db_store *DbStore) {
 	var request 	*Request = new(Request)
 	var msg 		*bytes.Buffer = bytes.NewBuffer(raw_msg)
 
@@ -53,11 +53,37 @@ func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbSt
 	}
 }
 
+func processRequest(db *Db, request *Request) {
+	if f, ok := database_commands[request.Command]; ok {
+		f(db, request)
+	}
+}
+
+func forwardResponse(response *Response, request *Request) error {
+	l4g.Debug(func() string { return response.String() })
+
+	var response_buf 	bytes.Buffer
+	var socket 			*zmq.Socket = &request.Source.Socket
+	var address 		[]byte = request.Source.Id
+	var parts 			[][]byte = make([][]byte, 2)
+
+	response.PackInto(&response_buf)
+	parts[0] = address
+	parts[1] = response_buf.Bytes()
+
+	err := socket.SendMultipart(parts, 0)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func ListenAndServe(config *Config) error {
 	l4g.Info(fmt.Sprintf("Elevator started on %s", config.Endpoint))
 
 	// Build server zmq socket
-	socket, err := server_socket(config.Endpoint)
+	socket, err := buildServerSocket(config.Endpoint)
 	defer (*socket).Close()
 	if err != nil {
 		log.Fatal(err)
@@ -93,7 +119,7 @@ func ListenAndServe(config *Config) error {
 			}
 			msg := parts[1]
 
-			go request_handler(&client_socket, msg, db_store)
+			go handleRequest(&client_socket, msg, db_store)
 		}
 	}
 }
