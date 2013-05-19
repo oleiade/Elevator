@@ -1,8 +1,8 @@
 package elevator
 
 import (
-	"os"
 	l4g "github.com/alecthomas/log4go"
+	"os"
 )
 
 // Log levels binding
@@ -34,8 +34,8 @@ func SetupFileLogger(logger_name string, log_level string, log_file string) erro
 	}
 
 	l4g.AddFilter(logger_name,
-	  			  LogLevels[log_level],
-	  			  l4g.NewFileLogWriter(log_file, false))
+		LogLevels[log_level],
+		l4g.NewFileLogWriter(log_file, false))
 
 	return nil
 }

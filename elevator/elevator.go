@@ -1,30 +1,29 @@
 package main
 
 import (
+	l4g "github.com/alecthomas/log4go"
+	elevator "github.com/oleiade/Elevator"
 	"log"
-	elevator 	"github.com/oleiade/Elevator"
-	l4g 		"github.com/alecthomas/log4go"
 )
 
 func main() {
+	var err error
+
+	// Parse command line arguments
 	cmdline := &elevator.Cmdline{}
 	cmdline.ParseArgs()
 
+	// Load configuration
 	config := elevator.NewConfig()
-	err := config.FromFile(*cmdline.ConfigFile)
+	err = config.FromFile(*cmdline.ConfigFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	config.UpdateFromCmdline(cmdline)
 
 	// Set up loggers
-	l4g.AddFilter("stdout",
-				  l4g.INFO,
-				  l4g.NewConsoleLogWriter())
-	err = elevator.SetupFileLogger("file",
-								   config.LogLevel,
-								   config.LogFile)
+	l4g.AddFilter("stdout", l4g.INFO, l4g.NewConsoleLogWriter())
+	err = elevator.SetupFileLogger("file", config.LogLevel, config.LogFile)
 	if err != nil {
 		log.Fatal(err)
 	}
