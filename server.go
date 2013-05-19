@@ -32,8 +32,11 @@ func server_socket(endpoint string) (*zmq.Socket, error) {
 }
 
 func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbStore) {
-	request := new(Request)
-	msg := bytes.NewBuffer(raw_msg)
+	var request 	*Request = new(Request)
+	var msg 		*bytes.Buffer = bytes.NewBuffer(raw_msg)
+
+	// Deserialize request message and fulfill request
+	// obj with it's content
 	request.UnpackFrom(msg)
 	request.Source = client_socket
 	l4g.Debug(func() string { return request.String() })
@@ -53,12 +56,14 @@ func request_handler(client_socket *ClientSocket, raw_msg []byte, db_store *DbSt
 func ListenAndServe(config *Config) error {
 	l4g.Info(fmt.Sprintf("Elevator started on %s", config.Endpoint))
 
+	// Build server zmq socket
 	socket, err := server_socket(config.Endpoint)
 	defer (*socket).Close()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// Load database store
 	db_store := NewDbStore(config.StorePath, config.StoragePath)
 	err = db_store.Load()
 	if err != nil {
@@ -68,10 +73,13 @@ func ListenAndServe(config *Config) error {
 		}
 	}
 
+	// build zmq poller
 	poller := zmq.PollItems{
 		zmq.PollItem{Socket: socket, Events: zmq.POLLIN},
 	}
 
+	// Poll for events on the zmq socket
+	// and handle the incoming requests in a goroutine
 	for {
 		_, _ = zmq.Poll(poller, -1)
 
