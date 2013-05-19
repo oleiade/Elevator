@@ -44,7 +44,9 @@ func (db *Db) Mount() (err error) {
 		db.Channel = make(chan *Request)
 		go db.Routine()
 	} else {
-		return errors.New("Database already mounted")
+		error := errors.New(fmt.Sprintf("Database %s already mounted", db.Name))
+		l4g.Error(error)
+		return error
 	}
 
 	l4g.Debug(func() string {
@@ -62,7 +64,9 @@ func (db *Db) Unmount() (err error) {
 		close(db.Channel)
 		db.Status = DB_STATUS_UNMOUNTED
 	} else {
-		return errors.New("Database already unmounted")
+		error := errors.New(fmt.Sprintf("Database %s already unmounted", db.Name))
+		l4g.Error(error)
+		return error
 	}
 
 	l4g.Debug(func() string {

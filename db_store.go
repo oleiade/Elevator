@@ -99,7 +99,9 @@ func (store *DbStore) Mount(db_uid string) (err error) {
 			return err
 		}
 	} else {
-		return errors.New("Database does not exist")
+		error := errors.New(fmt.Sprintf("Database with uid %s does not exist", db_uid))
+		l4g.Error(error)
+		return error
 	}
 
 	return nil
@@ -114,7 +116,9 @@ func (store *DbStore) Unmount(db_uid string) (err error) {
 			return err
 		}
 	} else {
-		return errors.New("Database does not exist")
+		error := errors.New(fmt.Sprintf("Database with uid %s does not exist", db_uid))
+		l4g.Error(error)
+		return error
 	}
 
 	return nil
@@ -130,7 +134,9 @@ func (store *DbStore) Add(db_name string) (err error) {
 
 		if IsFilePath(db_name) {
 			if !filepath.IsAbs(db_name) {
-				return errors.New("Cannot create database from relative path")
+				error := errors.New("Creating database from relative pathnot allowed")
+				l4g.Error(error)
+				return error
 			}
 
 			db_path = db_name
@@ -141,7 +147,9 @@ func (store *DbStore) Add(db_name string) (err error) {
 				l4g.Error(err)
 				return err
 			} else if !exists {
-				return errors.New(fmt.Sprintf("%s does not exist", dir))
+				error := errors.New(fmt.Sprintf("%s does not exist", dir))
+				l4g.Error(error)
+				return error
 			}
 		} else {
 			db_path = filepath.Join(store.StoragePath, db_name)
@@ -152,6 +160,7 @@ func (store *DbStore) Add(db_name string) (err error) {
 		store.updateNameToUidIndex()
 		err = store.WriteToFile()
 		if err != nil {
+			l4g.Error(err)
 			return err
 		}
 		db.Mount()
@@ -178,10 +187,13 @@ func (store *DbStore) Drop(db_name string) (err error) {
 
 		err = os.RemoveAll(db_path)
 		if err != nil {
+			l4g.Error(err)
 			return err
 		}
 	} else {
-		return errors.New("Database does not exist")
+		error := errors.New(fmt.Sprintf("Database %s does not exist", db_name))
+		l4g.Error(error)
+		return error
 	}
 
 	l4g.Debug(func() string {
