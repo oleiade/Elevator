@@ -32,6 +32,8 @@ func buildServerSocket(endpoint string) (*zmq.Socket, error) {
 	return socket, nil
 }
 
+// handleRequest deserializes the input msgpack request,
+// processes it and ensures it is forwarded to the client.
 func handleRequest(client_socket *ClientSocket, raw_msg []byte, db_store *DbStore) {
 	var request 	*Request = new(Request)
 	var msg 		*bytes.Buffer = bytes.NewBuffer(raw_msg)
@@ -59,6 +61,8 @@ func handleRequest(client_socket *ClientSocket, raw_msg []byte, db_store *DbStor
 	}
 }
 
+// processRequest executes the received request command, and returns
+// the resulting response.
 func processRequest(db *Db, request *Request) (*Response, error) {
 	if f, ok := database_commands[request.Command]; ok {
 		response, _ := f(db, request)
@@ -70,6 +74,8 @@ func processRequest(db *Db, request *Request) (*Response, error) {
 	return nil, error
 }
 
+// forwardResponse takes a request-response pair as input and
+// sends the response to the request client.
 func forwardResponse(response *Response, request *Request) error {
 	l4g.Debug(func() string { return response.String() })
 
