@@ -1,8 +1,9 @@
 package elevator
 
 import (
-	"bytes"
 	"fmt"
+	"bytes"
+	"errors"
 	zmq "github.com/alecthomas/gozmq"
 	l4g "github.com/alecthomas/log4go"
 	"log"
@@ -49,14 +50,24 @@ func handleRequest(client_socket *ClientSocket, raw_msg []byte, db_store *DbStor
 			db.Channel <- request
 		}
 	} else {
-		go store_commands[request.Command](db_store, request)
+		go func() {
+			response, err := store_commands[request.Command](db_store, request)
+			if err == nil {
+				forwardResponse(response, request)
+			}
+		}()
 	}
 }
 
-func processRequest(db *Db, request *Request) {
+func processRequest(db *Db, request *Request) (*Response, error) {
 	if f, ok := database_commands[request.Command]; ok {
-		f(db, request)
+		response, _ := f(db, request)
+		return response, nil
 	}
+	error := errors.New(fmt.Sprintf("Unknown command %s", request.Command))
+	l4g.Error(error)
+
+	return nil, error
 }
 
 func forwardResponse(response *Response, request *Request) error {

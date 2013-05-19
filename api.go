@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-var database_commands = map[string]func(*Db, *Request) error{
+var database_commands = map[string]func(*Db, *Request) (*Response, error){
 	DB_GET:    Get,
 	DB_MGET:   MGet,
 	DB_PUT:    Put,
@@ -16,7 +16,7 @@ var database_commands = map[string]func(*Db, *Request) error{
 	DB_BATCH:  Batch,
 }
 
-var store_commands = map[string]func(*DbStore, *Request) error{
+var store_commands = map[string]func(*DbStore, *Request) (*Response, error){
 	DB_CREATE:  DbCreate,
 	DB_DROP:    DbDrop,
 	DB_CONNECT: DbConnect,
@@ -26,7 +26,7 @@ var store_commands = map[string]func(*DbStore, *Request) error{
 }
 
 
-func Get(db *Db, request *Request) error {
+func Get(db *Db, request *Request) (*Response, error) {
 	var response *Response
 	var key string = request.Args[0]
 
@@ -38,12 +38,10 @@ func Get(db *Db, request *Request) error {
 		response = NewSuccessResponse([]string{string(value)})
 	}
 
-	forwardResponse(response, request)
-
-	return nil
+	return response, nil
 }
 
-func Put(db *Db, request *Request) error {
+func Put(db *Db, request *Request) (*Response, error) {
 	var response *Response
 	var key string = request.Args[0]
 	var value string = request.Args[1]
@@ -56,12 +54,10 @@ func Put(db *Db, request *Request) error {
 		response = NewSuccessResponse([]string{})
 	}
 
-	forwardResponse(response, request)
-
-	return nil
+	return response, nil
 }
 
-func Delete(db *Db, request *Request) error {
+func Delete(db *Db, request *Request) (*Response, error) {
 	var response *Response
 	var key string = request.Args[0]
 
@@ -73,12 +69,10 @@ func Delete(db *Db, request *Request) error {
 		response = NewSuccessResponse([]string{})
 	}
 
-	forwardResponse(response, request)
-
-	return nil
+	return response, nil
 }
 
-func MGet(db *Db, request *Request) error {
+func MGet(db *Db, request *Request) (*Response, error) {
 	var response *Response
 	var data []string = make([]string, len(request.Args))
 
@@ -117,10 +111,10 @@ func MGet(db *Db, request *Request) error {
 
 	db.Connector.ReleaseSnapshot(snapshot)
 
-	return nil
+	return response, nil
 }
 
-func Range(db *Db, request *Request) error {
+func Range(db *Db, request *Request) (*Response, error) {
 	var response *Response
 	var data []string
 	var start string = request.Args[0]
@@ -146,10 +140,10 @@ func Range(db *Db, request *Request) error {
 
 	db.Connector.ReleaseSnapshot(snapshot)
 
-	return nil
+	return response, nil
 }
 
-func Slice(db *Db, request *Request) error {
+func Slice(db *Db, request *Request) (*Response, error) {
 	var response *Response
 	var data []string
 	var start string = request.Args[0]
@@ -178,10 +172,10 @@ func Slice(db *Db, request *Request) error {
 
 	db.Connector.ReleaseSnapshot(snapshot)
 
-	return nil
+	return response, nil
 }
 
-func Batch(db *Db, request *Request) error {
+func Batch(db *Db, request *Request) (*Response, error) {
 	var response *Response
 	var operations *BatchOperations
 	var batch *leveldb.WriteBatch = leveldb.NewWriteBatch()
@@ -205,12 +199,10 @@ func Batch(db *Db, request *Request) error {
 		response = NewSuccessResponse([]string{})
 	}
 
-	forwardResponse(response, request)
-
-	return nil
+	return response, nil
 }
 
-func DbCreate(db_store *DbStore, request *Request) error {
+func DbCreate(db_store *DbStore, request *Request) (*Response, error) {
 	var response *Response
 	var db_name string = request.Args[0]
 
@@ -221,12 +213,10 @@ func DbCreate(db_store *DbStore, request *Request) error {
 		response = NewSuccessResponse([]string{})
 	}
 
-	forwardResponse(response, request)
-
-	return nil
+	return response, nil
 }
 
-func DbDrop(db_store *DbStore, request *Request) error {
+func DbDrop(db_store *DbStore, request *Request) (*Response, error) {
 	var response *Response
 	var db_name string = request.Args[0]
 
@@ -237,12 +227,10 @@ func DbDrop(db_store *DbStore, request *Request) error {
 		response = NewSuccessResponse([]string{})
 	}
 
-	forwardResponse(response, request)
-
-	return nil
+	return response, nil
 }
 
-func DbConnect(db_store *DbStore, request *Request) error {
+func DbConnect(db_store *DbStore, request *Request) (*Response, error) {
 	var response *Response
 	var db_name string = request.Args[0]
 
@@ -254,12 +242,10 @@ func DbConnect(db_store *DbStore, request *Request) error {
 		response = NewFailureResponse(DATABASE_ERROR, "Database does not exist")
 	}
 
-	forwardResponse(response, request)
-
-	return nil
+	return response, nil
 }
 
-func DbList(db_store *DbStore, request *Request) error {
+func DbList(db_store *DbStore, request *Request) (*Response, error) {
 	var response *Response
 
 	db_names := db_store.List()
@@ -270,12 +256,10 @@ func DbList(db_store *DbStore, request *Request) error {
 	}
 
 	response = NewSuccessResponse(data)
-	forwardResponse(response, request)
-
-	return nil
+	return response, nil
 }
 
-func DbMount(db_store *DbStore, request *Request) error {
+func DbMount(db_store *DbStore, request *Request) (*Response, error) {
 	var response *Response
 	var db_name string = request.Args[0]
 
@@ -284,7 +268,7 @@ func DbMount(db_store *DbStore, request *Request) error {
 	if exists {
 		err := db_store.Mount(db_store.Container[db_uid].Name)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		response = NewSuccessResponse([]string{})
@@ -292,13 +276,11 @@ func DbMount(db_store *DbStore, request *Request) error {
 		response = NewFailureResponse(DATABASE_ERROR, "Database does not exist")
 	}
 
-	forwardResponse(response, request)
-
-	return nil
+	return response, nil
 
 }
 
-func DbUnmount(db_store *DbStore, request *Request) error {
+func DbUnmount(db_store *DbStore, request *Request) (*Response, error) {
 	var response *Response
 	var db_name string = request.Args[0]
 
@@ -307,7 +289,7 @@ func DbUnmount(db_store *DbStore, request *Request) error {
 	if exists {
 		err := db_store.Unmount(db_uid)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		response = NewSuccessResponse([]string{})
@@ -315,7 +297,5 @@ func DbUnmount(db_store *DbStore, request *Request) error {
 		response = NewFailureResponse(DATABASE_ERROR, "Database does not exist")
 	}
 
-	forwardResponse(response, request)
-
-	return nil
+	return response, nil
 }
