@@ -39,3 +39,14 @@ func Truncate(str string, l int) string {
 
 	return truncated.String()
 }
+
+func MegabytesToBytes(mb int) int {
+	return mb * 1048576
+}
+
+func Btoi(b bool) int {
+    if b {
+        return 1
+    }
+    return 0
+ }

@@ -100,11 +100,13 @@ Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``
 
 .. code-block:: ini
 
-  [global]
+  ### MANDATORY ###
+
+  [core]
   # By default Elevator does not run as a daemon.
   # Use 'yes' if you need it. Note that Elevator will write
   # a pid file in /var/run/elevator.pid when daemonized.
-  daemonize = no
+  daemonize = false
 
   # When running daemonized, Elevator writes
   # a pid file in /var/run/elevator.pid by default.
@@ -133,7 +135,43 @@ Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``
   log_level=INFO
 
   # Path to file were server activity should be logged
-  activity_log = /var/log/elevator.log
+  log_file = /var/log/elevator.log
+
+
+  ### OPTIONAL ###
+
+  [storage_engine]
+
+  # Whether data compaction using snappy should be activated
+  # or not at the storage engine level.
+  compression=true
+
+  # Approximate size (in bytes) of user data packed per block. For very
+  # large databases bigger block sizes are likely to perform better.
+  # Default: 128K
+  block_size=131072
+
+  # The cache size (in bytes) determines how much data LevelDB caches in memory.
+  # The more of your data set that can fit in-memory, the better LevelDB will perform.
+  # Default: 512M
+  cache_size=512 * 1048576
+
+  # Larger write buffers increase performance, especially during bulk loads.
+  # Up to two write buffers may be held in memory at the same time, so you may
+  # wish to adjust this parameter to control memory usage.
+  # Default: 64M
+  write_buffer_size=64 * 1048576
+
+  # Bloom filter will reduce the number of unnecessary disk reads needed for Get()
+  # calls by a factor of approximately a 100.
+  # Increasing the bits per key will lead to a larger reduction at the cost of more memory usage.
+  bloom_filter_bits=100
+
+  # Number of open files that can be used by the DB. You may need to increase this if your database has a large working set.
+  max_open_files=150
+
+  # If true, all data read from underlying storage will be verified against corresponding checksums.
+  verify_checksums=false
 
 
 Clients
