@@ -378,31 +378,3 @@ Repairs a broken (or too slow) database
         "",
         nil
     ]
-
-.. _database options:
-
-Database Options
-----------------
-
-As Elevator uses `leveldb <http://http://code.google.com/p/leveldb/>`_ as a storage backend,
-you can operate a rather precise configuration of your databases using leveldb backend.
-Options covers database high level behavior, filesystem operations,
-and cache management. You can find more details about configuration in `leveldb documentation
-<http://leveldb.googlecode.com/svn/trunk/doc/index.html>`_
-
-Here is a description offered by `py-leveldb <http://http://code.google.com/p/py-leveldb/>`_ of the available options.
-
-.. code-block::ini
-
-    create_if_missing  #(default: True)  if True, creates a new database if none exists
-    error_if_exists    #(default: False)  if True, raises and error if the database already exists
-    paranoid_checks    #(default: False)  if True, raises an error as soon as an internal corruption is detected
-    block_cache_size   #(default: 8 * (2 << 20))  maximum allowed size for the block cache in bytes
-    write_buffer_size  #(default  2 * (2 << 20))
-    block_size         #(default: 4096)  unit of transfer for the block cache in bytes
-    max_open_files:    #(default: 1000)
-
-
-
-Options should be passed as a hash map with the ``DBCREATE`` function. It comes with default
-values which will be overrided with the ones you set.

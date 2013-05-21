@@ -4,6 +4,72 @@
 Tuning
 ======
 
+.. _Storage_engine_options:
+
+Storage engine options
+======================
+
+The Elevator storage engine can be configured to fit with your dataset size and problematics through the configuration file ``[storage_engine]`` section. There you can set options which will be used to create and mount the underlying storage of your databases.
+
+.. _write_buffer_size:
+
+Write Buffer Size
+-----------------
+
+Larger write buffers increase performance, especially during bulk loads. Up to two write buffers may be held in memory at the same time, so you may wish to adjust this parameter to control memory usage.
+
+Default : ``write_buffer_size``: 67108864 (64M)
+
+
+.. _max_open_files:
+
+Max Open Files
+--------------
+
+Number of open files that can be used by the DB. You may need to increase this if your database has a large working set.
+
+Default: ``max_open_files``: 150
+
+
+.. _block_size:
+
+Block Size
+----------
+
+Approximate size of user data packed per block. For very large databases bigger block sizes are likely to perform better so increasing the block size to 256k (or another power of 2) may be a good idea. Keep in mind that LevelDB's default internal block cache is only 8MB so if you increase the block size you will want to resize cache_size as well.
+
+Default: ``block_size``: 131072 (128K)
+
+
+.. _cache_size:
+
+Cache Size
+----------
+
+The cache_size determines how much data LevelDB caches in memory. The more of your data set that can fit in-memory, the better LevelDB will perform. The LevelDB cache works in conjunction with your operating system and file system caches; do not disable or under-size them. LevelDB keeps keys and values in a block cache, this allows for management of key spaces that are larger than available memory.
+
+Default: ``cache_size``: 536870912 (512MB)
+
+.. _bloom_filter_bits:
+
+Bloom filter bits
+-----------------
+
+Bloom filter will reduce the number of unnecessary disk reads needed for Get() calls by a factor of approximately a 100. Increasing the bits per key will lead to a larger reduction at the cost of more memory usage.
+
+Default: ``bloom_filter_bits``: 100
+
+.. _verify_checksum:
+
+Verify Checksums
+----------------
+
+If true, all data read from underlying storage will be verified against corresponding checksums.
+
+Default: ``verify_checksum``: false
+
+
+
 .. _about_leveldb:
 
 About Leveldb

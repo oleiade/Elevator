@@ -99,18 +99,18 @@ storing it's pid in ``.pid`` file in ``/tmp``.
 Configuration
 ================
 
-Server configuration relies on a INI file you can pass it as ``–c`` argument. As a default
-Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``
+Server core configuration relies on a INI file you can pass it as ``–c`` argument. As a default
+Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``.
 
 **example config (config/elevator.conf)**
 
 .. code-block:: ini
 
-  [global]
+  [core]
   # By default Elevator does not run as a daemon.
   # Use 'yes' if you need it. Note that Elevator will write
   # a pid file in /var/run/elevator.pid when daemonized.
-  daemonize = no
+  daemonize = false
 
   # When running daemonized, Elevator writes
   # a pid file in /var/run/elevator.pid by default.
@@ -118,7 +118,7 @@ Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``
   pidfile = /var/run/elevator.pid
 
   # Where databases files should be store on the filesystem.
-  databases_store_path = /var/lib/elevator
+  databases_storage_path = /var/lib/elevator
 
   # Where should the file describing the databases store be
   # put on file system
@@ -134,14 +134,13 @@ Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``
   endpoint = tcp://127.0.0.1:4141
 
   # Sets the logging verbosity, possible values are:
-  # DEBUG, TRACE, INFO, WARNING, ERROR, CRITICAL
+  # DEBUG, FINEST, FINE, DEBUG, TRACE,
+  # INFO, WARNING, ERROR, CRITICAL
   log_level=INFO
 
   # Path to file were server activity should be logged
-  activity_log = /var/log/elevator.log
+  log_file = /var/log/elevator.log
 
-  # Path to file were server warnings, errors, exceptions should be logged
-  errors_log = /var/log/elevator_errors.log
 
 .. _clients:
 
