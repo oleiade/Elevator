@@ -14,21 +14,21 @@ func main() {
 	cmdline.ParseArgs()
 
 	// Load configuration
-	config := elevator.NewConfig()
+	config := new(elevator.Config)
 	err = config.FromFile(*cmdline.ConfigFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-	config.UpdateFromCmdline(cmdline)
+	config.Core.UpdateFromCmdline(cmdline)
 
 	// Set up loggers
 	l4g.AddFilter("stdout", l4g.INFO, l4g.NewConsoleLogWriter())
-	err = elevator.SetupFileLogger("file", config.LogLevel, config.LogFile)
+	err = elevator.SetupFileLogger("file", config.Core.LogLevel, config.Core.LogFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if config.Daemon {
+	if config.Core.Daemon {
 		if err := elevator.Daemon(config); err != nil {
 			log.Fatal(err)
 		}

@@ -114,7 +114,7 @@ Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``
   pidfile = /var/run/elevator.pid
 
   # Where databases files should be store on the filesystem.
-  databases_store_path = /var/lib/elevator
+  databases_storage_path = /var/lib/elevator
 
   # Where should the file describing the databases store be
   # put on file system
@@ -154,13 +154,13 @@ Elevator will search for it's configuration at ``/etc/elevator/elevator.conf``
   # The cache size (in bytes) determines how much data LevelDB caches in memory.
   # The more of your data set that can fit in-memory, the better LevelDB will perform.
   # Default: 512M
-  cache_size=512 * 1048576
+  cache_size=536870912
 
   # Larger write buffers increase performance, especially during bulk loads.
   # Up to two write buffers may be held in memory at the same time, so you may
   # wish to adjust this parameter to control memory usage.
   # Default: 64M
-  write_buffer_size=64 * 1048576
+  write_buffer_size=67108864
 
   # Bloom filter will reduce the number of unnecessary disk reads needed for Get()
   # calls by a factor of approximately a 100.
