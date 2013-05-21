@@ -97,17 +97,17 @@ func forwardResponse(response *Response, request *Request) error {
 }
 
 func ListenAndServe(config *Config) error {
-	l4g.Info(fmt.Sprintf("Elevator started on %s", config.Endpoint))
+	l4g.Info(fmt.Sprintf("Elevator started on %s", config.Core.Endpoint))
 
 	// Build server zmq socket
-	socket, err := buildServerSocket(config.Endpoint)
+	socket, err := buildServerSocket(config.Core.Endpoint)
 	defer (*socket).Close()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Load database store
-	db_store := NewDbStore(config.StorePath, config.StoragePath)
+	db_store := NewDbStore(config.Core.StorePath, config.Core.StoragePath)
 	err = db_store.Load()
 	if err != nil {
 		err = db_store.Add("default")
