@@ -107,7 +107,7 @@ func ListenAndServe(config *Config) error {
 	}
 
 	// Load database store
-	db_store := NewDbStore(config.Core.StorePath, config.Core.StoragePath)
+	db_store := NewDbStore(config)
 	err = db_store.Load()
 	if err != nil {
 		err = db_store.Add("default")

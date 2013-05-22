@@ -70,6 +70,16 @@ func (opts *DbOptions) ToLeveldbOptions() *leveldb.Options {
 	return options
 }
 
+func (opts *DbOptions) UpdateFromConfig(config *Config) {
+	opts.Compression = config.Storage.Compression
+	opts.BlockSize = config.Storage.BlockSize
+	opts.CacheSize = config.Storage.CacheSize
+	opts.BloomFilterBits = config.Storage.BloomFilterBits
+	opts.MaxOpenFiles = config.Storage.MaxOpenFiles
+	opts.VerifyChecksums = config.Storage.VerifyChecksums
+	opts.WriteBufferSize = config.Storage.WriteBufferSize
+}
+
 // StartRoutine listens on the Db channel awaiting
 // for incoming requests to execute. Willingly
 // blocking on each Exec call received through the
