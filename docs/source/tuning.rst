@@ -28,7 +28,7 @@ Max Open Files
 
 Number of open files that can be used by the DB. You may need to increase this if your database has a large working set.
 
-Default: ``max_open_files``: 150
+Default: ``max_open_files=150``
 
 
 .. _block_size:
@@ -38,7 +38,7 @@ Block Size
 
 Approximate size of user data packed per block. For very large databases bigger block sizes are likely to perform better so increasing the block size to 256k (or another power of 2) may be a good idea. Keep in mind that LevelDB's default internal block cache is only 8MB so if you increase the block size you will want to resize cache_size as well.
 
-Default: ``block_size``: 131072 (128K)
+Default: ``block_size=131072`` (128K)
 
 
 .. _cache_size:
@@ -48,7 +48,7 @@ Cache Size
 
 The cache_size determines how much data LevelDB caches in memory. The more of your data set that can fit in-memory, the better LevelDB will perform. The LevelDB cache works in conjunction with your operating system and file system caches; do not disable or under-size them. LevelDB keeps keys and values in a block cache, this allows for management of key spaces that are larger than available memory.
 
-Default: ``cache_size``: 536870912 (512MB)
+Default: ``cache_size=536870912`` (512MB)
 
 .. _bloom_filter_bits:
 
@@ -57,7 +57,7 @@ Bloom filter bits
 
 Bloom filter will reduce the number of unnecessary disk reads needed for Get() calls by a factor of approximately a 100. Increasing the bits per key will lead to a larger reduction at the cost of more memory usage.
 
-Default: ``bloom_filter_bits``: 100
+Default: ``bloom_filter_bits=100``
 
 .. _verify_checksum:
 
@@ -66,8 +66,72 @@ Verify Checksums
 
 If true, all data read from underlying storage will be verified against corresponding checksums.
 
-Default: ``verify_checksum``: false
+Default: ``verify_checksum=false``
 
+
+.. _system_tuning:
+
+System tuning
+=============
+
+**Full credit** *for this whole section goes to* `Riak <http://docs.basho.com/riak/latest/tutorials/choosing-a-backend/LevelDB/#LevelDB-Implementation-Details>`_ *which made a great work describing how the leveldb engine works*
+
+
+File handle limits
+------------------
+
+You can control the number of file descriptors Elevator will use with max_open_files. Elevator configuration is set to 150. If you increase that value above certain values, this can cause problems on some platforms (e.g. OS X has a default limit of 256 handles). The solution is to increase the number of file handles available.
+
+Avoid extra disk head seeks by turning off noatime
+--------------------------------------------------
+
+Elevator is very aggressive at reading and writing files. As such, you can get a big speed boost by adding the ``noatime`` mounting option to ``/etc/fstab``. This will disable the recording of the "last accessed time" for all files. If you need last access times but you'd like some of the benefits of this optimization you can try relatime::
+
+    /dev/sda5    /data           ext3    noatime  1 1
+    /dev/sdb1    /data/inno-log  ext3    noatime  1 2
+
+Recommended system settings
+---------------------------
+
+Below are general configuration recommendations for Linux distributions. Individual users may need to tailor these settings for their application.
+
+For production environments, we recommend the following settings within ``/etc/syscfg.conf``::
+
+    net.core.wmem_default=8388608
+    net.core.rmem_default=8388608
+    net.core.wmem_max=8388608
+    net.core.rmem_max=8388608
+    net.core.netdev_max_backlog=10000
+    net.core.somaxconn=4000
+    net.ipv4.tcp_max_syn_backlog=40000
+    net.ipv4.tcp_fin_timeout=15
+    net.ipv4.tcp_tw_reuse=1
+
+Block Device Scheduler
+----------------------
+
+Beginning with the 2.6 kernel, Linux gives you a choice of four I/O `elevator models <http://www.gnutoolbox.com/linux-io-elevator/>`_. We recommend using the NOOP elevator. You can do this by changing the scheduler on the Linux boot line: ``elevator=noop``.
+
+ext4 Options
+------------
+
+The ext4 file system defaults include two options that increase integrity but slow performance. These two options can be changed to boost Elevator's performance. We recommend setting: ``barrier=0`` and ``data=writeback``.
+
+CPU Throttling
+--------------
+
+If CPU throttling is enabled, disabling it can boost Elevator performance in some cases.
+
+No Entropy
+----------
+
+If you are using ``https`` protocol, the 2.6 kernel is widely known for stalling programs waiting for SSL entropy bits. If you are using https, we recommend installing the HAVEGE package for pseudorandom number generation.
+clocksource
+
+We recommend setting ``clocksource=hpet`` on your linux kernel's boot line. The TSC clocksource has been identified to cause issues on machines with multiple physical processors and/or CPU throttling.
+swappiness
+
+We recommend setting ``vm.swappiness=0`` in ``/etc/sysctl.conf``. The ``vm.swappiness`` default is 60, which is aimed toward laptop users with application windows. This was a key change for mysql servers and is often referenced on db performance.
 
 
 .. _about_leveldb:
@@ -75,7 +139,7 @@ Default: ``verify_checksum``: false
 About Leveldb
 =============
 
-(Full credit for this whole section goes to `Riak <http://docs.basho.com/riak/latest/tutorials/choosing-a-backend/LevelDB/#LevelDB-Implementation-Details>`_ which made a great work describing how the leveldb engine works)
+**Full credit** *for this whole section goes to* `Riak <http://docs.basho.com/riak/latest/tutorials/choosing-a-backend/LevelDB/#LevelDB-Implementation-Details>`_ *which made a great work describing how the leveldb engine works*
 
 `LevelDB <http://code.google.com/p/leveldb/>`_ is a Google sponsored open source project that has been incorporated into Elevator for storage of key/value information on disk. The implementation of LevelDB is similar in spirit to the representation of a single Bigtable tablet (section 5.3).
 

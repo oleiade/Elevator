@@ -2,7 +2,7 @@
    :maxdepth: 2
 
    guide
-   tuning
    protocol
    api
+   tuning
    development
