@@ -9,76 +9,27 @@ import (
 )
 
 type Db struct {
-	Name      string        `json:"name"`
-	Uid       string        `json:"uid"`
-	Path      string        `json:"path"`
-	Options   DbOptions 	`json:"options"`
-	Status    int           `json:"-"`
-	Connector *leveldb.DB   `json:"-"`
-	Channel   chan *Request `json:"-"`
-}
-
-// Every indicative values are in Bytes
-type DbOptions struct {
-	Compression 	bool 	`json:"compression"`  		// default: true
-	BlockSize 		int 	`json:"block_size"` 		// default: 4096
-	CacheSize 		int     `json:"cache_size"` 		// default: 128 * 1048576 (128MB)
-	BloomFilterBits int 	`json:"bloom_filter_bits"`	// default: 100
-	MaxOpenFiles 	int 	`json:"max_open_files"`		// default: 150
-	VerifyChecksums	bool 	`json:"verify_checksums"` 	// default: false
-	WriteBufferSize int 	`json:"write_buffer_size"` 	// default: 64 * 1048576 (64MB)
+	Name      string        		`json:"name"`
+	Uid       string        		`json:"uid"`
+	Path      string        		`json:"path"`
+	Options   *StorageEngineConfig 	`json:"-"`
+	Status    int           		`json:"-"`
+	Connector *leveldb.DB   		`json:"-"`
+	Channel   chan *Request 		`json:"-"`
 }
 
 
-func NewDb(db_name string, path string) *Db {
+func NewDb(db_name string, path string, config *StorageEngineConfig) *Db {
 	return &Db{
 		Name:    db_name,
 		Path:    path,
 		Uid:     uuid.New(),
 		Status:  DB_STATUS_UNMOUNTED,
-		Options: *NewDbOptions(),
+		Options: config,
 		Channel: make(chan *Request),
 	}
 }
 
-// NewDbOptions allocates a new DbOptions with
-// default values and returns a pointer to it.
-func NewDbOptions() *DbOptions{
-	return &DbOptions{
-		Compression: true,
-		BlockSize: 4096,
-		CacheSize: 512 * 1048576,
-		BloomFilterBits: 100,
-		MaxOpenFiles: 150,
-		VerifyChecksums: false,
-		WriteBufferSize: 64 * 1048576,
-	}
-}
-
-func (opts *DbOptions) ToLeveldbOptions() *leveldb.Options {
-	options := leveldb.NewOptions()
-
-	options.SetCreateIfMissing(true)
-	options.SetCompression(leveldb.CompressionOpt(Btoi(opts.Compression)))
-	options.SetBlockSize(opts.BlockSize)
-	options.SetCache(leveldb.NewLRUCache(opts.CacheSize))
-	options.SetFilterPolicy(leveldb.NewBloomFilter(opts.BloomFilterBits))
-	options.SetMaxOpenFiles(opts.MaxOpenFiles)
-	options.SetParanoidChecks(opts.VerifyChecksums)
-	options.SetWriteBufferSize(opts.WriteBufferSize)
-
-	return options
-}
-
-func (opts *DbOptions) UpdateFromConfig(config *Config) {
-	opts.Compression = config.Storage.Compression
-	opts.BlockSize = config.Storage.BlockSize
-	opts.CacheSize = config.Storage.CacheSize
-	opts.BloomFilterBits = config.Storage.BloomFilterBits
-	opts.MaxOpenFiles = config.Storage.MaxOpenFiles
-	opts.VerifyChecksums = config.Storage.VerifyChecksums
-	opts.WriteBufferSize = config.Storage.WriteBufferSize
-}
 
 // StartRoutine listens on the Db channel awaiting
 // for incoming requests to execute. Willingly

@@ -132,7 +132,7 @@ func (store *DbStore) Add(db_name string) (err error) {
 
 		if IsFilePath(db_name) {
 			if !filepath.IsAbs(db_name) {
-				error := errors.New("Creating database from relative pathnot allowed")
+				error := errors.New("Creating database from relative path not allowed")
 				l4g.Error(error)
 				return error
 			}
@@ -153,7 +153,7 @@ func (store *DbStore) Add(db_name string) (err error) {
 			db_path = filepath.Join(store.Config.Core.StoragePath, db_name)
 		}
 
-		db := NewDb(db_name, db_path)
+		db := NewDb(db_name, db_path, store.Config.Storage)
 		store.Container[db.Uid] = db
 		store.updateNameToUidIndex()
 		err = store.WriteToFile()

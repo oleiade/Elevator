@@ -1,13 +1,14 @@
 package elevator
 
 import (
-	goconfig "github.com/msbranco/goconfig"
 	"reflect"
+	goconfig "github.com/msbranco/goconfig"
+	leveldb "github.com/jmhodges/levigo"
 )
 
 type Config struct {
 	Core 		*CoreConfig
-	Storage 	*StorageConfig
+	Storage 	*StorageEngineConfig
 }
 
 type CoreConfig struct {
@@ -21,17 +22,24 @@ type CoreConfig struct {
 	LogLevel    string `ini:"log_level"`
 }
 
-type StorageConfig struct {
+type StorageEngineConfig struct {
 	Compression 	bool 	`ini:"compression"`  		// default: true
-	BlockSize 		int 	`ini:"block_size"` 		// default: 4096
-	CacheSize 		int     `ini:"cache_size"` 		// default: 128 * 1048576 (128MB)
+	BlockSize 		int 	`ini:"block_size"` 			// default: 4096
+	CacheSize 		int     `ini:"cache_size"` 			// default: 128 * 1048576 (128MB)
 	BloomFilterBits int 	`ini:"bloom_filter_bits"`	// default: 100
 	MaxOpenFiles 	int 	`ini:"max_open_files"`		// default: 150
 	VerifyChecksums	bool 	`ini:"verify_checksums"` 	// default: false
 	WriteBufferSize int 	`ini:"write_buffer_size"` 	// default: 64 * 1048576 (64MB)
 }
 
-func NewConfig() *CoreConfig {
+func NewConfig() *Config {
+	return &Config{
+		Core: NewCoreConfig(),
+		Storage: NewStorageEngineConfig(),
+	}
+}
+
+func NewCoreConfig() *CoreConfig {
 	return &CoreConfig{
 		Daemon:      false,
 		Endpoint:    "tcp://127.0.0.1:4141",
@@ -44,14 +52,49 @@ func NewConfig() *CoreConfig {
 	}
 }
 
+func NewStorageEngineConfig() *StorageEngineConfig {
+	return &StorageEngineConfig{
+		Compression: true,
+		BlockSize: 4096,
+		CacheSize: 512 * 1048576,
+		BloomFilterBits: 100,
+		MaxOpenFiles: 150,
+		VerifyChecksums: false,
+		WriteBufferSize: 64 * 1048576,
+	}
+}
+
+func (opts *StorageEngineConfig) ToLeveldbOptions() *leveldb.Options {
+	options := leveldb.NewOptions()
+
+	options.SetCreateIfMissing(true)
+	options.SetCompression(leveldb.CompressionOpt(Btoi(opts.Compression)))
+	options.SetBlockSize(opts.BlockSize)
+	options.SetCache(leveldb.NewLRUCache(opts.CacheSize))
+	options.SetFilterPolicy(leveldb.NewBloomFilter(opts.BloomFilterBits))
+	options.SetMaxOpenFiles(opts.MaxOpenFiles)
+	options.SetParanoidChecks(opts.VerifyChecksums)
+	options.SetWriteBufferSize(opts.WriteBufferSize)
+
+	return options
+}
+
+func (opts *StorageEngineConfig) UpdateFromConfig(config *Config) {
+	opts.Compression = config.Storage.Compression
+	opts.BlockSize = config.Storage.BlockSize
+	opts.CacheSize = config.Storage.CacheSize
+	opts.BloomFilterBits = config.Storage.BloomFilterBits
+	opts.MaxOpenFiles = config.Storage.MaxOpenFiles
+	opts.VerifyChecksums = config.Storage.VerifyChecksums
+	opts.WriteBufferSize = config.Storage.WriteBufferSize
+}
+
 func (c *Config) FromFile(path string) error {
-	c.Core = new(CoreConfig)
 	err := loadConfigFromFile(path, c.Core, "core")
 	if err != nil {
 		return err
 	}
 
-	c.Storage = new(StorageConfig)
 	err = loadConfigFromFile(path, c.Storage, "storage_engine")
 	if err != nil {
 		return err

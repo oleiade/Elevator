@@ -14,7 +14,7 @@ func main() {
 	cmdline.ParseArgs()
 
 	// Load configuration
-	config := new(elevator.Config)
+	config := elevator.NewConfig()
 	err = config.FromFile(*cmdline.ConfigFile)
 	if err != nil {
 		log.Fatal(err)
