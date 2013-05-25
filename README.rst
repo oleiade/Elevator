@@ -47,6 +47,9 @@ In order to ease your Elevator deployment, a `puppet module <http://github.com/o
 Installation
 ============
 
+Just make it
+------------
+
 1. First, make sure you have a `Go <http://http://golang.org/>`_ language compiler ``>= 1.1`` and `git <http://gitscm.org>`_ installed.
 
 2. Then, clone this repository
@@ -64,8 +67,23 @@ Installation
   sudo cp ./bin/elevator /usr/local/bin/elevator
 
 
+Docker
+------
+
+For the lazy guys out there, a Dockerfile is available at repositories top-level. It will allow you to build a `Docker <http://docker.io/>`_ container preconfigured for Elevator.
+
+Once you've got `Docker <http://docker.io>`_ up and running on your system, just::
+
+  docker build < Dockerfile
+  docker run mysupperduppernewimagehash
+
+You've got an up and running elevator container ready to serve. Enjoy!
+
+
 Usage
 =====
+
+Once Elevator is installed, you can launch the server using the elevator executable.
 
 .. code-block:: bash
 
@@ -74,7 +92,7 @@ Usage
 
   Usage of ./bin/elevator:
 
-  -b="127.0.0.1": If tcp transport is selected: ip the server
+  -e="127.0.0.1": If tcp transport is selected: ip the server
                   socket should be listening on.
   -c="/etc/elevator/elevator.conf": Path to elevator server
                                     config file, eventually
@@ -85,9 +103,12 @@ Usage
   -p=4141: Port the server should listen on
   -t="tcp": Transport layer : tcp | ipc
 
-Once Elevator is installed, you can then launch the server using the elevator executable.
-Note that a --daemon option is disposable, and allows you to run elevator server as a daemon,
-storing it's pid in ``.pid`` file in ``/tmp``.
+You'll probably want to use the ``-d`` option, which will run Elevator in daemon mode. Elevator will then run in the background and will handle it's pid through the configuration defined ``pidfile``.
+
+.. code-block:: bash
+
+    $ elevator -d &
+
 
 
 Configuration
