@@ -18,7 +18,7 @@ Write Buffer Size
 
 Larger write buffers increase performance, especially during bulk loads. Up to two write buffers may be held in memory at the same time, so you may wish to adjust this parameter to control memory usage.
 
-Default : ``write_buffer_size``: 67108864 (64M)
+Default : ``write_buffer_size=67108864`` (64M)
 
 
 .. _max_open_files:

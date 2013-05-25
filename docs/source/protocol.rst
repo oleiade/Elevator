@@ -13,7 +13,7 @@ Depending on your Elevator configuration, once running it will either listen on 
 
 Elevator uses zeromq ``ROUTER`` and ``DEALER`` sockets, so that every commands passed through sockets are signed with a client id hash. X sockets queues messages as they come in order to prevent overload.
 
-Finally, Elevator sockets are set to communicate using `multipart messages <http://www.zeromq.org/blog:zero-copy>`_ to be able to keep apart responses headers and content for example.
+Finally, Elevator sockets are set to communicate using `multipart messages <http://www.zeromq.org/blog:zero-copy>`_ to be able to keep track of clients id and messages separatly (see zeromq ``ROUTER`` and ``DEALER`` sockets).
 
 If you're trying to implement a client, or just curious about how it really works, you can take a look at both `source code <http://github.com/oleiade/Elevator>`_ and `python client <http://github.com/oleiade/py-elevator>`_
 
