@@ -36,12 +36,7 @@ There are a number of ways to get involved with Elevator:
 Coding Style
 ===============
 
-Elevator tries hard to honor `PEP-8 <http://www.python.org/dev/peps/pep-0008/>`_, and `Zen of Python <http://www.python.org/dev/peps/pep-0020/>`_. But as no one is perfect, let say the following rules are
-mandatory:
-
-    * Keep all lines under 80 characters.
-    * Typical Python 4-space (soft-tab) indents. No tabs! No 8 space indents! (No 2- or 3-space indents, for that matter!)
-    * CamelCase class names, but lowercase_underscore_separated everything else.
+Elevator tries hard to keep up to ``go fmt`` norm. So anytime, use ``go fmt`` to help you code keep clean and following the go creators coding style.
 
 
 .. _releases:
