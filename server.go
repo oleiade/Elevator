@@ -49,6 +49,9 @@ func handleRequest(clientSocket *ClientSocket, rawMsg []byte, dbStore *DbStore) 
 			if db.Status == DB_STATUS_UNMOUNTED {
 				db.Mount()
 			}
+
+			// Then send the command to database for execution
+			// and forwarding
 			db.Channel <- request
 		}
 	} else {

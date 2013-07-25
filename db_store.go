@@ -33,6 +33,17 @@ func (store *DbStore) updateNameToUidIndex() {
 	}
 }
 
+// updateDatabasesOptions makes sur that every Db instance
+// in DbStore has it's storage options set. Nota, this
+// operation is necessary as storage options are defined
+// in an ini file and canno't be automatically loaded by the
+// json store loader.
+func (store *DbStore) updateDatabasesOptions() {
+	for _, db := range store.Container {
+		db.Options = store.Config.Storage
+	}
+}
+
 // ReadFromFile syncs the content of the store
 // description file to the DbStore
 func (store *DbStore) ReadFromFile() (err error) {
@@ -47,6 +58,7 @@ func (store *DbStore) ReadFromFile() (err error) {
 	}
 
 	store.updateNameToUidIndex()
+	store.updateDatabasesOptions()
 
 	return nil
 }
