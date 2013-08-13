@@ -1,14 +1,14 @@
 package elevator
 
 import (
-	"reflect"
-	goconfig "github.com/msbranco/goconfig"
 	leveldb "github.com/jmhodges/levigo"
+	goconfig "github.com/msbranco/goconfig"
+	"reflect"
 )
 
 type Config struct {
-	Core 		*CoreConfig
-	Storage 	*StorageEngineConfig
+	Core    *CoreConfig
+	Storage *StorageEngineConfig
 }
 
 type CoreConfig struct {
@@ -23,18 +23,18 @@ type CoreConfig struct {
 }
 
 type StorageEngineConfig struct {
-	Compression 	bool 	`ini:"compression"`  		// default: true
-	BlockSize 		int 	`ini:"block_size"` 			// default: 4096
-	CacheSize 		int     `ini:"cache_size"` 			// default: 128 * 1048576 (128MB)
-	BloomFilterBits int 	`ini:"bloom_filter_bits"`	// default: 100
-	MaxOpenFiles 	int 	`ini:"max_open_files"`		// default: 150
-	VerifyChecksums	bool 	`ini:"verify_checksums"` 	// default: false
-	WriteBufferSize int 	`ini:"write_buffer_size"` 	// default: 64 * 1048576 (64MB)
+	Compression     bool `ini:"compression"`       // default: true
+	BlockSize       int  `ini:"block_size"`        // default: 4096
+	CacheSize       int  `ini:"cache_size"`        // default: 128 * 1048576 (128MB)
+	BloomFilterBits int  `ini:"bloom_filter_bits"` // default: 100
+	MaxOpenFiles    int  `ini:"max_open_files"`    // default: 150
+	VerifyChecksums bool `ini:"verify_checksums"`  // default: false
+	WriteBufferSize int  `ini:"write_buffer_size"` // default: 64 * 1048576 (64MB)
 }
 
 func NewConfig() *Config {
 	return &Config{
-		Core: NewCoreConfig(),
+		Core:    NewCoreConfig(),
 		Storage: NewStorageEngineConfig(),
 	}
 }
@@ -54,11 +54,11 @@ func NewCoreConfig() *CoreConfig {
 
 func NewStorageEngineConfig() *StorageEngineConfig {
 	return &StorageEngineConfig{
-		Compression: true,
-		BlockSize: 4096,
-		CacheSize: 512 * 1048576,
+		Compression:     true,
+		BlockSize:       4096,
+		CacheSize:       512 * 1048576,
 		BloomFilterBits: 100,
-		MaxOpenFiles: 150,
+		MaxOpenFiles:    150,
 		VerifyChecksums: false,
 		WriteBufferSize: 64 * 1048576,
 	}

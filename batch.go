@@ -1,50 +1,49 @@
 package elevator
 
-
 type BatchOperations []BatchOperation
 
 type BatchOperation struct {
-    OpCode string
-    OpArgs []string
+	OpCode string
+	OpArgs []string
 }
 
 // NewBatchOperation builds a BatchOperation from batch operation
 // code and batch operation args
 func NewBatchOperation(opCode string, opArgs []string) *BatchOperation {
-    return &BatchOperation{
-        OpCode: opCode,
-        OpArgs: opArgs,
-    }
+	return &BatchOperation{
+		OpCode: opCode,
+		OpArgs: opArgs,
+	}
 }
 
 // BatchOperationFromSlice builds a BatchOperation from
 // a string slice containing the batch operation code and
 // arguments
 func BatchOperationFromSlice(slice []string) *BatchOperation {
-    return NewBatchOperation(slice[0], slice[1:])
+	return NewBatchOperation(slice[0], slice[1:])
 }
 
 // BatchOperationsFromRequestArgs builds a BatchOperations from
 // a string slice resprensenting a sequence of batch operations
 func BatchOperationsFromRequestArgs(args []string) *BatchOperations {
-    var ops BatchOperations
-    var curIndex int = 0
-    var lastIndex int = 0
+	var ops BatchOperations
+	var curIndex int = 0
+	var lastIndex int = 0
 
-    for index, elem := range args {
-        curIndex = index
-        if index > 0 {
-            if elem == SIGNAL_BATCH_PUT || elem == SIGNAL_BATCH_DELETE {
-                ops = append(ops, *BatchOperationFromSlice(args[lastIndex:index]))
-                lastIndex = index
-            }
-        }
-    }
+	for index, elem := range args {
+		curIndex = index
+		if index > 0 {
+			if elem == SIGNAL_BATCH_PUT || elem == SIGNAL_BATCH_DELETE {
+				ops = append(ops, *BatchOperationFromSlice(args[lastIndex:index]))
+				lastIndex = index
+			}
+		}
+	}
 
-    // Add the rest
-    if curIndex > 0 {
-        ops = append(ops, *BatchOperationFromSlice(args[lastIndex : curIndex+1]))
-    }
+	// Add the rest
+	if curIndex > 0 {
+		ops = append(ops, *BatchOperationFromSlice(args[lastIndex : curIndex+1]))
+	}
 
-    return &ops
+	return &ops
 }

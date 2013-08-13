@@ -1,9 +1,9 @@
 package elevator
 
 import (
-	"fmt"
 	"bytes"
 	"errors"
+	"fmt"
 	zmq "github.com/alecthomas/gozmq"
 	l4g "github.com/alecthomas/log4go"
 	"log"
@@ -35,8 +35,8 @@ func buildServerSocket(endpoint string) (*zmq.Socket, error) {
 // handleRequest deserializes the input msgpack request,
 // processes it and ensures it is forwarded to the client.
 func handleRequest(clientSocket *ClientSocket, rawMsg []byte, dbStore *DbStore) {
-	var request 	*Request = new(Request)
-	var msg 		*bytes.Buffer = bytes.NewBuffer(rawMsg)
+	var request *Request = new(Request)
+	var msg *bytes.Buffer = bytes.NewBuffer(rawMsg)
 
 	// Deserialize request message and fulfill request
 	// obj with it's content
@@ -79,10 +79,10 @@ func processRequest(db *Db, request *Request) (*Response, error) {
 func forwardResponse(response *Response, request *Request) error {
 	l4g.Debug(func() string { return response.String() })
 
-	var responseBuf 	bytes.Buffer
-	var socket 			*zmq.Socket = &request.Source.Socket
-	var address 		[]byte = request.Source.Id
-	var parts 			[][]byte = make([][]byte, 2)
+	var responseBuf bytes.Buffer
+	var socket *zmq.Socket = &request.Source.Socket
+	var address []byte = request.Source.Id
+	var parts [][]byte = make([][]byte, 2)
 
 	response.PackInto(&responseBuf)
 	parts[0] = address

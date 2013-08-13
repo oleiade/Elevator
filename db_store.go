@@ -11,17 +11,17 @@ import (
 )
 
 type DbStore struct {
-	Config 		*Config
-	Container   map[string]*Db
-	NameToUid   map[string]string
+	Config    *Config
+	Container map[string]*Db
+	NameToUid map[string]string
 }
 
 // DbStore constructor
 func NewDbStore(config *Config) *DbStore {
 	return &DbStore{
-		Config: 	 config,
-		Container:   make(map[string]*Db),
-		NameToUid:   make(map[string]string),
+		Config:    config,
+		Container: make(map[string]*Db),
+		NameToUid: make(map[string]string),
 	}
 }
 

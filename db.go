@@ -9,15 +9,14 @@ import (
 )
 
 type Db struct {
-	Name      string        		`json:"name"`
-	Uid       string        		`json:"uid"`
-	Path      string        		`json:"path"`
-	Options   *StorageEngineConfig 	`json:"-"`
-	Status    int           		`json:"-"`
-	Connector *leveldb.DB   		`json:"-"`
-	Channel   chan *Request 		`json:"-"`
+	Name      string               `json:"name"`
+	Uid       string               `json:"uid"`
+	Path      string               `json:"path"`
+	Options   *StorageEngineConfig `json:"-"`
+	Status    int                  `json:"-"`
+	Connector *leveldb.DB          `json:"-"`
+	Channel   chan *Request        `json:"-"`
 }
-
 
 func NewDb(dbName string, path string, config *StorageEngineConfig) *Db {
 	return &Db{
@@ -29,7 +28,6 @@ func NewDb(dbName string, path string, config *StorageEngineConfig) *Db {
 		Channel: make(chan *Request),
 	}
 }
-
 
 // StartRoutine listens on the Db channel awaiting
 // for incoming requests to execute. Willingly

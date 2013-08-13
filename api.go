@@ -25,7 +25,6 @@ var store_commands = map[string]func(*DbStore, *Request) (*Response, error){
 	DB_LIST:    DbList,
 }
 
-
 func Get(db *Db, request *Request) (*Response, error) {
 	var response *Response
 	var key string = request.Args[0]

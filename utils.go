@@ -45,8 +45,8 @@ func MegabytesToBytes(mb int) int {
 }
 
 func Btoi(b bool) int {
-    if b {
-        return 1
-    }
-    return 0
- }
+	if b {
+		return 1
+	}
+	return 0
+}
