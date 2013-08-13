@@ -15,16 +15,16 @@ type Response struct {
 
 // String represents the Response as a normalized string
 func (r *Response) String() string {
-    return fmt.Sprintf("<Response status:%d err_code:%d err_msg:%s data:%s",
+    return fmt.Sprintf("<Response status:%d errCode:%d errMsg:%s data:%s",
         r.Status, r.Err_code, r.Err_msg, r.Data)
 }
 
 // NewResponse returns a pointer to a brand new allocated Response
-func NewResponse(status int, err_code int, err_msg string, data []string) *Response {
+func NewResponse(status int, errCode int, errMsg string, data []string) *Response {
     return &Response{
         Status:   status,
-        Err_code: err_code,
-        Err_msg:  err_msg,
+        Err_code: errCode,
+        Err_msg:  errMsg,
         Data:     data,
     }
 }
@@ -40,11 +40,11 @@ func NewSuccessResponse(data []string) *Response {
 
 // NewFailureResponse returns a pointer to a brand
 // new allocated failure Response
-func NewFailureResponse(err_code int, err_msg string) *Response {
+func NewFailureResponse(errCode int, errMsg string) *Response {
     return &Response{
         Status:   FAILURE_STATUS,
-        Err_code: err_code,
-        Err_msg:  err_msg,
+        Err_code: errCode,
+        Err_msg:  errMsg,
     }
 }
 

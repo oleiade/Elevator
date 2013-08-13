@@ -19,9 +19,9 @@ type Db struct {
 }
 
 
-func NewDb(db_name string, path string, config *StorageEngineConfig) *Db {
+func NewDb(dbName string, path string, config *StorageEngineConfig) *Db {
 	return &Db{
-		Name:    db_name,
+		Name:    dbName,
 		Path:    path,
 		Uid:     uuid.New(),
 		Status:  DB_STATUS_UNMOUNTED,

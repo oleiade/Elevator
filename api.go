@@ -76,21 +76,21 @@ func MGet(db *Db, request *Request) (*Response, error) {
 	var response *Response
 	var data []string = make([]string, len(request.Args))
 
-	read_options := leveldb.NewReadOptions()
+	readOptions := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
-	read_options.SetSnapshot(snapshot)
+	readOptions.SetSnapshot(snapshot)
 
 	if len(request.Args) > 0 {
 		start := request.Args[0]
 		end := request.Args[len(request.Args)-1]
 
-		keys_index := make(map[string]int)
+		keysIndex := make(map[string]int)
 
 		for index, element := range request.Args {
-			keys_index[element] = index
+			keysIndex[element] = index
 		}
 
-		it := db.Connector.NewIterator(read_options)
+		it := db.Connector.NewIterator(readOptions)
 		defer it.Close()
 		it.Seek([]byte(start))
 
@@ -99,7 +99,7 @@ func MGet(db *Db, request *Request) (*Response, error) {
 				break
 			}
 
-			if index, present := keys_index[string(it.Key())]; present {
+			if index, present := keysIndex[string(it.Key())]; present {
 				data[index] = string(it.Value())
 			}
 		}
@@ -120,11 +120,11 @@ func Range(db *Db, request *Request) (*Response, error) {
 	var start string = request.Args[0]
 	var end string = request.Args[1]
 
-	read_options := leveldb.NewReadOptions()
+	readOptions := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
-	read_options.SetSnapshot(snapshot)
+	readOptions.SetSnapshot(snapshot)
 
-	it := db.Connector.NewIterator(read_options)
+	it := db.Connector.NewIterator(readOptions)
 	defer it.Close()
 	it.Seek([]byte(start))
 
@@ -149,11 +149,11 @@ func Slice(db *Db, request *Request) (*Response, error) {
 	var start string = request.Args[0]
 
 	limit, _ := strconv.Atoi(request.Args[1])
-	read_options := leveldb.NewReadOptions()
+	readOptions := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
-	read_options.SetSnapshot(snapshot)
+	readOptions.SetSnapshot(snapshot)
 
-	it := db.Connector.NewIterator(read_options)
+	it := db.Connector.NewIterator(readOptions)
 	defer it.Close()
 	it.Seek([]byte(start))
 
@@ -204,9 +204,9 @@ func Batch(db *Db, request *Request) (*Response, error) {
 
 func DbCreate(db_store *DbStore, request *Request) (*Response, error) {
 	var response *Response
-	var db_name string = request.Args[0]
+	var dbName string = request.Args[0]
 
-	err := db_store.Add(db_name)
+	err := db_store.Add(dbName)
 	if err != nil {
 		response = NewFailureResponse(DATABASE_ERROR, string(err.Error()))
 	} else {
@@ -218,9 +218,9 @@ func DbCreate(db_store *DbStore, request *Request) (*Response, error) {
 
 func DbDrop(db_store *DbStore, request *Request) (*Response, error) {
 	var response *Response
-	var db_name string = request.Args[0]
+	var dbName string = request.Args[0]
 
-	err := db_store.Drop(db_name)
+	err := db_store.Drop(dbName)
 	if err != nil {
 		response = NewFailureResponse(DATABASE_ERROR, string(err.Error()))
 	} else {
@@ -232,12 +232,12 @@ func DbDrop(db_store *DbStore, request *Request) (*Response, error) {
 
 func DbConnect(db_store *DbStore, request *Request) (*Response, error) {
 	var response *Response
-	var db_name string = request.Args[0]
+	var dbName string = request.Args[0]
 
-	db_uid, exists := db_store.NameToUid[db_name]
+	dbUid, exists := db_store.NameToUid[dbName]
 
 	if exists {
-		response = NewSuccessResponse([]string{db_uid})
+		response = NewSuccessResponse([]string{dbUid})
 	} else {
 		response = NewFailureResponse(DATABASE_ERROR, "Database does not exist")
 	}
@@ -248,11 +248,11 @@ func DbConnect(db_store *DbStore, request *Request) (*Response, error) {
 func DbList(db_store *DbStore, request *Request) (*Response, error) {
 	var response *Response
 
-	db_names := db_store.List()
-	data := make([]string, len(db_names))
+	dbNames := db_store.List()
+	data := make([]string, len(dbNames))
 
-	for index, db_name := range db_names {
-		data[index] = db_name
+	for index, dbName := range dbNames {
+		data[index] = dbName
 	}
 
 	response = NewSuccessResponse(data)
@@ -261,12 +261,12 @@ func DbList(db_store *DbStore, request *Request) (*Response, error) {
 
 func DbMount(db_store *DbStore, request *Request) (*Response, error) {
 	var response *Response
-	var db_name string = request.Args[0]
+	var dbName string = request.Args[0]
 
-	db_uid, exists := db_store.NameToUid[db_name]
+	dbUid, exists := db_store.NameToUid[dbName]
 
 	if exists {
-		err := db_store.Mount(db_store.Container[db_uid].Name)
+		err := db_store.Mount(db_store.Container[dbUid].Name)
 		if err != nil {
 			return nil, err
 		}
@@ -282,12 +282,12 @@ func DbMount(db_store *DbStore, request *Request) (*Response, error) {
 
 func DbUnmount(db_store *DbStore, request *Request) (*Response, error) {
 	var response *Response
-	var db_name string = request.Args[0]
+	var dbName string = request.Args[0]
 
-	db_uid, exists := db_store.NameToUid[db_name]
+	dbUid, exists := db_store.NameToUid[dbName]
 
 	if exists {
-		err := db_store.Unmount(db_uid)
+		err := db_store.Unmount(dbUid)
 		if err != nil {
 			return nil, err
 		}

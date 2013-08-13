@@ -10,10 +10,10 @@ type BatchOperation struct {
 
 // NewBatchOperation builds a BatchOperation from batch operation
 // code and batch operation args
-func NewBatchOperation(op_code string, op_args []string) *BatchOperation {
+func NewBatchOperation(opCode string, opArgs []string) *BatchOperation {
     return &BatchOperation{
-        OpCode: op_code,
-        OpArgs: op_args,
+        OpCode: opCode,
+        OpArgs: opArgs,
     }
 }
 
@@ -28,22 +28,22 @@ func BatchOperationFromSlice(slice []string) *BatchOperation {
 // a string slice resprensenting a sequence of batch operations
 func BatchOperationsFromRequestArgs(args []string) *BatchOperations {
     var ops BatchOperations
-    var cur_index int = 0
-    var last_index int = 0
+    var curIndex int = 0
+    var lastIndex int = 0
 
     for index, elem := range args {
-        cur_index = index
+        curIndex = index
         if index > 0 {
             if elem == SIGNAL_BATCH_PUT || elem == SIGNAL_BATCH_DELETE {
-                ops = append(ops, *BatchOperationFromSlice(args[last_index:index]))
-                last_index = index
+                ops = append(ops, *BatchOperationFromSlice(args[lastIndex:index]))
+                lastIndex = index
             }
         }
     }
 
     // Add the rest
-    if cur_index > 0 {
-        ops = append(ops, *BatchOperationFromSlice(args[last_index : cur_index+1]))
+    if curIndex > 0 {
+        ops = append(ops, *BatchOperationFromSlice(args[lastIndex : curIndex+1]))
     }
 
     return &ops

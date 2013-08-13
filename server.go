@@ -34,18 +34,18 @@ func buildServerSocket(endpoint string) (*zmq.Socket, error) {
 
 // handleRequest deserializes the input msgpack request,
 // processes it and ensures it is forwarded to the client.
-func handleRequest(client_socket *ClientSocket, raw_msg []byte, db_store *DbStore) {
+func handleRequest(clientSocket *ClientSocket, rawMsg []byte, dbStore *DbStore) {
 	var request 	*Request = new(Request)
-	var msg 		*bytes.Buffer = bytes.NewBuffer(raw_msg)
+	var msg 		*bytes.Buffer = bytes.NewBuffer(rawMsg)
 
 	// Deserialize request message and fulfill request
 	// obj with it's content
 	request.UnpackFrom(msg)
-	request.Source = client_socket
+	request.Source = clientSocket
 	l4g.Debug(func() string { return request.String() })
 
 	if request.DbUid != "" {
-		if db, ok := db_store.Container[request.DbUid]; ok {
+		if db, ok := dbStore.Container[request.DbUid]; ok {
 			if db.Status == DB_STATUS_UNMOUNTED {
 				db.Mount()
 			}
@@ -53,7 +53,7 @@ func handleRequest(client_socket *ClientSocket, raw_msg []byte, db_store *DbStor
 		}
 	} else {
 		go func() {
-			response, err := store_commands[request.Command](db_store, request)
+			response, err := store_commands[request.Command](dbStore, request)
 			if err == nil {
 				forwardResponse(response, request)
 			}
@@ -79,14 +79,14 @@ func processRequest(db *Db, request *Request) (*Response, error) {
 func forwardResponse(response *Response, request *Request) error {
 	l4g.Debug(func() string { return response.String() })
 
-	var response_buf 	bytes.Buffer
+	var responseBuf 	bytes.Buffer
 	var socket 			*zmq.Socket = &request.Source.Socket
 	var address 		[]byte = request.Source.Id
 	var parts 			[][]byte = make([][]byte, 2)
 
-	response.PackInto(&response_buf)
+	response.PackInto(&responseBuf)
 	parts[0] = address
-	parts[1] = response_buf.Bytes()
+	parts[1] = responseBuf.Bytes()
 
 	err := socket.SendMultipart(parts, 0)
 	if err != nil {
@@ -107,10 +107,10 @@ func ListenAndServe(config *Config) error {
 	}
 
 	// Load database store
-	db_store := NewDbStore(config)
-	err = db_store.Load()
+	dbStore := NewDbStore(config)
+	err = dbStore.Load()
 	if err != nil {
-		err = db_store.Add("default")
+		err = dbStore.Add("default")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -130,13 +130,13 @@ func ListenAndServe(config *Config) error {
 		case poller[0].REvents&zmq.POLLIN != 0:
 			parts, _ := poller[0].Socket.RecvMultipart(0)
 
-			client_socket := ClientSocket{
+			clientSocket := ClientSocket{
 				Id:     parts[0],
 				Socket: *socket,
 			}
 			msg := parts[1]
 
-			go handleRequest(&client_socket, msg, db_store)
+			go handleRequest(&clientSocket, msg, dbStore)
 		}
 	}
 }

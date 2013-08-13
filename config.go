@@ -104,33 +104,33 @@ func (c *Config) FromFile(path string) error {
 }
 
 func loadConfigFromFile(path string, obj interface{}, section string) error {
-	ini_config, err := goconfig.ReadConfigFile(path)
+	iniConfig, err := goconfig.ReadConfigFile(path)
 	if err != nil {
 		return err
 	}
 
 	config := reflect.ValueOf(obj).Elem()
-	config_type := config.Type()
+	configType := config.Type()
 
 	for i := 0; i < config.NumField(); i++ {
-		struct_field := config.Field(i)
-		field_tag := config_type.Field(i).Tag.Get("ini")
+		structField := config.Field(i)
+		fieldTag := configType.Field(i).Tag.Get("ini")
 
 		switch {
-		case struct_field.Type().Kind() == reflect.Bool:
-			config_value, err := ini_config.GetBool(section, field_tag)
+		case structField.Type().Kind() == reflect.Bool:
+			configValue, err := iniConfig.GetBool(section, fieldTag)
 			if err == nil {
-				struct_field.SetBool(config_value)
+				structField.SetBool(configValue)
 			}
-		case struct_field.Type().Kind() == reflect.String:
-			config_value, err := ini_config.GetString(section, field_tag)
+		case structField.Type().Kind() == reflect.String:
+			configValue, err := iniConfig.GetString(section, fieldTag)
 			if err == nil {
-				struct_field.SetString(config_value)
+				structField.SetString(configValue)
 			}
-		case struct_field.Type().Kind() == reflect.Int:
-			config_value, err := ini_config.GetInt64(section, field_tag)
+		case structField.Type().Kind() == reflect.Int:
+			configValue, err := iniConfig.GetInt64(section, fieldTag)
 			if err == nil {
-				struct_field.SetInt(config_value)
+				structField.SetInt(configValue)
 			}
 		}
 	}
