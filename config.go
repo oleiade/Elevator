@@ -7,8 +7,8 @@ import (
 )
 
 type Config struct {
-	Core    *CoreConfig
-	Storage *StorageEngineConfig
+	CoreConfig
+	StorageEngineConfig
 }
 
 type CoreConfig struct {
@@ -34,8 +34,8 @@ type StorageEngineConfig struct {
 
 func NewConfig() *Config {
 	return &Config{
-		Core:    NewCoreConfig(),
-		Storage: NewStorageEngineConfig(),
+		CoreConfig:    			*NewCoreConfig(),
+		StorageEngineConfig: 	*NewStorageEngineConfig(),
 	}
 }
 
@@ -80,22 +80,22 @@ func (opts *StorageEngineConfig) ToLeveldbOptions() *leveldb.Options {
 }
 
 func (opts *StorageEngineConfig) UpdateFromConfig(config *Config) {
-	opts.Compression = config.Storage.Compression
-	opts.BlockSize = config.Storage.BlockSize
-	opts.CacheSize = config.Storage.CacheSize
-	opts.BloomFilterBits = config.Storage.BloomFilterBits
-	opts.MaxOpenFiles = config.Storage.MaxOpenFiles
-	opts.VerifyChecksums = config.Storage.VerifyChecksums
-	opts.WriteBufferSize = config.Storage.WriteBufferSize
+	opts.Compression = config.Compression
+	opts.BlockSize = config.BlockSize
+	opts.CacheSize = config.CacheSize
+	opts.BloomFilterBits = config.BloomFilterBits
+	opts.MaxOpenFiles = config.MaxOpenFiles
+	opts.VerifyChecksums = config.VerifyChecksums
+	opts.WriteBufferSize = config.WriteBufferSize
 }
 
 func (c *Config) FromFile(path string) error {
-	err := loadConfigFromFile(path, c.Core, "core")
+	err := loadConfigFromFile(path, c, "core")
 	if err != nil {
 		return err
 	}
 
-	err = loadConfigFromFile(path, c.Storage, "storage_engine")
+	err = loadConfigFromFile(path, c, "storage_engine")
 	if err != nil {
 		return err
 	}

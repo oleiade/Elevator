@@ -100,10 +100,10 @@ func forwardResponse(response *Response, request *Request) error {
 }
 
 func ListenAndServe(config *Config) error {
-	l4g.Info(fmt.Sprintf("Elevator started on %s", config.Core.Endpoint))
+	l4g.Info(fmt.Sprintf("Elevator started on %s", config.Endpoint))
 
 	// Build server zmq socket
-	socket, err := buildServerSocket(config.Core.Endpoint)
+	socket, err := buildServerSocket(config.Endpoint)
 	defer (*socket).Close()
 	if err != nil {
 		log.Fatal(err)

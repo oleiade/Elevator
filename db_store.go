@@ -40,14 +40,14 @@ func (store *DbStore) updateNameToUidIndex() {
 // json store loader.
 func (store *DbStore) updateDatabasesOptions() {
 	for _, db := range store.Container {
-		db.Options = store.Config.Storage
+		db.Options = &store.Config.StorageEngineConfig
 	}
 }
 
 // ReadFromFile syncs the content of the store
 // description file to the DbStore
 func (store *DbStore) ReadFromFile() (err error) {
-	data, err := ioutil.ReadFile(store.Config.Core.StorePath)
+	data, err := ioutil.ReadFile(store.Config.StorePath)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (store *DbStore) WriteToFile() (err error) {
 	var data []byte
 
 	// Check the directory hosting the store exists
-	storeBasePath := filepath.Dir(store.Config.Core.StorePath)
+	storeBasePath := filepath.Dir(store.Config.StorePath)
 	_, err = os.Stat(storeBasePath)
 	if os.IsNotExist(err) {
 		return err
@@ -80,7 +80,7 @@ func (store *DbStore) WriteToFile() (err error) {
 		return err
 	}
 
-	err = ioutil.WriteFile(store.Config.Core.StorePath, data, 0777)
+	err = ioutil.WriteFile(store.Config.StorePath, data, 0777)
 	if err != nil {
 		return err
 	}
@@ -161,10 +161,10 @@ func (store *DbStore) Add(dbName string) (err error) {
 				return error
 			}
 		} else {
-			dbPath = filepath.Join(store.Config.Core.StoragePath, dbName)
+			dbPath = filepath.Join(store.Config.StoragePath, dbName)
 		}
 
-		db := NewDb(dbName, dbPath, store.Config.Storage)
+		db := NewDb(dbName, dbPath, &store.Config.StorageEngineConfig)
 		store.Container[db.Uid] = db
 		store.updateNameToUidIndex()
 		err = store.WriteToFile()

@@ -39,10 +39,10 @@ func removePidFile(pidfile string) {
 }
 
 func Daemon(config *Config) error {
-	if err := createPidFile(config.Core.Pidfile); err != nil {
+	if err := createPidFile(config.Pidfile); err != nil {
 		log.Fatal(err)
 	}
-	defer removePidFile(config.Core.Pidfile)
+	defer removePidFile(config.Pidfile)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill, os.Signal(syscall.SIGTERM))
@@ -50,7 +50,7 @@ func Daemon(config *Config) error {
 	go func() {
 		sig := <-c
 		log.Printf("Received signal '%v', exiting\n", sig)
-		removePidFile(config.Core.Pidfile)
+		removePidFile(config.Pidfile)
 		os.Exit(0)
 	}()
 

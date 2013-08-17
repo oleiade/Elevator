@@ -19,16 +19,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	config.Core.UpdateFromCmdline(cmdline)
+	config.UpdateFromCmdline(cmdline)
 
 	// Set up loggers
 	l4g.AddFilter("stdout", l4g.INFO, l4g.NewConsoleLogWriter())
-	err = elevator.SetupFileLogger("file", config.Core.LogLevel, config.Core.LogFile)
+	err = elevator.SetupFileLogger("file", config.LogLevel, config.LogFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if config.Core.Daemon {
+	if config.Daemon {
 		if err := elevator.Daemon(config); err != nil {
 			log.Fatal(err)
 		}
