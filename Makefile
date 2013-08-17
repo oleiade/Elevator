@@ -53,6 +53,9 @@ else ifneq ($(ELEVATOR_DIR), $(realpath $(ELEVATOR_DIR)))
 	@rm -f $(ELEVATOR_DIR)
 endif
 
+xc: all
+	@(cd $(ELEVATOR_DIR); sudo -E goxc package)
+
 test: all
 	@(cd $(ELEVATOR_DIR); sudo -E go test $(GO_OPTIONS))
 

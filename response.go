@@ -8,23 +8,23 @@ import (
 
 type Response struct {
 	Status   int
-	Err_code int
-	Err_msg  string
+	ErrCode int
+	ErrMsg  string
 	Data     []string
 }
 
 // String represents the Response as a normalized string
 func (r *Response) String() string {
 	return fmt.Sprintf("<Response status:%d errCode:%d errMsg:%s data:%s",
-		r.Status, r.Err_code, r.Err_msg, r.Data)
+		r.Status, r.ErrCode, r.ErrMsg, r.Data)
 }
 
 // NewResponse returns a pointer to a brand new allocated Response
 func NewResponse(status int, errCode int, errMsg string, data []string) *Response {
 	return &Response{
 		Status:   status,
-		Err_code: errCode,
-		Err_msg:  errMsg,
+		ErrCode: errCode,
+		ErrMsg:  errMsg,
 		Data:     data,
 	}
 }
@@ -43,8 +43,8 @@ func NewSuccessResponse(data []string) *Response {
 func NewFailureResponse(errCode int, errMsg string) *Response {
 	return &Response{
 		Status:   FAILURE_STATUS,
-		Err_code: errCode,
-		Err_msg:  errMsg,
+		ErrCode: errCode,
+		ErrMsg:  errMsg,
 	}
 }
 
@@ -52,7 +52,7 @@ func NewFailureResponse(errCode int, errMsg string) *Response {
 func (r *Response) ToArray() []interface{} {
 	var response []interface{}
 
-	response = append(response, r.Status, r.Err_code, r.Err_msg)
+	response = append(response, r.Status, r.ErrCode, r.ErrMsg)
 
 	for _, d := range r.Data {
 		response = append(response, string(d))

@@ -102,7 +102,6 @@ func (store *DbStore) Load() (err error) {
 // Mount sets the database status to DB_STATUS_MOUNTED
 // and instantiates the according leveldb connector
 func (store *DbStore) Mount(dbUid string) (err error) {
-
 	if db, present := store.Container[dbUid]; present {
 		err = db.Mount()
 		if err != nil {

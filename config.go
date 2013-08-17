@@ -118,19 +118,19 @@ func loadConfigFromFile(path string, obj interface{}, section string) error {
 
 		switch {
 		case structField.Type().Kind() == reflect.Bool:
-			configValue, err := iniConfig.GetBool(section, fieldTag)
+			config_value, err := iniConfig.GetBool(section, fieldTag)
 			if err == nil {
-				structField.SetBool(configValue)
+				structField.SetBool(config_value)
 			}
 		case structField.Type().Kind() == reflect.String:
-			configValue, err := iniConfig.GetString(section, fieldTag)
+			config_value, err := iniConfig.GetString(section, fieldTag)
 			if err == nil {
-				structField.SetString(configValue)
+				structField.SetString(config_value)
 			}
 		case structField.Type().Kind() == reflect.Int:
-			configValue, err := iniConfig.GetInt64(section, fieldTag)
+			config_value, err := iniConfig.GetInt64(section, fieldTag)
 			if err == nil {
-				structField.SetInt(configValue)
+				structField.SetInt(config_value)
 			}
 		}
 	}
