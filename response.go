@@ -7,10 +7,10 @@ import (
 )
 
 type Response struct {
-	Status   int
+	Status  int
 	ErrCode int
 	ErrMsg  string
-	Data     []string
+	Data    []string
 }
 
 // String represents the Response as a normalized string
@@ -22,10 +22,10 @@ func (r *Response) String() string {
 // NewResponse returns a pointer to a brand new allocated Response
 func NewResponse(status int, errCode int, errMsg string, data []string) *Response {
 	return &Response{
-		Status:   status,
+		Status:  status,
 		ErrCode: errCode,
 		ErrMsg:  errMsg,
-		Data:     data,
+		Data:    data,
 	}
 }
 
@@ -42,7 +42,7 @@ func NewSuccessResponse(data []string) *Response {
 // new allocated failure Response
 func NewFailureResponse(errCode int, errMsg string) *Response {
 	return &Response{
-		Status:   FAILURE_STATUS,
+		Status:  FAILURE_STATUS,
 		ErrCode: errCode,
 		ErrMsg:  errMsg,
 	}

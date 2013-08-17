@@ -2,8 +2,8 @@ package elevator
 
 import (
 	uuid "code.google.com/p/go-uuid/uuid"
-	"fmt"
 	"errors"
+	"fmt"
 	l4g "github.com/alecthomas/log4go"
 	leveldb "github.com/jmhodges/levigo"
 )
