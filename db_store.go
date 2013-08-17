@@ -7,10 +7,12 @@ import (
 	l4g "github.com/alecthomas/log4go"
 	"io/ioutil"
 	"os"
+	"sync"
 	"path/filepath"
 )
 
 type DbStore struct {
+	sync.RWMutex
 	Config    *Config
 	Container map[string]*Db
 	NameToUid map[string]string
@@ -26,11 +28,15 @@ func NewDbStore(config *Config) *DbStore {
 }
 
 func (store *DbStore) updateNameToUidIndex() {
+	store.Lock()
+
 	for _, db := range store.Container {
 		if _, present := store.NameToUid[db.Name]; present == false {
 			store.NameToUid[db.Name] = db.Uid
 		}
 	}
+
+	store.Unlock()
 }
 
 // updateDatabasesOptions makes sur that every Db instance
@@ -39,9 +45,13 @@ func (store *DbStore) updateNameToUidIndex() {
 // in an ini file and canno't be automatically loaded by the
 // json store loader.
 func (store *DbStore) updateDatabasesOptions() {
+	store.Lock()
+
 	for _, db := range store.Container {
 		db.Options = store.Config
 	}
+
+	store.Unlock()
 }
 
 // ReadFromFile syncs the content of the store
@@ -52,10 +62,12 @@ func (store *DbStore) ReadFromFile() (err error) {
 		return err
 	}
 
+	store.Lock()
 	err = json.Unmarshal(data, &store.Container)
 	if err != nil {
 		return err
 	}
+	store.Unlock()
 
 	store.updateNameToUidIndex()
 	store.updateDatabasesOptions()
@@ -75,10 +87,12 @@ func (store *DbStore) WriteToFile() (err error) {
 		return err
 	}
 
+	store.RLock()
 	data, err = json.Marshal(store.Container)
 	if err != nil {
 		return err
 	}
+	store.RUnlock()
 
 	err = ioutil.WriteFile(store.Config.Storepath, data, 0777)
 	if err != nil {
@@ -165,7 +179,11 @@ func (store *DbStore) Add(dbName string) (err error) {
 		}
 
 		db := NewDb(dbName, dbPath, store.Config)
+		
+		store.Lock()
 		store.Container[db.Uid] = db
+		store.Unlock()
+		
 		store.updateNameToUidIndex()
 		err = store.WriteToFile()
 		if err != nil {
@@ -190,8 +208,12 @@ func (store *DbStore) Drop(dbName string) (err error) {
 		dbPath := db.Path
 
 		store.Unmount(dbUid)
+
+		store.Lock()
 		delete(store.Container, dbUid)
 		delete(store.NameToUid, dbName)
+		store.Unlock()
+
 		store.WriteToFile()
 
 		err = os.RemoveAll(dbPath)
@@ -215,6 +237,9 @@ func (store *DbStore) Drop(dbName string) (err error) {
 // Status returns a database status defined by constants
 // DB_STATUS_MOUNTED and DB_STATUS_UNMOUNTED
 func (store *DbStore) Status(dbName string) (int, error) {
+	store.RLock()
+	defer store.RUnlock()
+	
 	if dbUid, present := store.NameToUid[dbName]; present {
 		db := store.Container[dbUid]
 		return db.Status, nil
@@ -226,6 +251,9 @@ func (store *DbStore) Status(dbName string) (int, error) {
 // Exists checks if a database present in DbStore
 // exists on disk.
 func (store *DbStore) Exists(dbName string) (bool, error) {
+	store.RLock()
+	defer store.RUnlock()
+
 	if dbUid, present := store.NameToUid[dbName]; present {
 		db := store.Container[dbUid]
 
@@ -251,10 +279,12 @@ func (store *DbStore) List() []string {
 	dbNames := make([]string, len(store.Container))
 
 	i := 0
+	store.RLock()
 	for _, db := range store.Container {
 		dbNames[i] = db.Name
 		i++
 	}
+	store.RUnlock()
 
 	return dbNames
 }
