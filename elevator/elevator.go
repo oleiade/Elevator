@@ -15,7 +15,7 @@ func main() {
 
 	// Load configuration
 	config := elevator.NewConfig()
-	err = config.FromFile(*cmdline.ConfigFile)
+	err = config.OverrideWithIni(*cmdline.ConfigFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,7 +23,7 @@ func main() {
 
 	// Set up loggers
 	l4g.AddFilter("stdout", l4g.INFO, l4g.NewConsoleLogWriter())
-	err = elevator.SetupFileLogger("file", config.LogLevel, config.LogFile)
+	err = elevator.SetupFileLogger("file", config.Loglevel, config.Logfile)
 	if err != nil {
 		log.Fatal(err)
 	}

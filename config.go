@@ -3,144 +3,72 @@ package elevator
 import (
 	leveldb "github.com/jmhodges/levigo"
 	goconfig "github.com/msbranco/goconfig"
+	"github.com/oleiade/reflections"
 	"reflect"
 )
 
 type Config struct {
-	CoreConfig
-	StorageEngineConfig
-}
-
-type CoreConfig struct {
+	// Exported core configuration
 	Daemon      bool   `ini:"daemonize"`
 	Endpoint    string `ini:"endpoint"`
 	Pidfile     string `ini:"pidfile"`
-	StorePath   string `ini:"database_store"`
-	StoragePath string `ini:"databases_storage_path"`
-	DefaultDb   string `ini:"default_db"`
-	LogFile     string `ini:"log_file"`
-	LogLevel    string `ini:"log_level"`
-}
+	Storepath   string `ini:"database_store"`
+	Storagepath string `ini:"databases_storage_path"`
+	Defaultdb   string `ini:"default_db"`
+	Logfile     string `ini:"log_file"`
+	Loglevel    string `ini:"log_level"`
 
-type StorageEngineConfig struct {
-	Compression     bool `ini:"compression"`       // default: true
-	BlockSize       int  `ini:"block_size"`        // default: 4096
-	CacheSize       int  `ini:"cache_size"`        // default: 128 * 1048576 (128MB)
-	BloomFilterBits int  `ini:"bloom_filter_bits"` // default: 100
-	MaxOpenFiles    int  `ini:"max_open_files"`    // default: 150
-	VerifyChecksums bool `ini:"verify_checksums"`  // default: false
-	WriteBufferSize int  `ini:"write_buffer_size"` // default: 64 * 1048576 (64MB)
+	// Unexported storage engine configuration variables
+	compression     bool `ini:"compression"`       // default: true
+	blocksize       int  `ini:"block_size"`        // default: 4096
+	cachesize       int  `ini:"cache_size"`        // default: 128 * 1048576 (128MB)
+	bloomfilterbits int  `ini:"bloom_filter_bits"` // default: 100
+	maxopenfiles    int  `ini:"max_open_files"`    // default: 150
+	verifychecksums bool `ini:"verify_checksums"`  // default: false
+	writebuffersize int  `ini:"write_buffer_size"` // default: 64 * 1048576 (64MB)
 }
 
 func NewConfig() *Config {
 	return &Config{
-		CoreConfig:    			*NewCoreConfig(),
-		StorageEngineConfig: 	*NewStorageEngineConfig(),
-	}
-}
-
-func NewCoreConfig() *CoreConfig {
-	return &CoreConfig{
+		// core configuration default setup
 		Daemon:      false,
 		Endpoint:    "tcp://127.0.0.1:4141",
 		Pidfile:     "/var/run/elevator.pid",
-		StorePath:   "/var/lib/elevator/store",
-		StoragePath: "/var/lib/elevator",
-		DefaultDb:   "default",
-		LogFile:     "/var/log/elevator.log",
-		LogLevel:    "INFO",
+		Storepath:   "/var/lib/elevator/store",
+		Storagepath: "/var/lib/elevator",
+		Defaultdb:   "default",
+		Logfile:     "/var/log/elevator.log",
+		Loglevel:    "INFO",
+
+		// storage engine configuration default setup
+		compression:     true,
+		blocksize:       4096,
+		cachesize:       512 * 1048576,
+		bloomfilterbits: 100,
+		maxopenfiles:    150,
+		verifychecksums: false,
+		writebuffersize: 64 * 1048576,
 	}
 }
 
-func NewStorageEngineConfig() *StorageEngineConfig {
-	return &StorageEngineConfig{
-		Compression:     true,
-		BlockSize:       4096,
-		CacheSize:       512 * 1048576,
-		BloomFilterBits: 100,
-		MaxOpenFiles:    150,
-		VerifyChecksums: false,
-		WriteBufferSize: 64 * 1048576,
-	}
-}
-
-func (opts *StorageEngineConfig) ToLeveldbOptions() *leveldb.Options {
+func (c *Config) ExtractLeveldbOptions() *leveldb.Options {
 	options := leveldb.NewOptions()
 
 	options.SetCreateIfMissing(true)
-	options.SetCompression(leveldb.CompressionOpt(Btoi(opts.Compression)))
-	options.SetBlockSize(opts.BlockSize)
-	options.SetCache(leveldb.NewLRUCache(opts.CacheSize))
-	options.SetFilterPolicy(leveldb.NewBloomFilter(opts.BloomFilterBits))
-	options.SetMaxOpenFiles(opts.MaxOpenFiles)
-	options.SetParanoidChecks(opts.VerifyChecksums)
-	options.SetWriteBufferSize(opts.WriteBufferSize)
+	options.SetCompression(leveldb.CompressionOpt(Btoi(c.compression)))
+	options.SetBlockSize(c.blocksize)
+	options.SetCache(leveldb.NewLRUCache(c.cachesize))
+	options.SetFilterPolicy(leveldb.NewBloomFilter(c.bloomfilterbits))
+	options.SetMaxOpenFiles(c.maxopenfiles)
+	options.SetParanoidChecks(c.verifychecksums)
+	options.SetWriteBufferSize(c.writebuffersize)
 
 	return options
 }
 
-func (opts *StorageEngineConfig) UpdateFromConfig(config *Config) {
-	opts.Compression = config.Compression
-	opts.BlockSize = config.BlockSize
-	opts.CacheSize = config.CacheSize
-	opts.BloomFilterBits = config.BloomFilterBits
-	opts.MaxOpenFiles = config.MaxOpenFiles
-	opts.VerifyChecksums = config.VerifyChecksums
-	opts.WriteBufferSize = config.WriteBufferSize
-}
-
-func (c *Config) FromFile(path string) error {
-	err := loadConfigFromFile(path, c, "core")
-	if err != nil {
-		return err
-	}
-
-	err = loadConfigFromFile(path, c, "storage_engine")
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func loadConfigFromFile(path string, obj interface{}, section string) error {
-	iniConfig, err := goconfig.ReadConfigFile(path)
-	if err != nil {
-		return err
-	}
-
-	config := reflect.ValueOf(obj).Elem()
-	configType := config.Type()
-
-	for i := 0; i < config.NumField(); i++ {
-		structField := config.Field(i)
-		fieldTag := configType.Field(i).Tag.Get("ini")
-
-		switch {
-		case structField.Type().Kind() == reflect.Bool:
-			config_value, err := iniConfig.GetBool(section, fieldTag)
-			if err == nil {
-				structField.SetBool(config_value)
-			}
-		case structField.Type().Kind() == reflect.String:
-			config_value, err := iniConfig.GetString(section, fieldTag)
-			if err == nil {
-				structField.SetString(config_value)
-			}
-		case structField.Type().Kind() == reflect.Int:
-			config_value, err := iniConfig.GetInt64(section, fieldTag)
-			if err == nil {
-				structField.SetInt(config_value)
-			}
-		}
-	}
-
-	return nil
-}
-
 // A bit verbose, and not that dry, but could not find
 // more clever for now.
-func (c *CoreConfig) UpdateFromCmdline(cmdline *Cmdline) {
+func (c *Config) UpdateFromCmdline(cmdline *Cmdline) {
 	if *cmdline.DaemonMode != DEFAULT_DAEMON_MODE {
 		c.Daemon = *cmdline.DaemonMode
 	}
@@ -150,6 +78,47 @@ func (c *CoreConfig) UpdateFromCmdline(cmdline *Cmdline) {
 	}
 
 	if *cmdline.LogLevel != DEFAULT_LOG_LEVEL {
-		c.LogLevel = *cmdline.LogLevel
+		c.Loglevel = *cmdline.LogLevel
 	}
 }
+
+func (c *Config) OverrideWithIni(filePath string) error {
+	iniConfig, err := goconfig.ReadConfigFile(filePath)
+	if err != nil {
+		return err
+	}
+	
+	iniConfigSections := iniConfig.GetSections()
+	configTags, _ := reflections.Tags(*c, "ini")
+
+	for _, section := range iniConfigSections {
+		sectionOptions, err := iniConfig.GetOptions(section)
+		if err != nil {
+			return err
+		}
+
+		for field, tag := range configTags {
+			if StringSliceContains(sectionOptions, tag) {
+				fieldType, _ := reflections.GetFieldKind(*c, field)
+				var configValue interface{}
+
+				switch fieldType {
+				case reflect.Bool:
+					configValue, err = iniConfig.GetBool(section, tag)
+				case reflect.String:
+					configValue, err = iniConfig.GetString(section, tag)
+				case reflect.Int:
+					configValue, err = iniConfig.GetInt64(section, tag)
+				}
+
+				if err == nil {
+					reflections.SetField(c, field, configValue)
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+

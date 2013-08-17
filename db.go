@@ -12,13 +12,13 @@ type Db struct {
 	Name      string               `json:"name"`
 	Uid       string               `json:"uid"`
 	Path      string               `json:"path"`
-	Options   *StorageEngineConfig `json:"-"`
+	Options   *Config 			   `json:"-"`
 	Status    int                  `json:"-"`
 	Connector *leveldb.DB          `json:"-"`
 	Channel   chan *Request        `json:"-"`
 }
 
-func NewDb(dbName string, path string, config *StorageEngineConfig) *Db {
+func NewDb(dbName string, path string, config *Config) *Db {
 	return &Db{
 		Name:    dbName,
 		Path:    path,
@@ -47,7 +47,7 @@ func (db *Db) StartRoutine() {
 // and instantiates the according leveldb connector
 func (db *Db) Mount() (err error) {
 	if db.Status == DB_STATUS_UNMOUNTED {
-		db.Connector, err = leveldb.Open(db.Path, db.Options.ToLeveldbOptions())
+		db.Connector, err = leveldb.Open(db.Path, db.Options.ExtractLeveldbOptions())
 		if err != nil {
 			return err
 		}
