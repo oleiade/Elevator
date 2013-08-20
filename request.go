@@ -3,7 +3,7 @@ package elevator
 import (
 	"bytes"
 	"fmt"
-	"github.com/ugorji/go-msgpack"
+	"github.com/ugorji/go/codec"
 )
 
 type Request struct {
@@ -31,9 +31,10 @@ func NewRequest(command string, args []string) *Request {
 // serialized request message
 func (r *Request) UnpackFrom(data *bytes.Buffer) error {
 	var rawRequest []string
+	var mh codec.MsgpackHandle
 
 	// deserialize msgpacked message into string slice
-	dec := msgpack.NewDecoder(data, nil)
+	dec := codec.NewDecoder(data, &mh)
 	err := dec.Decode(&rawRequest)
 	if err != nil {
 		return err

@@ -3,7 +3,7 @@ package elevator
 import (
 	"bytes"
 	"fmt"
-	"github.com/ugorji/go-msgpack"
+	"github.com/ugorji/go/codec"
 )
 
 type Response struct {
@@ -64,7 +64,9 @@ func (r *Response) ToArray() []interface{} {
 // PackInto method fulfills serializes the Response
 // into a msgpacked response message
 func (r *Response) PackInto(buffer *bytes.Buffer) error {
-	enc := msgpack.NewEncoder(buffer)
+	var mh codec.MsgpackHandle
+
+	enc := codec.NewEncoder(buffer, &mh)
 	err := enc.Encode(r.ToArray())
 	if err != nil {
 		return err
