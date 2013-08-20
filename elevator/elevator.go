@@ -22,7 +22,7 @@ func main() {
 	config.UpdateFromCmdline(cmdline)
 
 	// Set up loggers
-	l4g.AddFilter("stdout", l4g.INFO, l4g.NewConsoleLogWriter())
+	l4g.AddFilter("stdout", elevator.LogLevels[config.Loglevel], l4g.NewConsoleLogWriter())
 	err = elevator.SetupFileLogger("file", config.Loglevel, config.Logfile)
 	if err != nil {
 		log.Fatal(err)

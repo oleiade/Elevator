@@ -35,7 +35,6 @@ func NewDb(dbName string, path string, config *Config) *Db {
 // channel in order to protect requests.
 func (db *Db) StartRoutine() {
 	for request := range db.Channel {
-		fmt.Println(request)
 		response, err := processRequest(db, request)
 		if err == nil {
 			forwardResponse(response, request)
