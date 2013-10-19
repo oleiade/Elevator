@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	zmq "github.com/alecthomas/gozmq"
+    zmq "github.com/bonnefoa/go-zeromq"
 	l4g "github.com/alecthomas/log4go"
 	"log"
 )
@@ -22,7 +22,7 @@ func buildServerSocket(endpoint string) (*zmq.Socket, error) {
 		return nil, err
 	}
 
-	socket, err := context.NewSocket(zmq.ROUTER)
+	socket, err := context.NewSocket(zmq.Router)
 	if err != nil {
 		return nil, err
 	}
@@ -85,13 +85,13 @@ func forwardResponse(response *Response, request *Request) error {
 	var responseBuf bytes.Buffer
 	var socket *zmq.Socket = &request.Source.Socket
 	var address []byte = request.Source.Id
-	var parts [][]byte = make([][]byte, 2)
+	var msg [][]byte = make([][]byte, 2)
 
 	response.PackInto(&responseBuf)
-	parts[0] = address
-	parts[1] = responseBuf.Bytes()
+	msg[0] = address
+	msg[1] = responseBuf.Bytes()
 
-	err := socket.SendMultipart(parts, 0)
+	err := socket.SendMultipart(msg, 0)
 	if err != nil {
 		return err
 	}
@@ -121,23 +121,23 @@ func ListenAndServe(config *Config) error {
 
 	// build zmq poller
 	poller := zmq.PollItems{
-		zmq.PollItem{Socket: socket, Events: zmq.POLLIN},
+		&zmq.PollItem{Socket: socket, Events: zmq.Pollin},
 	}
 
 	// Poll for events on the zmq socket
 	// and handle the incoming requests in a goroutine
 	for {
-		_, _ = zmq.Poll(poller, -1)
+		_, _ = poller.Poll(-1)
 
 		switch {
-		case poller[0].REvents&zmq.POLLIN != 0:
-			parts, _ := poller[0].Socket.RecvMultipart(0)
+		case poller[0].REvents&zmq.Pollin > 0:
+			multipart, _ := poller[0].Socket.RecvMultipart(0)
 
 			clientSocket := ClientSocket{
-				Id:     parts[0],
+				Id:     multipart.Data[0],
 				Socket: *socket,
 			}
-			msg := parts[1]
+			msg := multipart.Data[1]
 
 			go handleRequest(&clientSocket, msg, dbStore)
 		}
