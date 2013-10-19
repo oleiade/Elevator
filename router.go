@@ -16,7 +16,7 @@ type ClientSocket struct {
 
 // Creates and binds the zmq socket for the server
 // to listen on
-func buildServerSocket(endpoint string) (*zmq.Socket, error) {
+func CreateSocket(sockType zmq.SocketType) (*zmq.Socket, error) {
 	context, err := zmq.NewContext()
 	if err != nil {
 		return nil, err
@@ -26,8 +26,6 @@ func buildServerSocket(endpoint string) (*zmq.Socket, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	socket.Bind(endpoint)
 
 	return socket, nil
 }
@@ -103,11 +101,12 @@ func ListenAndServe(config *Config) error {
 	l4g.Info(fmt.Sprintf("Elevator started on %s", config.Endpoint))
 
 	// Build server zmq socket
-	socket, err := buildServerSocket(config.Endpoint)
-	defer (*socket).Close()
+	socket, err := CreateSocket(zmq.Router)
 	if err != nil {
 		log.Fatal(err)
 	}
+	socket.Bind(config.Endpoint)
+	defer (*socket).Close()
 
 	// Load database store
 	dbStore := NewDatabaseRegistry(config)
