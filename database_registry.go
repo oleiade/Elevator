@@ -7,14 +7,14 @@ import (
 	l4g "github.com/alecthomas/log4go"
 	"io/ioutil"
 	"os"
-	"sync"
 	"path/filepath"
+	"sync"
 )
 
 type DatabaseRegistry struct {
 	sync.RWMutex
 	Config    *Config
-	Container map[string]*Db
+	Container map[string]*Database
 	NameToUid map[string]string
 }
 
@@ -22,7 +22,7 @@ type DatabaseRegistry struct {
 func NewDatabaseRegistry(config *Config) *DatabaseRegistry {
 	return &DatabaseRegistry{
 		Config:    config,
-		Container: make(map[string]*Db),
+		Container: make(map[string]*Database),
 		NameToUid: make(map[string]string),
 	}
 }
@@ -178,12 +178,12 @@ func (store *DatabaseRegistry) Add(dbName string) (err error) {
 			dbPath = filepath.Join(store.Config.Storagepath, dbName)
 		}
 
-		db := NewDb(dbName, dbPath, store.Config)
-		
+		db := NewDatabase(dbName, dbPath, store.Config)
+
 		store.Lock()
 		store.Container[db.Uid] = db
 		store.Unlock()
-		
+
 		store.updateNameToUidIndex()
 		err = store.WriteToFile()
 		if err != nil {
@@ -239,7 +239,7 @@ func (store *DatabaseRegistry) Drop(dbName string) (err error) {
 func (store *DatabaseRegistry) Status(dbName string) (int, error) {
 	store.RLock()
 	defer store.RUnlock()
-	
+
 	if dbUid, present := store.NameToUid[dbName]; present {
 		db := store.Container[dbUid]
 		return db.Status, nil

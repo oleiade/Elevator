@@ -8,18 +8,18 @@ import (
 	leveldb "github.com/jmhodges/levigo"
 )
 
-type Db struct {
-	Name      string               `json:"name"`
-	Uid       string               `json:"uid"`
-	Path      string               `json:"path"`
-	Options   *Config 			   `json:"-"`
-	Status    int                  `json:"-"`
-	Connector *leveldb.DB          `json:"-"`
-	Channel   chan *Request        `json:"-"`
+type Database struct {
+	Name      string        `json:"name"`
+	Uid       string        `json:"uid"`
+	Path      string        `json:"path"`
+	Options   *Config       `json:"-"`
+	Status    int           `json:"-"`
+	Connector *leveldb.DB   `json:"-"`
+	Channel   chan *Request `json:"-"`
 }
 
-func NewDb(dbName string, path string, config *Config) *Db {
-	return &Db{
+func NewDatabase(dbName string, path string, config *Config) *Database {
+	return &Database{
 		Name:    dbName,
 		Path:    path,
 		Uid:     uuid.New(),
@@ -29,11 +29,11 @@ func NewDb(dbName string, path string, config *Config) *Db {
 	}
 }
 
-// StartRoutine listens on the Db channel awaiting
+// StartRoutine listens on the Database channel awaiting
 // for incoming requests to execute. Willingly
 // blocking on each Exec call received through the
 // channel in order to protect requests.
-func (db *Db) StartRoutine() {
+func (db *Database) StartRoutine() {
 	for request := range db.Channel {
 		response, err := processRequest(db, request)
 		if err == nil {
@@ -44,7 +44,7 @@ func (db *Db) StartRoutine() {
 
 // Mount sets the database status to DB_STATUS_MOUNTED
 // and instantiates the according leveldb connector
-func (db *Db) Mount() (err error) {
+func (db *Database) Mount() (err error) {
 	if db.Status == DB_STATUS_UNMOUNTED {
 		db.Connector, err = leveldb.Open(db.Path, db.Options.ExtractLeveldbOptions())
 		if err != nil {
@@ -69,7 +69,7 @@ func (db *Db) Mount() (err error) {
 
 // Unmount sets the database status to DB_STATUS_UNMOUNTED
 // and deletes the according leveldb connector
-func (db *Db) Unmount() (err error) {
+func (db *Database) Unmount() (err error) {
 	if db.Status == DB_STATUS_MOUNTED {
 		db.Connector.Close()
 		close(db.Channel)

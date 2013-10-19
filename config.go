@@ -87,7 +87,7 @@ func (c *Config) OverrideWithIni(filePath string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	iniConfigSections := iniConfig.GetSections()
 	configTags, _ := reflections.Tags(*c, "ini")
 
@@ -121,4 +121,3 @@ func (c *Config) OverrideWithIni(filePath string) error {
 
 	return nil
 }
-

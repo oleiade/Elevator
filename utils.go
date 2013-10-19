@@ -51,13 +51,12 @@ func Btoi(b bool) int {
 	return 0
 }
 
-func StringSliceContains(slice []string, elem string) bool { 
+func StringSliceContains(slice []string, elem string) bool {
 	for _, t := range slice {
 		if t == elem {
-			return true 
+			return true
 		}
-	} 
+	}
 
-	return false 
-} 
-
+	return false
+}

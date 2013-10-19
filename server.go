@@ -44,8 +44,8 @@ func handleRequest(clientSocket *ClientSocket, rawMsg []byte, dbStore *DatabaseR
 	request.Source = clientSocket
 	l4g.Debug(func() string { return request.String() })
 
-	if request.DbUid != "" {
-		if db, ok := dbStore.Container[request.DbUid]; ok {
+	if request.DatabaseUid != "" {
+		if db, ok := dbStore.Container[request.DatabaseUid]; ok {
 			if db.Status == DB_STATUS_UNMOUNTED {
 				db.Mount()
 			}
@@ -66,7 +66,7 @@ func handleRequest(clientSocket *ClientSocket, rawMsg []byte, dbStore *DatabaseR
 
 // processRequest executes the received request command, and returns
 // the resulting response.
-func processRequest(db *Db, request *Request) (*Response, error) {
+func processRequest(db *Database, request *Request) (*Response, error) {
 	if f, ok := database_commands[request.Command]; ok {
 		response, _ := f(db, request)
 		return response, nil

@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-var database_commands = map[string]func(*Db, *Request) (*Response, error){
+var database_commands = map[string]func(*Database, *Request) (*Response, error){
 	DB_GET:    Get,
 	DB_MGET:   MGet,
 	DB_PUT:    Put,
@@ -17,15 +17,15 @@ var database_commands = map[string]func(*Db, *Request) (*Response, error){
 }
 
 var store_commands = map[string]func(*DatabaseRegistry, *Request) (*Response, error){
-	DB_CREATE:  DbCreate,
-	DB_DROP:    DbDrop,
-	DB_CONNECT: DbConnect,
-	DB_MOUNT:   DbMount,
-	DB_UMOUNT:  DbUnmount,
-	DB_LIST:    DbList,
+	DB_CREATE:  DatabaseCreate,
+	DB_DROP:    DatabaseDrop,
+	DB_CONNECT: DatabaseConnect,
+	DB_MOUNT:   DatabaseMount,
+	DB_UMOUNT:  DatabaseUnmount,
+	DB_LIST:    DatabaseList,
 }
 
-func Get(db *Db, request *Request) (*Response, error) {
+func Get(db *Database, request *Request) (*Response, error) {
 	var response *Response
 	var key string = request.Args[0]
 
@@ -40,7 +40,7 @@ func Get(db *Db, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func Put(db *Db, request *Request) (*Response, error) {
+func Put(db *Database, request *Request) (*Response, error) {
 	var response *Response
 	var key string = request.Args[0]
 	var value string = request.Args[1]
@@ -56,7 +56,7 @@ func Put(db *Db, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func Delete(db *Db, request *Request) (*Response, error) {
+func Delete(db *Database, request *Request) (*Response, error) {
 	var response *Response
 	var key string = request.Args[0]
 
@@ -71,7 +71,7 @@ func Delete(db *Db, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func MGet(db *Db, request *Request) (*Response, error) {
+func MGet(db *Database, request *Request) (*Response, error) {
 	var response *Response
 	var data []string = make([]string, len(request.Args))
 
@@ -113,7 +113,7 @@ func MGet(db *Db, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func Range(db *Db, request *Request) (*Response, error) {
+func Range(db *Database, request *Request) (*Response, error) {
 	var response *Response
 	var data []string
 	var start string = request.Args[0]
@@ -142,7 +142,7 @@ func Range(db *Db, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func Slice(db *Db, request *Request) (*Response, error) {
+func Slice(db *Database, request *Request) (*Response, error) {
 	var response *Response
 	var data []string
 	var start string = request.Args[0]
@@ -174,7 +174,7 @@ func Slice(db *Db, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func Batch(db *Db, request *Request) (*Response, error) {
+func Batch(db *Database, request *Request) (*Response, error) {
 	var response *Response
 	var operations *BatchOperations
 	var batch *leveldb.WriteBatch = leveldb.NewWriteBatch()
@@ -201,7 +201,7 @@ func Batch(db *Db, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func DbCreate(db_store *DatabaseRegistry, request *Request) (*Response, error) {
+func DatabaseCreate(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	var response *Response
 	var dbName string = request.Args[0]
 
@@ -215,7 +215,7 @@ func DbCreate(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func DbDrop(db_store *DatabaseRegistry, request *Request) (*Response, error) {
+func DatabaseDrop(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	var response *Response
 	var dbName string = request.Args[0]
 
@@ -229,7 +229,7 @@ func DbDrop(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func DbConnect(db_store *DatabaseRegistry, request *Request) (*Response, error) {
+func DatabaseConnect(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	var response *Response
 	var dbName string = request.Args[0]
 
@@ -244,7 +244,7 @@ func DbConnect(db_store *DatabaseRegistry, request *Request) (*Response, error) 
 	return response, nil
 }
 
-func DbList(db_store *DatabaseRegistry, request *Request) (*Response, error) {
+func DatabaseList(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	var response *Response
 
 	dbNames := db_store.List()
@@ -258,7 +258,7 @@ func DbList(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func DbMount(db_store *DatabaseRegistry, request *Request) (*Response, error) {
+func DatabaseMount(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	var response *Response
 	var dbName string = request.Args[0]
 
@@ -279,7 +279,7 @@ func DbMount(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 
 }
 
-func DbUnmount(db_store *DatabaseRegistry, request *Request) (*Response, error) {
+func DatabaseUnmount(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	var response *Response
 	var dbName string = request.Args[0]
 
