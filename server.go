@@ -34,7 +34,7 @@ func buildServerSocket(endpoint string) (*zmq.Socket, error) {
 
 // handleRequest deserializes the input msgpack request,
 // processes it and ensures it is forwarded to the client.
-func handleRequest(clientSocket *ClientSocket, rawMsg []byte, dbStore *DbStore) {
+func handleRequest(clientSocket *ClientSocket, rawMsg []byte, dbStore *DatabaseRegistry) {
 	var request *Request = new(Request)
 	var msg *bytes.Buffer = bytes.NewBuffer(rawMsg)
 
@@ -110,7 +110,7 @@ func ListenAndServe(config *Config) error {
 	}
 
 	// Load database store
-	dbStore := NewDbStore(config)
+	dbStore := NewDatabaseRegistry(config)
 	err = dbStore.Load()
 	if err != nil {
 		err = dbStore.Add("default")

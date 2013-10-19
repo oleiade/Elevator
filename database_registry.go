@@ -11,23 +11,23 @@ import (
 	"path/filepath"
 )
 
-type DbStore struct {
+type DatabaseRegistry struct {
 	sync.RWMutex
 	Config    *Config
 	Container map[string]*Db
 	NameToUid map[string]string
 }
 
-// DbStore constructor
-func NewDbStore(config *Config) *DbStore {
-	return &DbStore{
+// DatabaseRegistry constructor
+func NewDatabaseRegistry(config *Config) *DatabaseRegistry {
+	return &DatabaseRegistry{
 		Config:    config,
 		Container: make(map[string]*Db),
 		NameToUid: make(map[string]string),
 	}
 }
 
-func (store *DbStore) updateNameToUidIndex() {
+func (store *DatabaseRegistry) updateNameToUidIndex() {
 	store.Lock()
 
 	for _, db := range store.Container {
@@ -40,11 +40,11 @@ func (store *DbStore) updateNameToUidIndex() {
 }
 
 // updateDatabasesOptions makes sur that every Db instance
-// in DbStore has it's storage options set. Nota, this
+// in DatabaseRegistry has it's storage options set. Nota, this
 // operation is necessary as storage options are defined
 // in an ini file and canno't be automatically loaded by the
 // json store loader.
-func (store *DbStore) updateDatabasesOptions() {
+func (store *DatabaseRegistry) updateDatabasesOptions() {
 	store.Lock()
 
 	for _, db := range store.Container {
@@ -55,8 +55,8 @@ func (store *DbStore) updateDatabasesOptions() {
 }
 
 // ReadFromFile syncs the content of the store
-// description file to the DbStore
-func (store *DbStore) ReadFromFile() (err error) {
+// description file to the DatabaseRegistry
+func (store *DatabaseRegistry) ReadFromFile() (err error) {
 	data, err := ioutil.ReadFile(store.Config.Storepath)
 	if err != nil {
 		return err
@@ -75,9 +75,9 @@ func (store *DbStore) ReadFromFile() (err error) {
 	return nil
 }
 
-// WriteToFile syncs the content of the DbStore
+// WriteToFile syncs the content of the DatabaseRegistry
 // to the store description file
-func (store *DbStore) WriteToFile() (err error) {
+func (store *DatabaseRegistry) WriteToFile() (err error) {
 	var data []byte
 
 	// Check the directory hosting the store exists
@@ -102,9 +102,9 @@ func (store *DbStore) WriteToFile() (err error) {
 	return nil
 }
 
-// Load updates the DbStore with databases
+// Load updates the DatabaseRegistry with databases
 // described by store file
-func (store *DbStore) Load() (err error) {
+func (store *DatabaseRegistry) Load() (err error) {
 	err = store.ReadFromFile()
 	if err != nil {
 		return err
@@ -115,7 +115,7 @@ func (store *DbStore) Load() (err error) {
 
 // Mount sets the database status to DB_STATUS_MOUNTED
 // and instantiates the according leveldb connector
-func (store *DbStore) Mount(dbUid string) (err error) {
+func (store *DatabaseRegistry) Mount(dbUid string) (err error) {
 	if db, present := store.Container[dbUid]; present {
 		err = db.Mount()
 		if err != nil {
@@ -132,7 +132,7 @@ func (store *DbStore) Mount(dbUid string) (err error) {
 
 // Unmount sets the database status to DB_STATUS_UNMOUNTED
 // and deletes the according leveldb connector
-func (store *DbStore) Unmount(dbUid string) (err error) {
+func (store *DatabaseRegistry) Unmount(dbUid string) (err error) {
 	if db, present := store.Container[dbUid]; present {
 		err = db.Unmount()
 		if err != nil {
@@ -147,9 +147,9 @@ func (store *DbStore) Unmount(dbUid string) (err error) {
 	return nil
 }
 
-// Add a db to the DbStore and syncs it
+// Add a db to the DatabaseRegistry and syncs it
 // to the store file
-func (store *DbStore) Add(dbName string) (err error) {
+func (store *DatabaseRegistry) Add(dbName string) (err error) {
 	if _, present := store.NameToUid[dbName]; present {
 		return errors.New("Database already exists")
 	} else {
@@ -200,9 +200,9 @@ func (store *DbStore) Add(dbName string) (err error) {
 	return nil
 }
 
-// Drop removes a database from DbStore, and syncs it
+// Drop removes a database from DatabaseRegistry, and syncs it
 // to store file
-func (store *DbStore) Drop(dbName string) (err error) {
+func (store *DatabaseRegistry) Drop(dbName string) (err error) {
 	if dbUid, present := store.NameToUid[dbName]; present {
 		db := store.Container[dbUid]
 		dbPath := db.Path
@@ -236,7 +236,7 @@ func (store *DbStore) Drop(dbName string) (err error) {
 
 // Status returns a database status defined by constants
 // DB_STATUS_MOUNTED and DB_STATUS_UNMOUNTED
-func (store *DbStore) Status(dbName string) (int, error) {
+func (store *DatabaseRegistry) Status(dbName string) (int, error) {
 	store.RLock()
 	defer store.RUnlock()
 	
@@ -248,9 +248,9 @@ func (store *DbStore) Status(dbName string) (int, error) {
 	return -1, errors.New("Database does not exist")
 }
 
-// Exists checks if a database present in DbStore
+// Exists checks if a database present in DatabaseRegistry
 // exists on disk.
-func (store *DbStore) Exists(dbName string) (bool, error) {
+func (store *DatabaseRegistry) Exists(dbName string) (bool, error) {
 	store.RLock()
 	defer store.RUnlock()
 
@@ -274,8 +274,8 @@ func (store *DbStore) Exists(dbName string) (bool, error) {
 }
 
 // List enumerates  all the databases
-// in DbStore
-func (store *DbStore) List() []string {
+// in DatabaseRegistry
+func (store *DatabaseRegistry) List() []string {
 	dbNames := make([]string, len(store.Container))
 
 	i := 0

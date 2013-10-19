@@ -16,7 +16,7 @@ var database_commands = map[string]func(*Db, *Request) (*Response, error){
 	DB_BATCH:  Batch,
 }
 
-var store_commands = map[string]func(*DbStore, *Request) (*Response, error){
+var store_commands = map[string]func(*DatabaseRegistry, *Request) (*Response, error){
 	DB_CREATE:  DbCreate,
 	DB_DROP:    DbDrop,
 	DB_CONNECT: DbConnect,
@@ -201,7 +201,7 @@ func Batch(db *Db, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func DbCreate(db_store *DbStore, request *Request) (*Response, error) {
+func DbCreate(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	var response *Response
 	var dbName string = request.Args[0]
 
@@ -215,7 +215,7 @@ func DbCreate(db_store *DbStore, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func DbDrop(db_store *DbStore, request *Request) (*Response, error) {
+func DbDrop(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	var response *Response
 	var dbName string = request.Args[0]
 
@@ -229,7 +229,7 @@ func DbDrop(db_store *DbStore, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func DbConnect(db_store *DbStore, request *Request) (*Response, error) {
+func DbConnect(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	var response *Response
 	var dbName string = request.Args[0]
 
@@ -244,7 +244,7 @@ func DbConnect(db_store *DbStore, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func DbList(db_store *DbStore, request *Request) (*Response, error) {
+func DbList(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	var response *Response
 
 	dbNames := db_store.List()
@@ -258,7 +258,7 @@ func DbList(db_store *DbStore, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func DbMount(db_store *DbStore, request *Request) (*Response, error) {
+func DbMount(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	var response *Response
 	var dbName string = request.Args[0]
 
@@ -279,7 +279,7 @@ func DbMount(db_store *DbStore, request *Request) (*Response, error) {
 
 }
 
-func DbUnmount(db_store *DbStore, request *Request) (*Response, error) {
+func DbUnmount(db_store *DatabaseRegistry, request *Request) (*Response, error) {
 	var response *Response
 	var dbName string = request.Args[0]
 
