@@ -18,7 +18,7 @@ type Router struct {
 	Poller   zmq.PollItems
 }
 
-func NewRouter(config *Config) (*Router, error) {
+func NewRouter(config *Config, registry *DatabaseRegistry) (*Router, error) {
 	// Build server zmq socket
 	socket, err := CreateSocket(zmq.Router)
 	if err != nil {
@@ -30,21 +30,12 @@ func NewRouter(config *Config) (*Router, error) {
 		&zmq.PollItem{Socket: socket, Events: zmq.Pollin},
 	}
 
-	// Load database store
-	dbRegistry := NewDatabaseRegistry(config)
-	err = dbRegistry.Load()
-	if err != nil {
-		err = dbRegistry.Add("default")
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	router := Router{
 		Config:   config,
 		Socket:   socket,
 		Poller:   poller,
-		Registry: dbRegistry,
+		Registry: registry,
 	}
 
 	return &router, nil

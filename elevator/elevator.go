@@ -28,7 +28,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-    router, err := elevator.NewRouter(config)
+    // Load database registry
+    dbRegistry := elevator.NewDatabaseRegistry(config)
+    err = dbRegistry.Load()
+    if err != nil {
+        err = dbRegistry.Add("default")
+        if err != nil {
+            log.Fatal(err)
+        }
+    }
+
+    router, err := elevator.NewRouter(config, dbRegistry)
     if err != nil {
         log.Fatal(err)
     }
