@@ -15,7 +15,7 @@ type Database struct {
 	Options   *Config       `json:"-"`
 	Status    int           `json:"-"`
 	Connector *leveldb.DB   `json:"-"`
-	Channel   chan *Request `json:"-"`
+	Channel   chan *Message `json:"-"`
 }
 
 func NewDatabase(dbName string, path string, config *Config) *Database {
@@ -25,19 +25,19 @@ func NewDatabase(dbName string, path string, config *Config) *Database {
 		Uid:     uuid.New(),
 		Status:  DB_STATUS_UNMOUNTED,
 		Options: config,
-		Channel: make(chan *Request),
+		Channel: make(chan *Message),
 	}
 }
 
 // StartRoutine listens on the Database channel awaiting
-// for incoming requests to execute. Willingly
+// for incoming messages to execute. Willingly
 // blocking on each Exec call received through the
-// channel in order to protect requests.
+// channel in order to protect messages.
 func (db *Database) StartRoutine() {
-	for request := range db.Channel {
-		response, err := processRequest(db, request)
+	for message := range db.Channel {
+		response, err := processMessage(db, message)
 		if err == nil {
-			forwardResponse(response, request)
+			forwardResponse(response, message)
 		}
 	}
 }
@@ -52,7 +52,7 @@ func (db *Database) Mount() (err error) {
 		}
 
 		db.Status = DB_STATUS_MOUNTED
-		db.Channel = make(chan *Request)
+		db.Channel = make(chan *Message)
 		go db.StartRoutine()
 	} else {
 		error := errors.New(fmt.Sprintf("Database %s already mounted", db.Name))

@@ -2,9 +2,26 @@ package elevator
 
 import (
 	"bytes"
+	zmq "github.com/bonnefoa/go-zeromq"
 	"os"
 	"strings"
 )
+
+// Creates and binds the zmq socket for the server
+// to listen on
+func CreateSocket(sockType zmq.SocketType) (*zmq.Socket, error) {
+	context, err := zmq.NewContext()
+	if err != nil {
+		return nil, err
+	}
+
+	socket, err := context.NewSocket(zmq.Router)
+	if err != nil {
+		return nil, err
+	}
+
+	return socket, nil
+}
 
 func DirExists(path string) (bool, error) {
 	fileInfo, err := os.Stat(path)

@@ -28,11 +28,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if config.Daemon {
-		if err := elevator.Daemon(config); err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		elevator.ListenAndServe(config)
-	}
+    router, err := elevator.NewRouter(config)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    if config.Daemon {
+        if err := elevator.Daemon(router); err != nil {
+            log.Fatal(err)
+        }
+    } else {
+        router.Run()
+    }
 }

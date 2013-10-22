@@ -38,11 +38,11 @@ func removePidFile(pidfile string) {
 	}
 }
 
-func Daemon(config *Config) error {
-	if err := createPidFile(config.Pidfile); err != nil {
+func Daemon(router *Router) error {
+	if err := createPidFile(router.Config.Pidfile); err != nil {
 		log.Fatal(err)
 	}
-	defer removePidFile(config.Pidfile)
+	defer removePidFile(router.Config.Pidfile)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill, os.Signal(syscall.SIGTERM))
@@ -50,9 +50,11 @@ func Daemon(config *Config) error {
 	go func() {
 		sig := <-c
 		log.Printf("Received signal '%v', exiting\n", sig)
-		removePidFile(config.Pidfile)
+		removePidFile(router.Config.Pidfile)
 		os.Exit(0)
 	}()
 
-	return ListenAndServe(config)
+	router.Run()
+
+	return nil
 }

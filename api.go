@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-var database_commands = map[string]func(*Database, *Request) (*Response, error){
+var database_commands = map[string]func(*Database, *Message) (*Response, error){
 	DB_GET:    Get,
 	DB_MGET:   MGet,
 	DB_PUT:    Put,
@@ -16,7 +16,7 @@ var database_commands = map[string]func(*Database, *Request) (*Response, error){
 	DB_BATCH:  Batch,
 }
 
-var store_commands = map[string]func(*DatabaseRegistry, *Request) (*Response, error){
+var store_commands = map[string]func(*DatabaseRegistry, *Message) (*Response, error){
 	DB_CREATE:  DatabaseCreate,
 	DB_DROP:    DatabaseDrop,
 	DB_CONNECT: DatabaseConnect,
@@ -25,9 +25,9 @@ var store_commands = map[string]func(*DatabaseRegistry, *Request) (*Response, er
 	DB_LIST:    DatabaseList,
 }
 
-func Get(db *Database, request *Request) (*Response, error) {
+func Get(db *Database, message *Message) (*Response, error) {
 	var response *Response
-	var key string = request.Args[0]
+	var key string = message.Args[0]
 
 	ro := leveldb.NewReadOptions()
 	value, err := db.Connector.Get(ro, []byte(key))
@@ -40,10 +40,10 @@ func Get(db *Database, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func Put(db *Database, request *Request) (*Response, error) {
+func Put(db *Database, message *Message) (*Response, error) {
 	var response *Response
-	var key string = request.Args[0]
-	var value string = request.Args[1]
+	var key string = message.Args[0]
+	var value string = message.Args[1]
 
 	wo := leveldb.NewWriteOptions()
 	err := db.Connector.Put(wo, []byte(key), []byte(value))
@@ -56,9 +56,9 @@ func Put(db *Database, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func Delete(db *Database, request *Request) (*Response, error) {
+func Delete(db *Database, message *Message) (*Response, error) {
 	var response *Response
-	var key string = request.Args[0]
+	var key string = message.Args[0]
 
 	wo := leveldb.NewWriteOptions()
 	err := db.Connector.Delete(wo, []byte(key))
@@ -71,21 +71,21 @@ func Delete(db *Database, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func MGet(db *Database, request *Request) (*Response, error) {
+func MGet(db *Database, message *Message) (*Response, error) {
 	var response *Response
-	var data []string = make([]string, len(request.Args))
+	var data []string = make([]string, len(message.Args))
 
 	readOptions := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
 	readOptions.SetSnapshot(snapshot)
 
-	if len(request.Args) > 0 {
-		start := request.Args[0]
-		end := request.Args[len(request.Args)-1]
+	if len(message.Args) > 0 {
+		start := message.Args[0]
+		end := message.Args[len(message.Args)-1]
 
 		keysIndex := make(map[string]int)
 
-		for index, element := range request.Args {
+		for index, element := range message.Args {
 			keysIndex[element] = index
 		}
 
@@ -106,18 +106,18 @@ func MGet(db *Database, request *Request) (*Response, error) {
 	}
 
 	response = NewSuccessResponse(data)
-	forwardResponse(response, request)
+	forwardResponse(response, message)
 
 	db.Connector.ReleaseSnapshot(snapshot)
 
 	return response, nil
 }
 
-func Range(db *Database, request *Request) (*Response, error) {
+func Range(db *Database, message *Message) (*Response, error) {
 	var response *Response
 	var data []string
-	var start string = request.Args[0]
-	var end string = request.Args[1]
+	var start string = message.Args[0]
+	var end string = message.Args[1]
 
 	readOptions := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
@@ -135,19 +135,19 @@ func Range(db *Database, request *Request) (*Response, error) {
 	}
 
 	response = NewSuccessResponse(data)
-	forwardResponse(response, request)
+	forwardResponse(response, message)
 
 	db.Connector.ReleaseSnapshot(snapshot)
 
 	return response, nil
 }
 
-func Slice(db *Database, request *Request) (*Response, error) {
+func Slice(db *Database, message *Message) (*Response, error) {
 	var response *Response
 	var data []string
-	var start string = request.Args[0]
+	var start string = message.Args[0]
 
-	limit, _ := strconv.Atoi(request.Args[1])
+	limit, _ := strconv.Atoi(message.Args[1])
 	readOptions := leveldb.NewReadOptions()
 	snapshot := db.Connector.NewSnapshot()
 	readOptions.SetSnapshot(snapshot)
@@ -167,19 +167,19 @@ func Slice(db *Database, request *Request) (*Response, error) {
 	}
 
 	response = NewSuccessResponse(data)
-	forwardResponse(response, request)
+	forwardResponse(response, message)
 
 	db.Connector.ReleaseSnapshot(snapshot)
 
 	return response, nil
 }
 
-func Batch(db *Database, request *Request) (*Response, error) {
+func Batch(db *Database, message *Message) (*Response, error) {
 	var response *Response
 	var operations *BatchOperations
 	var batch *leveldb.WriteBatch = leveldb.NewWriteBatch()
 
-	operations = BatchOperationsFromRequestArgs(request.Args)
+	operations = BatchOperationsFromMessageArgs(message.Args)
 
 	for _, operation := range *operations {
 		switch operation.OpCode {
@@ -201,9 +201,9 @@ func Batch(db *Database, request *Request) (*Response, error) {
 	return response, nil
 }
 
-func DatabaseCreate(db_store *DatabaseRegistry, request *Request) (*Response, error) {
+func DatabaseCreate(db_store *DatabaseRegistry, message *Message) (*Response, error) {
 	var response *Response
-	var dbName string = request.Args[0]
+	var dbName string = message.Args[0]
 
 	err := db_store.Add(dbName)
 	if err != nil {
@@ -215,9 +215,9 @@ func DatabaseCreate(db_store *DatabaseRegistry, request *Request) (*Response, er
 	return response, nil
 }
 
-func DatabaseDrop(db_store *DatabaseRegistry, request *Request) (*Response, error) {
+func DatabaseDrop(db_store *DatabaseRegistry, message *Message) (*Response, error) {
 	var response *Response
-	var dbName string = request.Args[0]
+	var dbName string = message.Args[0]
 
 	err := db_store.Drop(dbName)
 	if err != nil {
@@ -229,9 +229,9 @@ func DatabaseDrop(db_store *DatabaseRegistry, request *Request) (*Response, erro
 	return response, nil
 }
 
-func DatabaseConnect(db_store *DatabaseRegistry, request *Request) (*Response, error) {
+func DatabaseConnect(db_store *DatabaseRegistry, message *Message) (*Response, error) {
 	var response *Response
-	var dbName string = request.Args[0]
+	var dbName string = message.Args[0]
 
 	dbUid, exists := db_store.NameToUid[dbName]
 
@@ -244,7 +244,7 @@ func DatabaseConnect(db_store *DatabaseRegistry, request *Request) (*Response, e
 	return response, nil
 }
 
-func DatabaseList(db_store *DatabaseRegistry, request *Request) (*Response, error) {
+func DatabaseList(db_store *DatabaseRegistry, message *Message) (*Response, error) {
 	var response *Response
 
 	dbNames := db_store.List()
@@ -258,9 +258,9 @@ func DatabaseList(db_store *DatabaseRegistry, request *Request) (*Response, erro
 	return response, nil
 }
 
-func DatabaseMount(db_store *DatabaseRegistry, request *Request) (*Response, error) {
+func DatabaseMount(db_store *DatabaseRegistry, message *Message) (*Response, error) {
 	var response *Response
-	var dbName string = request.Args[0]
+	var dbName string = message.Args[0]
 
 	dbUid, exists := db_store.NameToUid[dbName]
 
@@ -279,9 +279,9 @@ func DatabaseMount(db_store *DatabaseRegistry, request *Request) (*Response, err
 
 }
 
-func DatabaseUnmount(db_store *DatabaseRegistry, request *Request) (*Response, error) {
+func DatabaseUnmount(db_store *DatabaseRegistry, message *Message) (*Response, error) {
 	var response *Response
-	var dbName string = request.Args[0]
+	var dbName string = message.Args[0]
 
 	dbUid, exists := db_store.NameToUid[dbName]
 

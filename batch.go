@@ -23,9 +23,9 @@ func BatchOperationFromSlice(slice []string) *BatchOperation {
 	return NewBatchOperation(slice[0], slice[1:])
 }
 
-// BatchOperationsFromRequestArgs builds a BatchOperations from
+// BatchOperationsFromMessageArgs builds a BatchOperations from
 // a string slice resprensenting a sequence of batch operations
-func BatchOperationsFromRequestArgs(args []string) *BatchOperations {
+func BatchOperationsFromMessageArgs(args []string) *BatchOperations {
 	var ops BatchOperations
 	var curIndex int = 0
 	var lastIndex int = 0

@@ -3,47 +3,49 @@ package elevator
 import (
 	"bytes"
 	"fmt"
+	zmq "github.com/bonnefoa/go-zeromq"
 	"github.com/ugorji/go/codec"
 )
 
-type Request struct {
-	DatabaseUid string
-	Command     string
-	Args        []string
-	Source      *ClientSocket `msgpack:"-"`
+type Message struct {
+	DatabaseUid  string
+	Command      string
+	Args         []string
+	SourceId     []byte
+	SourceSocket zmq.Socket `msgpack:"-"`
 }
 
-// String represents the Request as a normalized string
-func (r *Request) String() string {
-	return fmt.Sprintf("<Request uid:%s command:%s args:%s>",
+// String represents the Message as a normalized string
+func (r *Message) String() string {
+	return fmt.Sprintf("<Message uid:%s command:%s args:%s>",
 		r.DatabaseUid, r.Command, r.Args)
 }
 
-// NewRequest returns a pointer to a brand new allocated Request
-func NewRequest(command string, args []string) *Request {
-	return &Request{
+// NewMessage returns a pointer to a brand new allocated Message
+func NewMessage(command string, args []string) *Message {
+	return &Message{
 		Command: command,
 		Args:    args,
 	}
 }
 
-// UnpackFrom method fulfills a Request from a received
+// UnpackFrom method fulfills a Message from a received
 // serialized request message
-func (r *Request) UnpackFrom(data *bytes.Buffer) error {
-	var rawRequest []string
+func (r *Message) UnpackFrom(data *bytes.Buffer) error {
+	var rawMessage []string
 	var mh codec.MsgpackHandle
 
 	// deserialize msgpacked message into string slice
 	dec := codec.NewDecoder(data, &mh)
-	err := dec.Decode(&rawRequest)
+	err := dec.Decode(&rawMessage)
 	if err != nil {
 		return err
 	}
 
-	// Fulfill Request with deserialized data
-	r.DatabaseUid = rawRequest[0]
-	r.Command = rawRequest[1]
-	r.Args = rawRequest[2:]
+	// Fulfill Message with deserialized data
+	r.DatabaseUid = rawMessage[0]
+	r.Command = rawMessage[1]
+	r.Args = rawMessage[2:]
 
 	return nil
 }
