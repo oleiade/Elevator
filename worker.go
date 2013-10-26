@@ -16,11 +16,11 @@ type Worker struct {
 // NewWorker builds a new Worker instance. It instantiates
 // a channel to the running service, and bootstraps a sync.waitGroup
 // with an element marked as running.
-func NewWorker(name string, wg *WaitGroup) *Worker {
+func NewWorker(name string, wg *sync.WaitGroup) *Worker {
 	return &Worker{
-		name:      name,
-		ch:        make(chan bool),
-		waitGroup: sync.WaitGroup,
+		name:           name,
+		ExitChannel:    make(chan bool),
+		waitGroup:      wg,
 	}
 }
 
@@ -31,6 +31,8 @@ func (w *Worker) Start() {
 // Stop the service by closing the service's channel.
 // Blocks until the service is really stopped.
 func (w *Worker) Stop() {
-	close(w.ch)
+    if _, ok := <- w.ExitChannel; ok {
+        close(w.ExitChannel)
+    }
 	w.waitGroup.Wait()
 }

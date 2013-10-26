@@ -34,9 +34,6 @@ ELEVATOR_BIN := $(CURDIR)/$(ELEVATOR_BIN_RELATIVE)
 all: $(ELEVATOR_BIN)
 
 $(ELEVATOR_BIN): $(ELEVATOR_DIR)
-	# Specifically install gozmq zmq3 compatible version
-	@go get -tags zmq_3_x github.com/alecthomas/gozmq
-
 	# Proceed to elevator build
 	@(mkdir -p  $(dir $@))
 	@(cd $(ELEVATOR_MAIN); go get $(GO_OPTIONS); go build $(GO_OPTIONS) $(BUILD_OPTIONS) -o $@)
