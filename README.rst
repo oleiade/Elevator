@@ -102,3 +102,9 @@ Thanks
 ======
 
 Thanks to `srinikom <https://github.com/srinikom>`_ for its `leveldb-server <https://github.com/srinikom/leveldb-server>`_ which was a very good base to start from.
+
+
+.. image:: https://d2weczhvl823v0.cloudfront.net/oleiade/elevator/trend.png
+   :alt: Bitdeli badge
+   :target: https://bitdeli.com/free
+
