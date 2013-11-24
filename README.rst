@@ -2,7 +2,7 @@
 Elevator
 ========
 
-.. image:: http://dl.dropbox.com/u/2497327/baneer.png
+.. image:: https://dl.dropboxusercontent.com/u/2497327/github/elevator/elevator-animation.gif
     :target: http://elevator.readthedocs.org
 
 Elevator is an open source, on-disk key-value. It provides high-performance bulk read-write operations over very large datasets while exposing a simple and efficient API.
@@ -210,7 +210,9 @@ Clients
 Thanks
 ======
 
-I wish to thank `Botify <http://botify.com>`_ which hires me and gave me the opportunity to spend some time on the project. To `Francisco Roque <http://www.franciscoroque.com/blog/>`_ and `BioQl <http://bioql.com/>`_ for their active support and feedback. Thanks to `Greg leclercq <https://twitter.com/ggregl>`_ for it's great advices and clever ideas.
-
+To `Boglio <http://cargocollective.com/boglio>`_ who designed the Elevator amazing logo !
+Thanks to `Botify <http://botify.com>`_ which hires me and gave me the opportunity to spend some time on the project.
+To `Francisco Roque <http://www.franciscoroque.com/blog/>`_ and `BioQl <http://bioql.com/>`_ for their active support and feedback.
+Thanks to `Greg leclercq <https://twitter.com/ggregl>`_ for it's great advices and clever ideas.
 I'd really like to thanks the `Zeromq <http://zeromq.org>`_ and `Leveldb <http://code.google.com/p/leveldb/>`_ creators and maintainers for their amazing work, without which, none of this would have been possible.
 
