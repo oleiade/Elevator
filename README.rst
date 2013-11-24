@@ -2,7 +2,7 @@
 Elevator
 ========
 
-.. image:: http://dl.dropbox.com/u/2497327/baneer.png
+.. image:: https://dl.dropboxusercontent.com/u/2497327/github/elevator/elevator-animation.gif
     :target: http://elevator.readthedocs.org
 
 Key-Value store written in Python and based on levelDB, allows high performance on-disk bulk read/write.
@@ -100,6 +100,8 @@ Clients
 
 Thanks
 ======
+
+To `Boglio <http://cargocollective.com/boglio>`_ who designed the Elevator amazing logo !
 
 Thanks to `srinikom <https://github.com/srinikom>`_ for its `leveldb-server <https://github.com/srinikom/leveldb-server>`_ which was a very good base to start from.
 
