@@ -1,7 +1,3 @@
-========
-Elevator
-========
-
 .. image:: https://dl.dropboxusercontent.com/u/2497327/github/elevator/elevator-animation.gif
     :target: http://elevator.readthedocs.org
 
