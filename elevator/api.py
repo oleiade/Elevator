@@ -110,7 +110,7 @@ class Handler(object):
         return success(db.delete(key))
 
     def Range(self, db, key_from, key_to,
-              include_key=True, include_value=True):
+              include_key=True, include_value=True, prefix=None):
         """Returns the Range of key/value between
         `key_from and `key_to`"""
         # Operate over a snapshot in order to return
@@ -119,6 +119,7 @@ class Handler(object):
         it = db_snapshot.iterator(start=key_from, stop=key_to,
                                   include_key=include_key,
                                   include_value=include_value,
+                                  prefix=prefix,
                                   include_stop=True)
         value = list(it)
         del db_snapshot

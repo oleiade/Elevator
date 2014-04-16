@@ -180,6 +180,7 @@ on a frozen database state.
     * ``key_to`` : key where to stop
     * ``include_key`` : whether should keys be include in return values or not, default is ``True``
     * ``include_value``: whether should values be included in return values or not, default is ``True``
+    * ``prefix``: prefix that all keys in the range must have, default is ``None``
 
 ``SLICE`` : Extracts a slice (key/value pairs) from a database
 
