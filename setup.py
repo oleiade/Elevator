@@ -52,7 +52,7 @@ setup(
         'lz4',
         'python-daemon==1.5.5',
         'msgpack-python',
-        'pyzmq==13.0.0',
+        'pyzmq>=13.0.0',
         'unittest2',
         'ujson',
         'procname',
