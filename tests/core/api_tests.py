@@ -138,6 +138,36 @@ class ApiTests(unittest2.TestCase):
         self.assertEqual(plain_header['status'], SUCCESS_STATUS)
         self.assertEqual(plain_content['datas'], None)
 
+    def test_exists_of_existing_key(self):
+        message = self.request_message('EXISTS', ['1'])
+        header, content = self.handler.command(message)
+
+        plain_header = msgpack.unpackb(header)
+        plain_content = msgpack.unpackb(content)
+
+        self.assertEqual(plain_header['status'], SUCCESS_STATUS)
+        self.assertEqual(plain_content['datas'], True)
+
+    def test_exists_of_non_existing_key_1(self):
+        message = self.request_message('EXISTS', ['0'])
+        header, content = self.handler.command(message)
+
+        plain_header = msgpack.unpackb(header)
+        plain_content = msgpack.unpackb(content)
+
+        self.assertEqual(plain_header['status'], SUCCESS_STATUS)
+        self.assertEqual(plain_content['datas'], False)
+
+    def test_exists_of_non_existing_key_2(self):
+        message = self.request_message('EXISTS', ['non_existing'])
+        header, content = self.handler.command(message)
+
+        plain_header = msgpack.unpackb(header)
+        plain_content = msgpack.unpackb(content)
+
+        self.assertEqual(plain_header['status'], SUCCESS_STATUS)
+        self.assertEqual(plain_content['datas'], False)
+
     def test_range(self):
         message = self.request_message('RANGE', ['1', '2'])
         header, content = self.handler.command(message)

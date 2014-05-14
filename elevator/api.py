@@ -33,6 +33,7 @@ class Handler(object):
             'GET': self.Get,
             'PUT': self.Put,
             'DELETE': self.Delete,
+            'EXISTS': self.Exists,
             'RANGE': self.Range,
             'SLICE': self.Slice,
             'BATCH': self.Batch,
@@ -108,6 +109,23 @@ class Handler(object):
 
         """
         return success(db.delete(key))
+
+    def Exists(self, db, key, *args, **kwargs):
+        """
+        Return whether or not the given key is present
+        in the database.
+
+        db      =>      LevelDB object
+        *args   =>      (key) to check
+
+        """
+
+        # We should be able to check if the key without getting the value
+        # by creating an iterator, seeking to the key and check if the
+        # iterator is valid.
+        # However, it doesn't work with Plyvel 0.8.
+        # cf https://github.com/wbolster/plyvel/issues/32
+        return success(db.get(key) is not None)
 
     def Range(self, db, key_from, key_to,
               include_key=True, include_value=True):
